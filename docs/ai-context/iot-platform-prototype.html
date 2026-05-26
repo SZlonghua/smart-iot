@@ -1,0 +1,2405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能物联网平台 - 高保真原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1890ff',
+                        secondary: '#f0f2f5',
+                        success: '#52c41a',
+                        warning: '#faad14',
+                        danger: '#ff4d4f',
+                        info: '#13c2c2',
+                        dark: '#1f2329',
+                        light: '#f7f8fa'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .transition-all-300 {
+                transition: all 300ms ease-in-out;
+            }
+            .card-shadow {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            .nav-item-active {
+                background-color: rgba(24, 144, 255, 0.1);
+                color: #1890ff;
+                border-left: 4px solid #1890ff;
+            }
+            .subpage {
+                display: none;
+            }
+            .subpage.active {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light font-sans">
+    <div class="flex h-screen overflow-hidden">
+        <!-- 侧边导航栏 -->
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col">
+            <!-- 平台Logo -->
+            <div class="h-16 flex items-center justify-center border-b border-gray-200">
+                <div class="text-2xl font-bold text-primary flex items-center">
+                    <i class="fa fa-cloud mr-2"></i>
+                    <span>智能物联网平台</span>
+                </div>
+            </div>
+            
+            <!-- 导航菜单 -->
+            <nav class="flex-1 overflow-y-auto p-4">
+                <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">物联管理</h3>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="#dashboard" class="nav-item-active flex items-center px-4 py-3 rounded-lg" data-page="dashboard">
+                            <i class="fa fa-dashboard w-6"></i>
+                            <span>控制台</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#product-categories" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-all-300" data-page="product-categories">
+                            <i class="fa fa-folder w-6"></i>
+                            <span>产品分类</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#products" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-all-300" data-page="products">
+                            <i class="fa fa-cubes w-6"></i>
+                            <span>产品管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#devices" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-all-300" data-page="devices">
+                            <i class="fa fa-microchip w-6"></i>
+                            <span>设备管理</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2">网络管理</h3>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="#network-components" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-all-300" data-page="network-components">
+                            <i class="fa fa-wifi w-6"></i>
+                            <span>网络组件</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#protocols" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-all-300" data-page="protocols">
+                            <i class="fa fa-exchange w-6"></i>
+                            <span>协议管理</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#gateways" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-all-300" data-page="gateways">
+                            <i class="fa fa-signal w-6"></i>
+                            <span>设备网关</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2">告警管理</h3>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="#alarms" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-all-300" data-page="alarms">
+                            <i class="fa fa-bell w-6"></i>
+                            <span>告警日志</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <h3 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">系统管理</h3>
+                    <ul class="mt-2 space-y-1">
+                        <li>
+                            <a href="#users" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-all-300" data-page="users">
+                                <i class="fa fa-users w-6"></i>
+                                <span>用户管理</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#billing" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-all-300" data-page="billing">
+                                <i class="fa fa-credit-card w-6"></i>
+                                <span>账单管理</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#settings" class="flex items-center px-4 py-3 rounded-lg hover:bg-gray-100 transition-all-300" data-page="settings">
+                                <i class="fa fa-cog w-6"></i>
+                                <span>系统设置</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+            
+            <!-- 底部用户信息 -->
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                        <i class="fa fa-user"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">管理员</p>
+                        <p class="text-xs text-gray-500">企业版</p>
+                    </div>
+                    <button class="ml-auto text-gray-400 hover:text-gray-600">
+                        <i class="fa fa-sign-out"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- 主内容区 -->
+        <main class="flex-1 overflow-y-auto bg-gray-50">
+            <!-- 顶部导航栏 -->
+            <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6">
+                <div class="flex items-center">
+                    <button class="mr-4 text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-bars"></i>
+                    </button>
+                    <div class="relative">
+                        <input type="text" placeholder="搜索设备、产品、服务..." class="pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <i class="fa fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-500 hover:text-gray-700 relative">
+                        <i class="fa fa-bell"></i>
+                        <span class="absolute -top-1 -right-1 w-2 h-2 bg-danger rounded-full"></span>
+                    </button>
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-question-circle"></i>
+                    </button>
+                    <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all-300">
+                        <i class="fa fa-plus mr-1"></i> 新建
+                    </button>
+                </div>
+            </header>
+            
+            <!-- 内容区域 -->
+            <div id="page-content" class="p-6">
+                
+                <!-- 控制台页面 -->
+                <div id="dashboard-page" class="subpage active">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800">控制台</h1>
+                        <p class="text-gray-500 mt-1">欢迎回来，管理员！这里是您的物联网平台总览。</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                        <div class="bg-white rounded-lg card-shadow p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">设备总数</p>
+                                    <h3 class="text-2xl font-bold mt-1">1,284</h3>
+                                    <p class="text-success text-sm mt-2"><i class="fa fa-arrow-up mr-1"></i> 12% 较上月</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                    <i class="fa fa-microchip text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg card-shadow p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">在线设备</p>
+                                    <h3 class="text-2xl font-bold mt-1">956</h3>
+                                    <p class="text-success text-sm mt-2"><i class="fa fa-arrow-up mr-1"></i> 8% 较上月</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center text-success">
+                                    <i class="fa fa-check-circle text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg card-shadow p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">数据流量</p>
+                                    <h3 class="text-2xl font-bold mt-1">1.2 GB</h3>
+                                    <p class="text-danger text-sm mt-2"><i class="fa fa-arrow-down mr-1"></i> 5% 较上月</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-info/10 flex items-center justify-center text-info">
+                                    <i class="fa fa-cloud-upload text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg card-shadow p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-500 text-sm">告警数量</p>
+                                    <h3 class="text-2xl font-bold mt-1">23</h3>
+                                    <p class="text-warning text-sm mt-2"><i class="fa fa-arrow-up mr-1"></i> 3% 较上月</p>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center text-warning">
+                                    <i class="fa fa-bell text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white rounded-lg card-shadow p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800">设备在线率</h3>
+                                <div class="flex space-x-2">
+                                    <button class="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">日</button>
+                                    <button class="px-3 py-1 text-sm bg-primary text-white rounded">周</button>
+                                    <button class="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">月</button>
+                                </div>
+                            </div>
+                            <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                                <div class="text-center">
+                                    <i class="fa fa-line-chart text-4xl text-gray-300 mb-2"></i>
+                                    <p class="text-gray-400">设备在线率图表</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg card-shadow p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800">数据流量趋势</h3>
+                                <div class="flex space-x-2">
+                                    <button class="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">日</button>
+                                    <button class="px-3 py-1 text-sm bg-primary text-white rounded">周</button>
+                                    <button class="px-3 py-1 text-sm bg-gray-100 rounded hover:bg-gray-200">月</button>
+                                </div>
+                            </div>
+                            <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                                <div class="text-center">
+                                    <i class="fa fa-area-chart text-4xl text-gray-300 mb-2"></i>
+                                    <p class="text-gray-400">数据流量趋势图表</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-800">最近设备活动</h3>
+                            <a href="#" class="text-primary text-sm hover:underline">查看全部</a>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">设备名称</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">设备ID</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">状态</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">最后活动</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-3">
+                                                    <i class="fa fa-thermometer-half"></i>
+                                                </div>
+                                                <span>温度传感器-001</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">D8F7E6D5C4B3</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">在线</span>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">2分钟前</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm">查看</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-500 mr-3">
+                                                    <i class="fa fa-tint"></i>
+                                                </div>
+                                                <span>湿度传感器-002</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">E9F8E7D6C5B4</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">在线</span>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">5分钟前</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm">查看</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-500 mr-3">
+                                                    <i class="fa fa-lightbulb-o"></i>
+                                                </div>
+                                                <span>智能灯泡-003</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">F0F9E8D7C6B5</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-500">离线</span>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">1小时前</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm">查看</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-500 mr-3">
+                                                    <i class="fa fa-lock"></i>
+                                                </div>
+                                                <span>智能门锁-004</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">G1F0E9D8C7B6</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">在线</span>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">15分钟前</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm">查看</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-500 mr-3">
+                                                    <i class="fa fa-plug"></i>
+                                                </div>
+                                                <span>智能插座-005</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">H2G1F0E9D8C7</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">在线</span>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">30分钟前</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm">查看</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 产品分类页面 -->
+                <div id="product-categories-page" class="subpage">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800">产品分类</h1>
+                        <p class="text-gray-500 mt-1">管理产品分类，方便产品的组织和查询</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-800">分类列表</h3>
+                            <button id="add-category-btn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all-300">
+                                <i class="fa fa-plus mr-1"></i> 新增分类
+                            </button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-center space-x-2">
+                                <div class="relative flex-1">
+                                    <input type="text" placeholder="搜索分类名称" class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <i class="fa fa-search absolute left-3 top-3 text-gray-400"></i>
+                                </div>
+                                <button class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                    <i class="fa fa-refresh mr-1"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">分类名称</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">排序值</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">说明</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">创建时间</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <i class="fa fa-folder text-warning mr-2"></i>传感器
+                                        </td>
+                                        <td class="py-3 px-4">1</td>
+                                        <td class="py-3 px-4">各类传感器设备</td>
+                                        <td class="py-3 px-4">2026-04-01</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-primary hover:underline text-sm mr-3 add-subcategory-btn" data-parent-id="1" data-parent-name="传感器">添加子分类</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50 pl-8">
+                                        <td class="py-3 px-4 pl-10">
+                                            <i class="fa fa-minus text-gray-300 mr-2"></i><i class="fa fa-folder text-warning mr-2"></i>温度传感器
+                                        </td>
+                                        <td class="py-3 px-4">1</td>
+                                        <td class="py-3 px-4">温度监测设备</td>
+                                        <td class="py-3 px-4">2026-04-01</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-primary hover:underline text-sm mr-3 add-subcategory-btn" data-parent-id="4" data-parent-name="温度传感器">添加子分类</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50 pl-8">
+                                        <td class="py-3 px-4 pl-10">
+                                            <i class="fa fa-minus text-gray-300 mr-2"></i><i class="fa fa-folder text-warning mr-2"></i>湿度传感器
+                                        </td>
+                                        <td class="py-3 px-4">2</td>
+                                        <td class="py-3 px-4">湿度监测设备</td>
+                                        <td class="py-3 px-4">2026-04-01</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-primary hover:underline text-sm mr-3 add-subcategory-btn" data-parent-id="5" data-parent-name="湿度传感器">添加子分类</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <i class="fa fa-folder text-warning mr-2"></i>控制器
+                                        </td>
+                                        <td class="py-3 px-4">2</td>
+                                        <td class="py-3 px-4">各类控制设备</td>
+                                        <td class="py-3 px-4">2026-04-02</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-primary hover:underline text-sm mr-3 add-subcategory-btn" data-parent-id="2" data-parent-name="控制器">添加子分类</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <i class="fa fa-folder text-warning mr-2"></i>网关
+                                        </td>
+                                        <td class="py-3 px-4">3</td>
+                                        <td class="py-3 px-4">网络网关设备</td>
+                                        <td class="py-3 px-4">2026-04-03</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-primary hover:underline text-sm mr-3 add-subcategory-btn" data-parent-id="3" data-parent-name="网关">添加子分类</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-4">
+                            <p class="text-gray-500 text-sm">共 5 条记录</p>
+                            <div class="flex items-center space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">上一页</button>
+                                <button class="px-3 py-1 border border-primary bg-primary text-white rounded-lg text-sm">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 产品管理页面 -->
+                <div id="products-page" class="subpage">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-800">产品管理</h1>
+                                <p class="text-gray-500 mt-1">管理产品信息和物模型定义</p>
+                            </div>
+                            <button id="add-product-btn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all-300">
+                                <i class="fa fa-plus mr-1"></i> 新增产品
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg card-shadow">
+                        <div class="p-4 border-b border-gray-200">
+                            <div class="flex items-center space-x-4">
+                                <div class="relative flex-1 max-w-md">
+                                    <input type="text" placeholder="搜索产品名称或编码" class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <i class="fa fa-search absolute left-3 top-3 text-gray-400"></i>
+                                </div>
+                                <select class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="">全部分类</option>
+                                    <option value="1">传感器</option>
+                                    <option value="2">控制器</option>
+                                    <option value="3">网关</option>
+                                </select>
+                                <select class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="">全部状态</option>
+                                    <option value="1">启用</option>
+                                    <option value="2">禁用</option>
+                                </select>
+                                <button class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                    <i class="fa fa-refresh mr-1"></i> 重置
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="bg-gray-50">
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">产品名称</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">产品key</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">设备类型</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">所属分类</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">设备数量</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">状态</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">创建时间</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded bg-blue-100 flex items-center justify-center text-blue-500 mr-3">
+                                                    <i class="fa fa-thermometer-half"></i>
+                                                </div>
+                                                <span class="font-medium">温度传感器</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">TEMP_SENSOR_001</td>
+                                        <td class="py-3 px-4 text-gray-600">直连设备</td>
+                                        <td class="py-3 px-4 text-gray-600">传感器</td>
+                                        <td class="py-3 px-4 text-gray-600">128</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">启用</span>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">2026-04-01</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3 view-product-btn" data-product-id="1">查看</button>
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded bg-green-100 flex items-center justify-center text-green-500 mr-3">
+                                                    <i class="fa fa-tint"></i>
+                                                </div>
+                                                <span class="font-medium">湿度传感器</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">HUMIDITY_SENSOR_001</td>
+                                        <td class="py-3 px-4 text-gray-600">直连设备</td>
+                                        <td class="py-3 px-4 text-gray-600">传感器</td>
+                                        <td class="py-3 px-4 text-gray-600">96</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">启用</span>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">2026-04-02</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3 view-product-btn" data-product-id="2">查看</button>
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded bg-yellow-100 flex items-center justify-center text-yellow-500 mr-3">
+                                                    <i class="fa fa-lightbulb-o"></i>
+                                                </div>
+                                                <span class="font-medium">智能灯泡</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">SMART_LIGHT_001</td>
+                                        <td class="py-3 px-4 text-gray-600">网关设备</td>
+                                        <td class="py-3 px-4 text-gray-600">控制器</td>
+                                        <td class="py-3 px-4 text-gray-600">256</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">启用</span>
+                                        </td>
+                                        <td class="py-3 px-4 text-gray-600">2026-04-03</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3 view-product-btn" data-product-id="3">查看</button>
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 border-t border-gray-200">
+                            <p class="text-gray-500 text-sm">共 3 条记录</p>
+                            <div class="flex items-center space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">上一页</button>
+                                <button class="px-3 py-1 border border-primary bg-primary text-white rounded-lg text-sm">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 查看产品详情页面 -->
+                <div id="product-detail-page" class="subpage">
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <button id="back-to-products" class="mr-4 text-gray-500 hover:text-gray-700">
+                                    <i class="fa fa-arrow-left text-xl"></i>
+                                </button>
+                                <div>
+                                    <h1 class="text-2xl font-bold text-gray-800">温度传感器</h1>
+                                    <p class="text-gray-500 mt-1">产品编码：TEMP_SENSOR_001</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300">
+                                    <i class="fa fa-edit mr-1"></i> 编辑
+                                </button>
+                                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">
+                                    <i class="fa fa-plus mr-1"></i> 新增设备
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 基础信息 -->
+                    <div class="bg-white rounded-lg card-shadow p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">基础信息</h3>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <div>
+                                <div class="space-y-4">
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">产品名称：</span>
+                                        <span class="text-gray-800">温度传感器</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">产品key：</span>
+                                        <span class="text-gray-800">TEMP_SENSOR_001</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">所属分类：</span>
+                                        <span class="text-gray-800">传感器</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">设备数量：</span>
+                                        <span class="text-gray-800">128</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">状态：</span>
+                                        <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">启用</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="space-y-4">
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">创建时间：</span>
+                                        <span class="text-gray-800">2026-04-01 10:30:00</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">创建人：</span>
+                                        <span class="text-gray-800">管理员</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">备注：</span>
+                                        <span class="text-gray-800">用于温度数据采集的传感器设备</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab页面 -->
+                    <div class="bg-white rounded-lg card-shadow">
+                        <div class="border-b border-gray-200">
+                            <nav class="flex">
+                                <button class="product-tab-btn px-6 py-3 text-sm font-medium text-primary border-b-2 border-primary" data-tab="model">物模型</button>
+                                <button class="product-tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-primary" data-tab="topic">Topic管理</button>
+                            </nav>
+                        </div>
+                        
+                        <!-- 物模型Tab -->
+                        <div id="product-model-tab" class="product-tab-content p-6">
+                            <div class="border-b border-gray-200 mb-6">
+                                <nav class="flex">
+                                    <button class="model-sub-tab-btn px-4 py-2 text-sm font-medium text-primary border-b-2 border-primary" data-sub-tab="property">属性</button>
+                                    <button class="model-sub-tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-primary" data-sub-tab="function">功能</button>
+                                    <button class="model-sub-tab-btn px-4 py-2 text-sm font-medium text-gray-500 hover:text-primary" data-sub-tab="event">事件</button>
+                                </nav>
+                            </div>
+                            
+                            <!-- 属性SubTab -->
+                            <div id="model-property-tab" class="model-sub-tab-content">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-base font-medium text-gray-700 flex items-center">
+                                        <i class="fa fa-list-ul text-primary mr-2"></i> 属性（Properties）
+                                    </h4>
+                                    <button class="add-model-btn px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300" data-model-type="property">
+                                        <i class="fa fa-plus mr-1"></i> 添加属性
+                                    </button>
+                                </div>
+                                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                    <table class="w-full">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">属性名称</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">标识符</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">数据类型</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">描述</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                                <td class="py-2 px-4 text-sm">当前温度</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">temperature</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">float</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">设备当前温度值</td>
+                                                <td class="py-2 px-4 text-sm">
+                                                    <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                                    <button class="text-danger hover:underline text-sm">删除</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                                <td class="py-2 px-4 text-sm">当前湿度</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">humidity</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">float</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">设备当前湿度值</td>
+                                                <td class="py-2 px-4 text-sm">
+                                                    <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                                    <button class="text-danger hover:underline text-sm">删除</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                                <td class="py-2 px-4 text-sm">电池电量</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">battery</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">int</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">设备电池电量百分比</td>
+                                                <td class="py-2 px-4 text-sm">
+                                                    <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                                    <button class="text-danger hover:underline text-sm">删除</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- 功能SubTab -->
+                            <div id="model-function-tab" class="model-sub-tab-content hidden">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-base font-medium text-gray-700 flex items-center">
+                                        <i class="fa fa-cogs text-primary mr-2"></i> 功能（Functions）
+                                    </h4>
+                                    <button class="add-model-btn px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300" data-model-type="function">
+                                        <i class="fa fa-plus mr-1"></i> 添加功能
+                                    </button>
+                                </div>
+                                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                    <table class="w-full">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">功能名称</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">标识符</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">调用方式</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">描述</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                                <td class="py-2 px-4 text-sm">重启设备</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">reboot</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">异步</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">远程重启设备</td>
+                                                <td class="py-2 px-4 text-sm">
+                                                    <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                                    <button class="text-danger hover:underline text-sm">删除</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                                <td class="py-2 px-4 text-sm">校准传感器</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">calibrate</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">同步</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">校准温度传感器</td>
+                                                <td class="py-2 px-4 text-sm">
+                                                    <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                                    <button class="text-danger hover:underline text-sm">删除</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- 事件SubTab -->
+                            <div id="model-event-tab" class="model-sub-tab-content hidden">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h4 class="text-base font-medium text-gray-700 flex items-center">
+                                        <i class="fa fa-bolt text-primary mr-2"></i> 事件（Events）
+                                    </h4>
+                                    <button class="add-model-btn px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300" data-model-type="event">
+                                        <i class="fa fa-plus mr-1"></i> 添加事件
+                                    </button>
+                                </div>
+                                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                    <table class="w-full">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">事件名称</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">标识符</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">事件类型</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">描述</th>
+                                                <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                                <td class="py-2 px-4 text-sm">温度告警</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">temp_alarm</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">告警</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">温度超过阈值时触发</td>
+                                                <td class="py-2 px-4 text-sm">
+                                                    <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                                    <button class="text-danger hover:underline text-sm">删除</button>
+                                                </td>
+                                            </tr>
+                                            <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                                <td class="py-2 px-4 text-sm">设备离线</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">offline</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">信息</td>
+                                                <td class="py-2 px-4 text-sm text-gray-600">设备离线时触发</td>
+                                                <td class="py-2 px-4 text-sm">
+                                                    <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                                    <button class="text-danger hover:underline text-sm">删除</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Topic管理Tab -->
+                        <div id="product-topic-tab" class="product-tab-content hidden p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-lg font-semibold text-gray-800">Topic管理</h3>
+                                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">
+                                    <i class="fa fa-plus mr-1"></i> 新增Topic
+                                </button>
+                            </div>
+                            
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">Topic名称</th>
+                                            <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">Topic类型</th>
+                                            <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">权限</th>
+                                            <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">描述</th>
+                                            <th class="text-left py-2 px-4 text-sm font-medium text-gray-500">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-2 px-4 text-sm">/device/data/upload</td>
+                                            <td class="py-2 px-4 text-sm text-gray-600">数据上报</td>
+                                            <td class="py-2 px-4 text-sm text-gray-600">发布</td>
+                                            <td class="py-2 px-4 text-sm text-gray-600">设备上报数据</td>
+                                            <td class="py-2 px-4 text-sm">
+                                                <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                                <button class="text-danger hover:underline text-sm">删除</button>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-2 px-4 text-sm">/device/command</td>
+                                            <td class="py-2 px-4 text-sm text-gray-600">命令下发</td>
+                                            <td class="py-2 px-4 text-sm text-gray-600">订阅</td>
+                                            <td class="py-2 px-4 text-sm text-gray-600">平台下发命令</td>
+                                            <td class="py-2 px-4 text-sm">
+                                                <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                                <button class="text-danger hover:underline text-sm">删除</button>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-2 px-4 text-sm">/device/event</td>
+                                            <td class="py-2 px-4 text-sm text-gray-600">事件上报</td>
+                                            <td class="py-2 px-4 text-sm text-gray-600">发布</td>
+                                            <td class="py-2 px-4 text-sm text-gray-600">设备上报事件</td>
+                                            <td class="py-2 px-4 text-sm">
+                                                <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                                <button class="text-danger hover:underline text-sm">删除</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 设备管理页面 -->
+                <div id="devices-page" class="subpage">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800">设备管理</h1>
+                        <p class="text-gray-500 mt-1">管理设备注册、监控和控制</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                                <h3 class="font-semibold text-gray-800">设备列表</h3>
+                                <div class="flex space-x-2">
+                                    <button id="add-device-btn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all-300">
+                                        <i class="fa fa-plus mr-1"></i> 新增设备
+                                    </button>
+                                    <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-all-300">
+                                        <i class="fa fa-upload mr-1"></i> 批量导入
+                                    </button>
+                                </div>
+                            </div>
+                        
+                        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">设备名称</label>
+                                    <input type="text" placeholder="请输入设备名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">所属产品</label>
+                                    <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option value="">全部产品</option>
+                                        <option value="1">温度传感器</option>
+                                        <option value="2">湿度传感器</option>
+                                        <option value="3">智能灯泡</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">设备状态</label>
+                                    <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option value="">全部状态</option>
+                                        <option value="1">在线</option>
+                                        <option value="2">离线</option>
+                                        <option value="3">未激活</option>
+                                        <option value="4">禁用</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-end mt-4 space-x-2">
+                                <button class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                    <i class="fa fa-refresh mr-1"></i> 重置
+                                </button>
+                                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                                    <i class="fa fa-search mr-1"></i> 搜索
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">设备名称</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">设备key</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">设备密钥</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">所属产品</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">设备状态</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">最后在线时间</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">创建时间</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-3">
+                                                    <i class="fa fa-thermometer-half"></i>
+                                                </div>
+                                                <span>温度传感器-001</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4">D8F7E6D5C4B3</td>
+                                        <td class="py-3 px-4">ds_xxxxxxxxxxxx</td>
+                                        <td class="py-3 px-4">温度传感器</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">在线</span>
+                                        </td>
+                                        <td class="py-3 px-4">2026-04-26 14:30</td>
+                                        <td class="py-3 px-4">2026-04-01</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3 view-device-btn" data-device-id="1">查看</button>
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-500 mr-3">
+                                                    <i class="fa fa-tint"></i>
+                                                </div>
+                                                <span>湿度传感器-002</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4">E9F8E7D6C5B4</td>
+                                        <td class="py-3 px-4">ds_yyyyyyyyyyyy</td>
+                                        <td class="py-3 px-4">湿度传感器</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">在线</span>
+                                        </td>
+                                        <td class="py-3 px-4">2026-04-26 14:25</td>
+                                        <td class="py-3 px-4">2026-04-02</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3 view-device-btn" data-device-id="1">查看</button>
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-500 mr-3">
+                                                    <i class="fa fa-lightbulb-o"></i>
+                                                </div>
+                                                <span>智能灯泡-003</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 px-4">F0F9E8D7C6B5</td>
+                                        <td class="py-3 px-4">ds_zzzzzzzzzzzz</td>
+                                        <td class="py-3 px-4">智能灯泡</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-500">离线</span>
+                                        </td>
+                                        <td class="py-3 px-4">2026-04-26 13:00</td>
+                                        <td class="py-3 px-4">2026-04-03</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3 view-device-btn" data-device-id="1">查看</button>
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-4">
+                            <p class="text-gray-500 text-sm">共 3 条记录</p>
+                            <div class="flex items-center space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">上一页</button>
+                                <button class="px-3 py-1 border border-primary bg-primary text-white rounded-lg text-sm">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">下一页</button>
+                            </div>
+            </div>
+        </div>
+    </div>
+                
+                <!-- 设备详情页面 -->
+                <div id="device-detail-page" class="subpage">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800">设备详情</h1>
+                        <p class="text-gray-500 mt-1">查看设备详细信息和操作历史</p>
+                    </div>
+                    
+                    <!-- 基础信息区域 -->
+                    <div class="bg-white rounded-lg card-shadow p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">基础信息</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <div class="space-y-4">
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">设备名称：</span>
+                                        <span class="text-gray-800">温度传感器-001</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">设备编码：</span>
+                                        <span class="text-gray-800">D8F7E6D5C4B3</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">所属产品：</span>
+                                        <span class="text-gray-800">温度传感器</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">设备状态：</span>
+                                        <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">在线</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="space-y-4">
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">最后在线：</span>
+                                        <span class="text-gray-800">2026-04-26 14:30:00</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">创建时间：</span>
+                                        <span class="text-gray-800">2026-04-01 10:00:00</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">创建人：</span>
+                                        <span class="text-gray-800">管理员</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-32 text-gray-500">描述：</span>
+                                        <span class="text-gray-800">办公室温度监控设备</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tab页面 -->
+                    <div class="bg-white rounded-lg card-shadow">
+                        <div class="border-b border-gray-200">
+                            <nav class="flex">
+                                <button class="device-tab-btn px-6 py-3 text-sm font-medium text-primary border-b-2 border-primary" data-tab="property">属性数据</button>
+                                <button class="device-tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-primary" data-tab="log">运行日志</button>
+                            </nav>
+                        </div>
+                        
+                        <!-- 属性数据Tab -->
+                        <div id="device-property-tab" class="device-tab-content p-6">
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-500">属性名称</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-500">标识符</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-500">数据类型</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-500">当前值</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-500">更新时间</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-500">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-3 px-4">当前温度</td>
+                                            <td class="py-3 px-4 text-gray-600">temperature</td>
+                                            <td class="py-3 px-4 text-gray-600">float</td>
+                                            <td class="py-3 px-4 text-gray-600">25.5°C</td>
+                                            <td class="py-3 px-4 text-gray-600">2026-04-26 14:30</td>
+                                            <td class="py-3 px-4">
+                                                <button class="text-primary hover:underline text-sm mr-3"><i class="fa fa-refresh mr-1"></i>刷新</button>
+                                                <button class="text-success hover:underline text-sm 下发-btn"><i class="fa fa-paper-plane mr-1"></i>下发</button>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-3 px-4">湿度</td>
+                                            <td class="py-3 px-4 text-gray-600">humidity</td>
+                                            <td class="py-3 px-4 text-gray-600">float</td>
+                                            <td class="py-3 px-4 text-gray-600">45%</td>
+                                            <td class="py-3 px-4 text-gray-600">2026-04-26 14:25</td>
+                                            <td class="py-3 px-4">
+                                                <button class="text-primary hover:underline text-sm mr-3"><i class="fa fa-refresh mr-1"></i>刷新</button>
+                                                <button class="text-success hover:underline text-sm 下发-btn"><i class="fa fa-paper-plane mr-1"></i>下发</button>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-3 px-4">电池电量</td>
+                                            <td class="py-3 px-4 text-gray-600">battery</td>
+                                            <td class="py-3 px-4 text-gray-600">int</td>
+                                            <td class="py-3 px-4 text-gray-600">95%</td>
+                                            <td class="py-3 px-4 text-gray-600">2026-04-26 14:20</td>
+                                            <td class="py-3 px-4">
+                                                <button class="text-primary hover:underline text-sm mr-3"><i class="fa fa-refresh mr-1"></i>刷新</button>
+                                                <button class="text-success hover:underline text-sm 下发-btn"><i class="fa fa-paper-plane mr-1"></i>下发</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- 运行日志Tab -->
+                        <div id="device-log-tab" class="device-tab-content hidden p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-base font-medium text-gray-700">运行日志</h4>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-500">时间</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-500">类型</th>
+                                            <th class="text-left py-3 px-4 font-medium text-gray-500">内容</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-3 px-4 text-gray-600">2026-04-26 14:30:00</td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">上线</span>
+                                            </td>
+                                            <td class="py-3 px-4 text-gray-600"><code class="text-xs bg-gray-100 px-2 py-1 rounded">{"event":"online","deviceKey":"device_001","timestamp":1714108200000}</code></td>
+                                        </tr>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-3 px-4 text-gray-600">2026-04-26 14:28:30</td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2 py-1 text-xs rounded-full bg-info/10 text-info">属性上报</span>
+                                            </td>
+                                            <td class="py-3 px-4 text-gray-600"><code class="text-xs bg-gray-100 px-2 py-1 rounded">{"type":"properties_report","data":{"temperature":25.5,"humidity":45,"status":1}}</code></td>
+                                        </tr>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-3 px-4 text-gray-600">2026-04-26 14:25:00</td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">读取属性</span>
+                                            </td>
+                                            <td class="py-3 px-4 text-gray-600"><code class="text-xs bg-gray-100 px-2 py-1 rounded">{"type":"properties_get","keys":["temperature","humidity"]}</code></td>
+                                        </tr>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-3 px-4 text-gray-600">2026-04-26 14:20:00</td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2 py-1 text-xs rounded-full bg-danger/10 text-danger">离线</span>
+                                            </td>
+                                            <td class="py-3 px-4 text-gray-600"><code class="text-xs bg-gray-100 px-2 py-1 rounded">{"event":"offline","deviceKey":"device_001","timestamp":1714108800000}</code></td>
+                                        </tr>
+                                        <tr class="border-t border-gray-200 hover:bg-gray-50">
+                                            <td class="py-3 px-4 text-gray-600">2026-04-26 14:15:00</td>
+                                            <td class="py-3 px-4">
+                                                <span class="px-2 py-1 text-xs rounded-full bg-warning/10 text-warning">事件</span>
+                                            </td>
+                                            <td class="py-3 px-4 text-gray-600"><code class="text-xs bg-gray-100 px-2 py-1 rounded">{"type":"event_report","eventId":"overTemperature","params":{"temperature":85,"threshold":80}}</code></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 网络组件页面 -->
+                <div id="network-components-page" class="subpage">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800">网络组件</h1>
+                        <p class="text-gray-500 mt-1">管理设备接入的网络基础设施</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-800">组件列表</h3>
+                            <button id="add-network-btn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all-300">
+                                <i class="fa fa-plus mr-1"></i> 新增组件
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">组件名称</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">组件类型</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">监听地址</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">监听端口</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">状态</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">说明</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">MQTT Broker</td>
+                                        <td class="py-3 px-4">MQTT服务</td>
+                                        <td class="py-3 px-4">0.0.0.0</td>
+                                        <td class="py-3 px-4">1883</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">运行中</span>
+                                        </td>
+                                        <td class="py-3 px-4">默认MQTT消息代理</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm">编辑</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">HTTP Server</td>
+                                        <td class="py-3 px-4">HTTP服务</td>
+                                        <td class="py-3 px-4">0.0.0.0</td>
+                                        <td class="py-3 px-4">8080</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">运行中</span>
+                                        </td>
+                                        <td class="py-3 px-4">HTTP API服务</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm">编辑</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 协议管理页面 -->
+                <div id="protocols-page" class="subpage">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800">协议管理</h1>
+                        <p class="text-gray-500 mt-1">管理设备通信协议</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-800">协议列表</h3>
+                            <button id="add-protocol-btn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all-300">
+                                <i class="fa fa-plus mr-1"></i> 新增协议
+                            </button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-center space-x-2">
+                                <input type="text" placeholder="搜索协议名称" class="flex-1 pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <i class="fa fa-search absolute left-3 top-3 text-gray-400 ml-3"></i>
+                                <button class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                    <i class="fa fa-refresh mr-1"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">协议名称</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">版本</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">说明</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">MQTT标准协议</td>
+                                        <td class="py-3 px-4">3.1.1</td>
+                                        <td class="py-3 px-4">标准MQTT协议实现</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">HTTP JSON协议</td>
+                                        <td class="py-3 px-4">1.0</td>
+                                        <td class="py-3 px-4">基于HTTP的JSON协议</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-danger hover:underline text-sm">删除</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 设备网关页面 -->
+                <div id="gateways-page" class="subpage">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800">设备网关</h1>
+                        <p class="text-gray-500 mt-1">管理设备接入网关</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-800">网关列表</h3>
+                            <button id="add-gateway-btn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all-300">
+                                <i class="fa fa-plus mr-1"></i> 新增网关
+                            </button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="flex items-center space-x-2">
+                                <input type="text" placeholder="搜索网关名称" class="flex-1 pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <i class="fa fa-search absolute left-3 top-3 text-gray-400 ml-3"></i>
+                                <button class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                    <i class="fa fa-refresh mr-1"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">网关名称</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">接入类型</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">网络组件</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">协议</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">状态</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">MQTT直连网关</td>
+                                        <td class="py-3 px-4">MQTT直连接入</td>
+                                        <td class="py-3 px-4">MQTT Broker</td>
+                                        <td class="py-3 px-4">MQTT标准协议</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">运行中</span>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-danger hover:underline text-sm">停止</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">HTTP网关</td>
+                                        <td class="py-3 px-4">HTTP接入</td>
+                                        <td class="py-3 px-4">HTTP Server</td>
+                                        <td class="py-3 px-4">HTTP JSON协议</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">运行中</span>
+                                        </td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm mr-3">编辑</button>
+                                            <button class="text-danger hover:underline text-sm">停止</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 告警日志页面 -->
+                <div id="alarms-page" class="subpage">
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold text-gray-800">告警日志</h1>
+                        <p class="text-gray-500 mt-1">查看和处理设备告警</p>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-gray-800">告警列表</h3>
+                            <div class="flex space-x-2">
+                                <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-all-300">
+                                    <i class="fa fa-download mr-1"></i> 导出
+                                </button>
+                                <button class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-all-300">
+                                    <i class="fa fa-refresh mr-1"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">告警级别</label>
+                                    <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option value="">全部级别</option>
+                                        <option value="1">紧急</option>
+                                        <option value="2">重要</option>
+                                        <option value="3">次要</option>
+                                        <option value="4">提示</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">处理状态</label>
+                                    <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option value="">全部状态</option>
+                                        <option value="1">未处理</option>
+                                        <option value="2">处理中</option>
+                                        <option value="3">已处理</option>
+                                        <option value="4">已忽略</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">告警来源</label>
+                                    <input type="text" placeholder="请输入设备名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-end mt-4 space-x-2">
+                                <button class="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200">
+                                    <i class="fa fa-refresh mr-1"></i> 重置
+                                </button>
+                                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                                    <i class="fa fa-search mr-1"></i> 搜索
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">告警级别</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">告警来源</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">告警描述</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">处理状态</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">触发时间</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">处理时间</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">处理人</th>
+                                        <th class="text-left py-3 px-4 font-medium text-gray-500">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-danger/10 text-danger">紧急</span>
+                                        </td>
+                                        <td class="py-3 px-4">温度传感器-001</td>
+                                        <td class="py-3 px-4">温度超过阈值</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-warning/10 text-warning">处理中</span>
+                                        </td>
+                                        <td class="py-3 px-4">2026-04-26 14:30</td>
+                                        <td class="py-3 px-4">2026-04-26 14:35</td>
+                                        <td class="py-3 px-4">管理员</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm handle-alarm-btn">处理</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-warning/10 text-warning">重要</span>
+                                        </td>
+                                        <td class="py-3 px-4">智能灯泡-003</td>
+                                        <td class="py-3 px-4">设备离线</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-500">未处理</span>
+                                        </td>
+                                        <td class="py-3 px-4">2026-04-26 13:00</td>
+                                        <td class="py-3 px-4">-</td>
+                                        <td class="py-3 px-4">-</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm handle-alarm-btn">处理</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-info/10 text-info">提示</span>
+                                        </td>
+                                        <td class="py-3 px-4">湿度传感器-002</td>
+                                        <td class="py-3 px-4">湿度正常</td>
+                                        <td class="py-3 px-4">
+                                            <span class="px-2 py-1 text-xs rounded-full bg-success/10 text-success">已处理</span>
+                                        </td>
+                                        <td class="py-3 px-4">2026-04-26 12:00</td>
+                                        <td class="py-3 px-4">系统</td>
+                                        <td class="py-3 px-4">
+                                            <button class="text-primary hover:underline text-sm">查看</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-4">
+                            <p class="text-gray-500 text-sm">共 3 条记录</p>
+                            <div class="flex items-center space-x-2">
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">上一页</button>
+                                <button class="px-3 py-1 border border-primary bg-primary text-white rounded-lg text-sm">1</button>
+                                <button class="px-3 py-1 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">下一页</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+        </main>
+    </div>
+    
+    <!-- 新增分类模态框 -->
+    <div id="category-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-md mx-4">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 id="category-modal-title" class="text-lg font-semibold text-gray-800">新增分类</h3>
+                <button id="close-category-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-4">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">分类名称 <span class="text-danger">*</span></label>
+                    <input type="text" id="category-name" placeholder="请输入分类名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">父分类</label>
+                    <select id="category-parent" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <option value="">无（顶级分类）</option>
+                        <option value="1">传感器</option>
+                        <option value="2">控制器</option>
+                        <option value="3">网关</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">排序值</label>
+                    <input type="number" id="category-sort" placeholder="请输入排序值" value="0" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">说明</label>
+                    <textarea id="category-desc" rows="3" placeholder="请输入分类说明" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+            </div>
+            <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                <button id="cancel-category" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300">取消</button>
+                <button id="save-category" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">确定</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 新增产品模态框 -->
+    <div id="product-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 id="product-modal-title" class="text-lg font-semibold text-gray-800">新增产品</h3>
+                <button id="close-product-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form id="product-form" class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">产品名称 <span class="text-danger">*</span></label>
+                        <input type="text" name="productName" placeholder="请输入产品名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">产品key <span class="text-danger">*</span></label>
+                        <input type="text" name="productCode" placeholder="请输入产品key" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">所属分类 <span class="text-danger">*</span></label>
+                        <select name="categoryId" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择分类</option>
+                            <option value="1">传感器</option>
+                            <option value="2">控制器</option>
+                            <option value="3">网关</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                        <select name="status" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="1">启用</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">设备类型 <span class="text-danger">*</span></label>
+                        <select name="deviceType" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择设备类型</option>
+                            <option value="direct">直连设备</option>
+                            <option value="gateway-child">网关子设备</option>
+                            <option value="gateway">网关设备</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                    <textarea name="description" rows="3" placeholder="请输入产品描述" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                    <button type="button" id="cancel-product" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300">取消</button>
+                    <button type="button" id="save-product" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">确定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 新增属性模态框 -->
+    <div id="property-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 class="text-lg font-semibold text-gray-800">新增属性</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600" data-modal="property-modal">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">属性名称 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入属性名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">标识符 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入标识符" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">数据类型 <span class="text-danger">*</span></label>
+                        <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择数据类型</option>
+                            <option value="int">int</option>
+                            <option value="float">float</option>
+                            <option value="string">string</option>
+                            <option value="bool">bool</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                    <textarea rows="3" placeholder="请输入属性描述" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                    <button type="button" class="close-modal-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300" data-modal="property-modal">取消</button>
+                    <button type="button" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">确定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 新增功能模态框 -->
+    <div id="function-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 class="text-lg font-semibold text-gray-800">新增功能</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600" data-modal="function-modal">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">功能名称 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入功能名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">标识符 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入标识符" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">调用方式 <span class="text-danger">*</span></label>
+                        <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择调用方式</option>
+                            <option value="sync">同步</option>
+                            <option value="async">异步</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                    <textarea rows="3" placeholder="请输入功能描述" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                    <button type="button" class="close-modal-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300" data-modal="function-modal">取消</button>
+                    <button type="button" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">确定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 新增事件模态框 -->
+    <div id="event-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 class="text-lg font-semibold text-gray-800">新增事件</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600" data-modal="event-modal">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">事件名称 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入事件名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">标识符 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入标识符" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">事件类型 <span class="text-danger">*</span></label>
+                        <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择事件类型</option>
+                            <option value="info">信息</option>
+                            <option value="warning">警告</option>
+                            <option value="error">告警</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                    <textarea rows="3" placeholder="请输入事件描述" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                    <button type="button" class="close-modal-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300" data-modal="event-modal">取消</button>
+                    <button type="button" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">确定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 新增设备模态框 -->
+    <div id="device-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 class="text-lg font-semibold text-gray-800">新增设备</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600" data-modal="device-modal">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">设备名称 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入设备名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">设备key <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入设备key" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">所属产品 <span class="text-danger">*</span></label>
+                        <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择产品</option>
+                            <option value="1">温度传感器</option>
+                            <option value="2">湿度传感器</option>
+                            <option value="3">智能灯泡</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">状态</label>
+                        <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="1">启用</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">描述</label>
+                    <textarea rows="3" placeholder="请输入设备描述" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                    <button type="button" class="close-modal-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300" data-modal="device-modal">取消</button>
+                    <button type="button" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">确定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 下发属性弹框 -->
+    <div id="下发-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-md mx-4">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">下发属性</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600" data-modal="下发-modal">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form class="p-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">属性名称</label>
+                    <input type="text" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 bg-gray-50">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">标识符</label>
+                    <input type="text" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 bg-gray-50">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">当前值</label>
+                    <input type="text" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 bg-gray-50">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">下发值 <span class="text-danger">*</span></label>
+                    <input type="text" placeholder="请输入要下发的值" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                    <button type="button" class="close-modal-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300" data-modal="下发-modal">取消</button>
+                    <button type="button" class="px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 transition-all-300">下发</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 新增网络组件模态框 -->
+    <div id="network-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 class="text-lg font-semibold text-gray-800">新增网络组件</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600" data-modal="network-modal">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">组件名称 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入组件名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">组件类型 <span class="text-danger">*</span></label>
+                        <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择组件类型</option>
+                            <option value="tcp">TCP服务</option>
+                            <option value="http">HTTP服务</option>
+                            <option value="mqtt-server">MQTT服务</option>
+                            <option value="mqtt-client">MQTT客户端</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">监听地址 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入监听地址" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">监听端口 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入监听端口" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">说明</label>
+                    <textarea rows="3" placeholder="请输入组件说明" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                    <button type="button" class="close-modal-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300" data-modal="network-modal">取消</button>
+                    <button type="button" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">确定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 新增协议模态框 -->
+    <div id="protocol-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 class="text-lg font-semibold text-gray-800">新增协议</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600" data-modal="protocol-modal">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">协议名称 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入协议名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">版本号 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入版本号" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">上传JAR包 <span class="text-danger">*</span></label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                        <i class="fa fa-cloud-upload text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-600">点击或拖拽文件到此处上传</p>
+                        <p class="text-gray-400 text-sm mt-1">支持 .jar 格式文件</p>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">说明</label>
+                    <textarea rows="3" placeholder="请输入协议说明" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                    <button type="button" class="close-modal-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300" data-modal="protocol-modal">取消</button>
+                    <button type="button" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">确定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 新增网关模态框 -->
+    <div id="gateway-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 class="text-lg font-semibold text-gray-800">新增网关</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600" data-modal="gateway-modal">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">网关名称 <span class="text-danger">*</span></label>
+                        <input type="text" placeholder="请输入网关名称" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">接入类型 <span class="text-danger">*</span></label>
+                        <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择接入类型</option>
+                            <option value="mqtt-direct">MQTT直连接入</option>
+                            <option value="gateway-child">网关子设备接入</option>
+                            <option value="http-push">HTTP推送接入</option>
+                            <option value="mqtt-broker">MQTT Broker接入</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">网络组件 <span class="text-danger">*</span></label>
+                        <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择网络组件</option>
+                            <option value="1">MQTT Broker</option>
+                            <option value="2">HTTP Server</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">协议 <span class="text-danger">*</span></label>
+                        <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择协议</option>
+                            <option value="1">MQTT标准协议</option>
+                            <option value="2">HTTP JSON协议</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">说明</label>
+                    <textarea rows="3" placeholder="请输入网关说明" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                    <button type="button" class="close-modal-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300" data-modal="gateway-modal">取消</button>
+                    <button type="button" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">确定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 处理告警模态框 -->
+    <div id="alarm-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white">
+                <h3 class="text-lg font-semibold text-gray-800">处理告警</h3>
+                <button class="close-modal-btn text-gray-400 hover:text-gray-600" data-modal="alarm-modal">
+                    <i class="fa fa-times text-xl"></i>
+                </button>
+            </div>
+            <form class="p-6">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">告警信息</label>
+                    <div class="p-4 bg-gray-50 rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            <div>
+                                <span class="text-gray-500">告警级别：</span>
+                                <span class="font-medium">紧急</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">告警来源：</span>
+                                <span class="font-medium">温度传感器-001</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">告警描述：</span>
+                                <span class="font-medium">温度超过阈值</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-500">触发时间：</span>
+                                <span class="font-medium">2026-04-26 14:30</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">处理状态 <span class="text-danger">*</span></label>
+                    <select class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <option value="1">处理中</option>
+                        <option value="2">已处理</option>
+                        <option value="3">已忽略</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">处理人 <span class="text-danger">*</span></label>
+                    <input type="text" placeholder="请输入处理人" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">处理说明</label>
+                    <textarea rows="4" placeholder="请输入处理说明" class="w-full pl-3 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"></textarea>
+                </div>
+                <div class="flex items-center justify-end p-4 border-t border-gray-200 space-x-2">
+                    <button type="button" class="close-modal-btn px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-all-300" data-modal="alarm-modal">取消</button>
+                    <button type="button" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all-300">确定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('nav a');
+            const subpages = document.querySelectorAll('.subpage');
+            
+            navItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    navItems.forEach(nav => nav.classList.remove('nav-item-active'));
+                    this.classList.add('nav-item-active');
+                    
+                    const targetPageId = this.getAttribute('data-page') + '-page';
+                    
+                    subpages.forEach(page => {
+                        if (page.id === targetPageId) {
+                            page.classList.add('active');
+                        } else {
+                            page.classList.remove('active');
+                        }
+                    });
+                });
+            });
+            
+            const addCategoryBtn = document.getElementById('add-category-btn');
+            const categoryModal = document.getElementById('category-modal');
+            const closeCategoryModal = document.getElementById('close-category-modal');
+            const cancelCategory = document.getElementById('cancel-category');
+            const saveCategory = document.getElementById('save-category');
+            
+            addCategoryBtn.addEventListener('click', function() {
+                document.getElementById('category-modal-title').textContent = '新增分类';
+                document.getElementById('category-parent').value = '';
+                categoryModal.classList.remove('hidden');
+            });
+            
+            document.querySelectorAll('.add-subcategory-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const parentId = this.getAttribute('data-parent-id');
+                    const parentName = this.getAttribute('data-parent-name');
+                    document.getElementById('category-modal-title').textContent = '添加子分类至：' + parentName;
+                    document.getElementById('category-parent').value = parentId;
+                    document.getElementById('category-name').value = '';
+                    document.getElementById('category-sort').value = '0';
+                    document.getElementById('category-desc').value = '';
+                    categoryModal.classList.remove('hidden');
+                });
+            });
+            
+            function closeModal() {
+                categoryModal.classList.add('hidden');
+                document.getElementById('category-name').value = '';
+                document.getElementById('category-parent').value = '';
+                document.getElementById('category-sort').value = '0';
+                document.getElementById('category-desc').value = '';
+            }
+            
+            closeCategoryModal.addEventListener('click', closeModal);
+            cancelCategory.addEventListener('click', closeModal);
+            
+            categoryModal.addEventListener('click', function(e) {
+                if (e.target === categoryModal) {
+                    closeModal();
+                }
+            });
+            
+            saveCategory.addEventListener('click', function() {
+                const name = document.getElementById('category-name').value.trim();
+                if (!name) {
+                    alert('请输入分类名称');
+                    return;
+                }
+                closeModal();
+            });
+            
+            // 产品相关功能
+            const addProductBtn = document.getElementById('add-product-btn');
+            const productModal = document.getElementById('product-modal');
+            const closeProductModal = document.getElementById('close-product-modal');
+            const cancelProduct = document.getElementById('cancel-product');
+            
+            addProductBtn.addEventListener('click', function() {
+                document.getElementById('product-modal-title').textContent = '新增产品';
+                document.getElementById('product-form').reset();
+                productModal.classList.remove('hidden');
+            });
+            
+            closeProductModal.addEventListener('click', function() {
+                productModal.classList.add('hidden');
+            });
+            cancelProduct.addEventListener('click', function() {
+                productModal.classList.add('hidden');
+            });
+            
+            productModal.addEventListener('click', function(e) {
+                if (e.target === productModal) {
+                    productModal.classList.add('hidden');
+                }
+            });
+            
+            // 物模型添加按钮
+            document.querySelectorAll('.add-model-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const modelType = this.getAttribute('data-model-type');
+                    const modalId = modelType + '-modal';
+                    document.getElementById(modalId).classList.remove('hidden');
+                });
+            });
+            
+            // 关闭模态框按钮
+            document.querySelectorAll('.close-modal-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const modalId = this.getAttribute('data-modal');
+                    document.getElementById(modalId).classList.add('hidden');
+                });
+            });
+            
+            // 模态框点击外部关闭
+            ['property-modal', 'function-modal', 'event-modal'].forEach(function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === modal) {
+                            modal.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+            
+            // 查看产品按钮
+            document.querySelectorAll('.view-product-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    subpages.forEach(page => page.classList.remove('active'));
+                    document.getElementById('product-detail-page').classList.add('active');
+                    navItems.forEach(nav => nav.classList.remove('nav-item-active'));
+                    document.querySelector('nav a[data-page="products"]').classList.add('nav-item-active');
+                });
+            });
+            
+            // 返回产品列表
+            document.getElementById('back-to-products').addEventListener('click', function() {
+                subpages.forEach(page => page.classList.remove('active'));
+                document.getElementById('products-page').classList.add('active');
+                document.querySelector('nav a[data-page="products"]').classList.add('nav-item-active');
+            });
+            
+            // 产品Tab切换
+            document.querySelectorAll('.product-tab-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.product-tab-btn').forEach(b => {
+                        b.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                        b.classList.add('text-gray-500');
+                    });
+                    this.classList.add('text-primary', 'border-b-2', 'border-primary');
+                    this.classList.remove('text-gray-500');
+                    
+                    const tabName = this.getAttribute('data-tab');
+                    document.querySelectorAll('.product-tab-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById('product-' + tabName + '-tab').classList.remove('hidden');
+                });
+            });
+            
+            // 物模型子Tab切换
+            document.querySelectorAll('.model-sub-tab-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.model-sub-tab-btn').forEach(b => {
+                        b.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                        b.classList.add('text-gray-500');
+                    });
+                    this.classList.add('text-primary', 'border-b-2', 'border-primary');
+                    this.classList.remove('text-gray-500');
+                    
+                    const subTabName = this.getAttribute('data-sub-tab');
+                    document.querySelectorAll('.model-sub-tab-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById('model-' + subTabName + '-tab').classList.remove('hidden');
+                });
+            });
+            
+            // 设备相关功能
+            const addDeviceBtn = document.getElementById('add-device-btn');
+            const deviceModal = document.getElementById('device-modal');
+            
+            addDeviceBtn.addEventListener('click', function() {
+                deviceModal.classList.remove('hidden');
+            });
+            
+            // 查看设备按钮
+            document.querySelectorAll('.view-device-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    subpages.forEach(page => page.classList.remove('active'));
+                    document.getElementById('device-detail-page').classList.add('active');
+                    document.querySelector('nav a[data-page="devices"]').classList.add('nav-item-active');
+                });
+            });
+            
+            // 设备Tab切换
+            document.querySelectorAll('.device-tab-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.device-tab-btn').forEach(b => {
+                        b.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                        b.classList.add('text-gray-500');
+                    });
+                    this.classList.add('text-primary', 'border-b-2', 'border-primary');
+                    this.classList.remove('text-gray-500');
+                    
+                    const tabName = this.getAttribute('data-tab');
+                    document.querySelectorAll('.device-tab-content').forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById('device-' + tabName + '-tab').classList.remove('hidden');
+                });
+            });
+            
+            // 模态框点击外部关闭
+            ['property-modal', 'function-modal', 'event-modal', 'device-modal', '下发-modal'].forEach(function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === modal) {
+                            modal.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+            
+            // 下发按钮点击
+            document.querySelectorAll('.下发-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.getElementById('下发-modal').classList.remove('hidden');
+                });
+            });
+            
+            // 网络组件相关功能
+            const addNetworkBtn = document.getElementById('add-network-btn');
+            const networkModal = document.getElementById('network-modal');
+            
+            if (addNetworkBtn) {
+                addNetworkBtn.addEventListener('click', function() {
+                    networkModal.classList.remove('hidden');
+                });
+            }
+            
+            // 协议相关功能
+            const addProtocolBtn = document.getElementById('add-protocol-btn');
+            const protocolModal = document.getElementById('protocol-modal');
+            
+            if (addProtocolBtn) {
+                addProtocolBtn.addEventListener('click', function() {
+                    protocolModal.classList.remove('hidden');
+                });
+            }
+            
+            // 网关相关功能
+            const addGatewayBtn = document.getElementById('add-gateway-btn');
+            const gatewayModal = document.getElementById('gateway-modal');
+            
+            if (addGatewayBtn) {
+                addGatewayBtn.addEventListener('click', function() {
+                    gatewayModal.classList.remove('hidden');
+                });
+            }
+            
+            // 网络组件、协议、网关模态框添加到外部关闭列表
+            ['network-modal', 'protocol-modal', 'gateway-modal', 'alarm-modal'].forEach(function(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.addEventListener('click', function(e) {
+                        if (e.target === modal) {
+                            modal.classList.add('hidden');
+                        }
+                    });
+                }
+            });
+            
+            // 处理告警按钮点击
+            document.querySelectorAll('.handle-alarm-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.getElementById('alarm-modal').classList.remove('hidden');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
