@@ -22,6 +22,14 @@ import codeGeneratorConst from './support/code-generator-const';
 import changeLogConst from './support/change-log-const';
 import jobConst from './support/job-const';
 import dictConst from './support/dict-const';
+import protocol from './business/protocol/protocol-const';
+import productCategory from './business/productcategory/product-category-const';
+import product from './business/product/product-const';
+import device from './business/device/device-const';
+import alarmLog from './business/alarmlog/alarm-log-const';
+import deviceLog from './business/devicelog/device-log-const';
+import networkComponent from './business/networkcomponent/network-component-const';
+import gateway from './business/gateway/gateway-const';
 
 export default {
   FLAG_NUMBER_ENUM,
@@ -41,4 +49,12 @@ export default {
   ...changeLogConst,
   ...jobConst,
   ...dictConst,
+  ...protocol,
+  ...productCategory,
+  ...product,
+  ...device,
+  ...alarmLog,
+  ...deviceLog,
+  ...networkComponent,
+  ...gateway,
 };

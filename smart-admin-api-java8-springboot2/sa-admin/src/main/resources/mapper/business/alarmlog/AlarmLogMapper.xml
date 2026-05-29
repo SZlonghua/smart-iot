@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.alarmlog.dao.AlarmLogDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        alarm_log.id,
+        alarm_log.device_key,
+        alarm_log.level,
+        alarm_log.description,
+        alarm_log.status,
+        alarm_log.trigger_time,
+        alarm_log.handle_time,
+        alarm_log.handler,
+        alarm_log.handle_note,
+        alarm_log.create_time,
+        alarm_log.update_time
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.alarmlog.domain.vo.AlarmLogVO">
+        SELECT <include refid="base_columns"/>
+        FROM alarm_log
+        <where>
+            <if test="queryForm.deviceKey != null and queryForm.deviceKey != ''">
+                AND INSTR(alarm_log.device_key, #{queryForm.deviceKey})
+            </if>
+            <if test="queryForm.level != null">
+                AND alarm_log.level = #{queryForm.level}
+            </if>
+            <if test="queryForm.status != null">
+                AND alarm_log.status = #{queryForm.status}
+            </if>
+            <if test="queryForm.triggerTimeBegin != null">
+                AND alarm_log.trigger_time &gt;= #{queryForm.triggerTimeBegin}
+            </if>
+            <if test="queryForm.triggerTimeEnd != null">
+                AND alarm_log.trigger_time &lt;= #{queryForm.triggerTimeEnd}
+            </if>
+        </where>
+        <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">
+            ORDER BY alarm_log.id DESC
+        </if>
+    </select>
+
+</mapper>

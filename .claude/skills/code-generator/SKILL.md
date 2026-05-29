@@ -198,6 +198,8 @@ public class ${Name}Entity {
 - 不需要生成 `deletedFlag` 字段（框架自动处理）
 - **不写 @Schema 等 Swagger 注解**（Entity 不暴露给 API）
 - **不要写 getter/setter**（@Data 已处理）
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} 实体类 */` + `@Author ${author}` + `@Date ${date}` + `@Copyright ${copyright}`
+- **【强制】每个字段必须有字段注释**：`/** ${columnComment} */`
 
 ### 4.2 AddForm.java
 
@@ -241,22 +243,15 @@ public class ${Name}AddForm {
 - 枚举字段加 `@CheckEnum` + `@SchemaEnum`
 - 所有字段加 `@Schema(description = "...")`
 - **只包含前端表单需要填写的字段**
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} 新建表单 */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.3 UpdateForm.java
 
 **模板参照**: `code-generator-template/java/domain/form/UpdateForm.java.vm`
 
-与 AddForm 相同，但**必须包含主键字段**且标记为 `@NotNull`。
-
-```java
-@Data
-public class ${Name}UpdateForm {
-    @NotNull(message = "${primaryKeyLabel} 不能为空")
-    @Schema(description = "${primaryKeyLabel}")
-    private ${primaryKeyType} ${primaryKeyField};
-    // ... 其余字段同 AddForm
-}
-```
+**约束**:
+- UpdateForm 与 AddForm 字段相同，但**必须包含主键字段**且标记为 `@NotNull`
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} 更新表单 */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.4 QueryForm.java
 
@@ -295,6 +290,7 @@ public class ${Name}QueryForm extends PageParam {
 - **必须有 `@EqualsAndHashCode(callSuper = false)`**
 - DateRange 字段拆分为 `Begin` + `End` 两个字段
 - 不包含 `pageNum`/`pageSize`/`sortItemList`（PageParam 已定义）
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} 查询表单 */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.5 VO.java
 
@@ -318,6 +314,7 @@ public class ${Name}VO {
 - 包含所有需要在列表/详情中展示的字段
 - 每个字段加 `@Schema`
 - **不需要 @CheckEnum**（VO 是只读的）
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} VO */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.6 Controller.java
 
@@ -391,6 +388,7 @@ public class ${Name}Controller {
 - 权限格式: `{moduleName}:{action}` (如 `goods:query`)
 - add/update 返回 `ResponseDTO<String>`
 - queryPage 返回 `ResponseDTO<PageResult<${Name}VO>>`
+- **【强制】Controller 类上必须有 Javadoc 注释**：`/** ${description} Controller */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.7 Service.java
 
@@ -469,6 +467,8 @@ public class ${Name}Service {
 - 软删除: 调用 `updateDeleted` / `batchUpdateDeleted`
 - 硬删除: 调用 `deleteById` / `deleteBatchIds`（MyBatis-Plus 内置方法）
 - 空集合检查: `CollectionUtils.isEmpty(idList)`
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} Service */` + `@Author ${author}` + `@Date ${date}`
+- **【强制】每个 public 方法必须有方法级 Javadoc**：`/** 分页查询 */`、`/** 添加 */`、`/** 更新 */`、`/** 批量删除 */`、`/** 单个删除 */`
 
 ### 4.8 Manager.java
 
@@ -489,6 +489,7 @@ public class ${Name}Manager extends ServiceImpl<${Name}Dao, ${Name}Entity> {
 - **必须继承 `ServiceImpl<Dao, Entity>`**（MyBatis-Plus 提供 CRUD 实现）
 - 使用 `@Service`（不用 `@Component`）
 - 空类体即可，复杂业务逻辑可在此扩展
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} Manager */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.9 Dao.java
 
@@ -521,6 +522,8 @@ public interface ${Name}Dao extends BaseMapper<${Name}Entity> {
 - `queryPage` 方法: 第一个参数是 `Page`（MyBatis-Plus 分页），第二个用 `@Param("queryForm")`
 - 软删除方法: `updateDeleted`（单个）+ `batchUpdateDeleted`（批量）
 - 硬删除直接用 `BaseMapper.deleteById` / `deleteBatchIds`，不需要声明
+- **【强制】接口上必须有 Javadoc 注释**：`/** ${description} DAO */` + `@Author ${author}` + `@Date ${date}`
+- **【强制】queryPage 方法必须有方法级 Javadoc**：`/** 分页查询 */` + `@param page` + `@param queryForm` + `@return`
 
 ### 4.10 Mapper.xml
 
@@ -579,11 +582,13 @@ public interface ${Name}Dao extends BaseMapper<${Name}Entity> {
 
 **约束**:
 - namespace 用 DAO 的**全限定类名**
-- `<sql id="base_columns">` 列出所有列，带表别名前缀
-- **模糊搜索用 `INSTR()`**（不是 `LIKE`）
+- **【强制】必须定义 `<sql id="base_columns">`，列出表中所有列，每列带表名别名前缀（如 `${tableName}.id, ${tableName}.name, ...`）**
+- **【强制】queryPage 查询必须使用 `SELECT <include refid="base_columns"/>`，不得使用 `SELECT *` 或内联列名**
+- **模糊搜索用 `INSTR()`**（不是 `LIKE`），且条件中的列名必须带表名别名前缀
 - DateRange 用 `Begin >=` + `End <=`
 - 条件判断: String 用 `!= null and != ''`, 数字用 `!= null`
 - 软删除 SQL: `UPDATE ... SET deleted_flag = ...`
+- **【强制】Mapper.xml 中必须包含注释**：`<!-- 查询结果列 -->`（在 base_columns 上方）、`<!-- 分页查询 -->`（在 queryPage 上方）
 
 ### 4.11 Menu.sql
 
@@ -672,6 +677,7 @@ export const ${name}Api = {
 - 查询/新增/修改/批量删除 → `postRequest`
 - 单个删除 → `getRequest`
 - URL 前缀与后端 Controller 一致（`/{name}/...`）
+- **【强制】每个 API 方法上必须有 JSDoc 注释**：`/** 分页查询 */`、`/** 添加 */`、`/** 修改 */`、`/** 删除 */`、`/** 批量删除 */`
 
 ### 5.2 常量文件 (`{name}-const.js`)
 
@@ -692,6 +698,9 @@ export default {
 - 文件路径: `src/constants/{domain}/{module}/{name}-const.js`
 - 每个枚举对象有 `{ value, desc }` 结构
 - default export 聚合所有枚举（供 `smart-enums-plugin` 注册）
+- **【强制】生成常量文件后，必须在 `src/constants/index.js` 中完成两步注册**：
+  1. 顶部添加 `import ${module} from './{domain}/{module}/{name}-const';`
+  2. default export 中添加 `...${module},`
 
 ### 5.3 列表页面 (`{name}-list.vue`)
 
@@ -784,6 +793,9 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
 - 错误处理: `smartSentry.captureError(e)`
 - `onMounted(queryData)` 初始加载
 - DateRange 需要 onChange 回调拆分 Begin/End
+- **【强制】必须包含 HTML 结构注释**：`<!-- 查询表单 begin -->`/`<!-- 查询表单 end -->`、`<!-- 表格 begin -->`/`<!-- 表格 end -->`
+- **【强制】script 中必须包含分组注释**：`// 表格列`、`// 查询数据表单和方法`、`// 添加/修改`、`// 单个删除`、`// 批量删除`
+- **【强制】每个变量声明必须有行内注释**：`// 表格加载loading`、`// 表格数据`、`// 总数` 等
 
 ### 5.4 表单页面 (`{name}-form-modal.vue`)
 
@@ -868,10 +880,12 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
 - [ ] QueryForm: 继承 `PageParam`, `@EqualsAndHashCode(callSuper = false)`
 - [ ] Manager: 继承 `ServiceImpl<Dao, Entity>`
 - [ ] DAO: 继承 `BaseMapper<Entity>`, `@Mapper`
-- [ ] Mapper.xml: 模糊搜索用 `INSTR()`, namespace 用全限定类名
+- [ ] 所有 Java 文件: 类上必须有 `/** ... */` Javadoc 注释（@Author, @Date）
+- [ ] Mapper.xml: 模糊搜索用 `INSTR()`, namespace 用全限定类名，必须有 `<!-- 查询结果列 -->` 和 `<!-- 分页查询 -->` 注释
 - [ ] Service: 分页用 `SmartPageUtil`, 转换用 `SmartBeanUtil.copy`
 - [ ] Vue: `<script setup>`, `v-model:value`, 绝对路径 `/@/`
 - [ ] API: 导出命名对象 `export const xxxApi = { ... }`
+- [ ] 前端常量: 生成后必须在 `src/constants/index.js` 中 import 并 spread
 - [ ] 软删除表: 所有 Mapper 查询加上 `deleted_flag` 过滤条件（生成后提醒用户）
 
 ---

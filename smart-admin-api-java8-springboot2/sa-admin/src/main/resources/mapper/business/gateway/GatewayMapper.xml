@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.gateway.dao.GatewayDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        g.id,
+        g.name,
+        g.type,
+        g.component_id,
+        g.protocol_id,
+        g.transport,
+        g.description,
+        g.create_time,
+        g.update_time
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.gateway.domain.vo.GatewayVO">
+        SELECT
+            <include refid="base_columns"/>,
+            nc.name AS componentName,
+            p.name AS protocolName
+        FROM gateway g
+        LEFT JOIN network_component nc ON g.component_id = nc.id
+        LEFT JOIN protocol p ON g.protocol_id = p.id
+        <where>
+            <if test="queryForm.name != null and queryForm.name != ''">
+                AND INSTR(g.name, #{queryForm.name})
+            </if>
+            <if test="queryForm.type != null and queryForm.type != ''">
+                AND g.type = #{queryForm.type}
+            </if>
+            <if test="queryForm.transport != null and queryForm.transport != ''">
+                AND g.transport = #{queryForm.transport}
+            </if>
+        </where>
+        <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">
+            ORDER BY g.id DESC
+        </if>
+    </select>
+
+</mapper>

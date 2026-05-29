@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.device.dao.DeviceDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        device.id,
+        device.name,
+        device.device_key,
+        device.device_secret,
+        device.parent_device_id,
+        device.product_id,
+        device.status,
+        device.last_online_time,
+        device.create_time,
+        device.update_time
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.device.domain.vo.DeviceVO">
+        SELECT <include refid="base_columns"/>
+        FROM device
+        <where>
+            <if test="queryForm.name != null and queryForm.name != ''">
+                AND INSTR(device.name, #{queryForm.name})
+            </if>
+            <if test="queryForm.deviceKey != null and queryForm.deviceKey != ''">
+                AND INSTR(device.device_key, #{queryForm.deviceKey})
+            </if>
+            <if test="queryForm.productId != null">
+                AND device.product_id = #{queryForm.productId}
+            </if>
+            <if test="queryForm.status != null">
+                AND device.status = #{queryForm.status}
+            </if>
+        </where>
+        <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">
+            ORDER BY device.id DESC
+        </if>
+    </select>
+
+</mapper>
