@@ -93,6 +93,7 @@
       />
     </div>
     <NetworkComponentOperate ref="operateRef" @refresh="ajaxQuery" />
+    <NetworkComponentDetail ref="detailRef" />
   </a-card>
 </template>
 
@@ -103,6 +104,7 @@
   import { networkComponentApi } from '/@/api/business/networkcomponent/network-component-api';
   import { PAGE_SIZE, PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import NetworkComponentOperate from './components/network-component-form-modal.vue';
+  import NetworkComponentDetail from './components/NetworkComponentDetail.vue';
   import { smartSentry } from '/@/lib/smart-sentry';
   import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
 
@@ -233,8 +235,9 @@
     operateRef.value.showModal(record);
   }
 
+  const detailRef = ref();
   function viewDetail(record) {
-    operateRef.value.showModal({ ...record, _readonly: true });
+    detailRef.value.show(record);
   }
 
   onMounted(ajaxQuery);

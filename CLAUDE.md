@@ -150,6 +150,7 @@ Centralized enum constants in `src/constants/`. Each enum object has `{ value, d
 - `defineProps` / `defineEmits` with `v-model:value` + `update:value` event pattern
 - `onMounted` for data fetching in components
 - Error handling: wrap with `smartSentry.captureError()`
+- **Vue SFC 缩进规则**：`<script setup>` 和 `<style>` 内的内容必须缩进 2 空格（对齐项目 Prettier 配置），`<template>` 内的内容也缩进 2 空格
 
 ### Scripts
 ```bash
