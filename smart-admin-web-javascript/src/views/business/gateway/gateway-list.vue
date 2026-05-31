@@ -10,15 +10,15 @@
   <a-form class="smart-query-form" v-privilege="'gateway:query'">
     <a-row class="smart-query-form-row">
       <a-form-item label="网关名称" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.name" placeholder="网关名称" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.name" placeholder="网关名称" />
       </a-form-item>
 
       <a-form-item label="网关类型" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.type" placeholder="网关类型" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.type" placeholder="网关类型" />
       </a-form-item>
 
       <a-form-item label="传输方式" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.transport" placeholder="传输方式" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.transport" placeholder="传输方式" />
       </a-form-item>
 
       <a-form-item class="smart-query-form-item smart-margin-left10">
@@ -42,7 +42,7 @@
       <div class="smart-table-operate-block">
         <a-button @click="add()" v-privilege="'gateway:add'" type="primary">
           <template #icon><PlusOutlined /></template>
-          新建
+          新建网关
         </a-button>
       </div>
     </a-row>

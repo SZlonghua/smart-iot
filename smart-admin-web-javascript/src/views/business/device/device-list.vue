@@ -3,13 +3,13 @@
   <a-form class="smart-query-form">
     <a-row class="smart-query-form-row">
       <a-form-item label="设备名称" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.name" placeholder="设备名称" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.name" placeholder="设备名称" />
       </a-form-item>
       <a-form-item label="Device Key" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.deviceKey" placeholder="Device Key" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.deviceKey" placeholder="Device Key" />
       </a-form-item>
       <a-form-item label="状态" class="smart-query-form-item">
-        <SmartEnumSelect v-model:value="queryForm.status" enum-name="DEVICE_STATUS_ENUM" width="160px" placeholder="状态" />
+        <SmartEnumSelect @pressEnter="onSearch" v-model:value="queryForm.status" enum-name="DEVICE_STATUS_ENUM" width="160px" placeholder="状态" />
       </a-form-item>
       <a-form-item class="smart-query-form-item">
         <a-button type="primary" @click="onSearch">
@@ -26,15 +26,15 @@
   <a-card size="small" :bordered="false" :hoverable="true">
     <a-row class="smart-table-btn-block">
       <div class="smart-table-operate-block">
-        <a-button @click="showForm" type="primary" size="small">
-          <template #icon><PlusOutlined /></template>新建
+        <a-button @click="showForm" type="primary">
+          <template #icon><PlusOutlined /></template>新建设备
         </a-button>
-        <a-button @click="confirmBatchDelete" type="primary" danger size="small" :disabled="selectedRowKeyList.length == 0">
+        <a-button @click="confirmBatchDelete" type="primary" danger :disabled="selectedRowKeyList.length == 0">
           <template #icon><DeleteOutlined /></template>批量删除
         </a-button>
       </div>
       <div class="smart-table-setting-block">
-        <TableOperator v-model="columns" :tableId="null" :refresh="queryData" />
+        <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.IOT.DEVICE" :refresh="queryData" />
       </div>
     </a-row>
 
@@ -91,7 +91,8 @@
   import { deviceApi } from '/@/api/business/device/device-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { smartSentry } from '/@/lib/smart-sentry';
-  import TableOperator from '/@/components/support/table-operator/index.vue';
+  import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
+import TableOperator from '/@/components/support/table-operator/index.vue';
   import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
   import DeviceForm from './device-form-modal.vue';
   import _ from 'lodash';
@@ -115,9 +116,8 @@
     status: undefined,
     pageNum: 1,
     pageSize: 10,
-    sortItemList: [],
   };
-  const queryForm = reactive(_.cloneDeep(queryFormState));
+  const queryForm = reactive({ ...queryFormState });
   // 表格加载loading
   const tableLoading = ref(false);
   // 表格数据
@@ -128,7 +128,7 @@
   // 重置查询条件
   function resetQuery() {
     let pageSize = queryForm.pageSize;
-    Object.assign(queryForm, _.cloneDeep(queryFormState));
+    Object.assign(queryForm, queryFormState);
     queryForm.pageSize = pageSize;
     queryData();
   }
@@ -143,7 +143,7 @@
   async function queryData() {
     tableLoading.value = true;
     try {
-      let queryResult = await deviceApi.queryPage(queryForm);
+      let queryResult = await deviceApi.queryPage({ ...queryForm });
       tableData.value = queryResult.data.list;
       total.value = queryResult.data.total;
     } catch (e) {

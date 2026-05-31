@@ -345,6 +345,12 @@ Velocity-based code generator that produces both frontend and backend code from 
 - Manager often extends `ServiceImpl<Dao, Entity>` to inherit MyBatis-Plus CRUD
 - Controller methods: `@PostMapping` for mutations, `@GetMapping` for queries
 - Mapper XML: dynamic SQL with `<where>`, `<if>`, `<foreach>`; INSTR() for keyword search
+- **新增 Entity 字段时，必须同步更新以下所有位置**：
+  1. `*Entity.java` — 新增字段
+  2. `*VO.java` / `*AddForm.java` / `*UpdateForm.java` — 对应的 DTO 也需要新增
+  3. **`*Mapper.xml` 的 `base_columns` SQL 片段** — 添加对应数据库列名（极易遗漏！）
+  4. 数据库表 — ALTER TABLE 添加列
+  5. 前端表单和列表 — 对应的字段绑定
 - All entity tables use `t_` prefix: `t_employee`, `t_menu`, etc.
 
 ---

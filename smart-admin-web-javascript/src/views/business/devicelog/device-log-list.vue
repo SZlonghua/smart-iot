@@ -3,10 +3,10 @@
   <a-form class="smart-query-form">
     <a-row class="smart-query-form-row">
       <a-form-item label="设备名称" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.deviceName" placeholder="设备名称" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.deviceName" placeholder="设备名称" />
       </a-form-item>
       <a-form-item label="日志类型" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.type" placeholder="日志类型" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.type" placeholder="日志类型" />
       </a-form-item>
       <a-form-item label="创建时间" class="smart-query-form-item">
         <a-range-picker
@@ -93,9 +93,8 @@
     createTimeEnd: undefined,
     pageNum: 1,
     pageSize: 10,
-    sortItemList: [],
   };
-  const queryForm = reactive(_.cloneDeep(queryFormState));
+  const queryForm = reactive({ ...queryFormState });
   const createTimeRange = ref(null);
   // 表格加载loading
   const tableLoading = ref(false);
@@ -117,7 +116,7 @@
   // 重置查询条件
   function resetQuery() {
     let pageSize = queryForm.pageSize;
-    Object.assign(queryForm, _.cloneDeep(queryFormState));
+    Object.assign(queryForm, queryFormState);
     queryForm.pageSize = pageSize;
     createTimeRange.value = null;
     queryData();
@@ -133,7 +132,7 @@
   async function queryData() {
     tableLoading.value = true;
     try {
-      let queryResult = await deviceLogApi.queryPage(queryForm);
+      let queryResult = await deviceLogApi.queryPage({ ...queryForm });
       tableData.value = queryResult.data.list;
       total.value = queryResult.data.total;
     } catch (e) {

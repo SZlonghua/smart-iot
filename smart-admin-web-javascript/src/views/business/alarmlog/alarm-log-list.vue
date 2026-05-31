@@ -3,13 +3,13 @@
   <a-form class="smart-query-form">
     <a-row class="smart-query-form-row">
       <a-form-item label="设备Key" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.deviceKey" placeholder="设备Key" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.deviceKey" placeholder="设备Key" />
       </a-form-item>
       <a-form-item label="告警级别" class="smart-query-form-item">
-        <SmartEnumSelect v-model:value="queryForm.level" enum-name="ALARM_LEVEL_ENUM" width="160px" placeholder="告警级别" />
+        <SmartEnumSelect @pressEnter="onSearch" v-model:value="queryForm.level" enum-name="ALARM_LEVEL_ENUM" width="160px" placeholder="告警级别" />
       </a-form-item>
       <a-form-item label="处理状态" class="smart-query-form-item">
-        <SmartEnumSelect v-model:value="queryForm.status" enum-name="ALARM_STATUS_ENUM" width="160px" placeholder="处理状态" />
+        <SmartEnumSelect @pressEnter="onSearch" v-model:value="queryForm.status" enum-name="ALARM_STATUS_ENUM" width="160px" placeholder="处理状态" />
       </a-form-item>
       <a-form-item label="触发时间" class="smart-query-form-item">
         <a-range-picker
@@ -112,9 +112,8 @@
     triggerTimeEnd: undefined,
     pageNum: 1,
     pageSize: 10,
-    sortItemList: [],
   };
-  const queryForm = reactive(_.cloneDeep(queryFormState));
+  const queryForm = reactive({ ...queryFormState });
   const triggerTimeRange = ref(null);
   // 表格加载loading
   const tableLoading = ref(false);
@@ -146,7 +145,7 @@
   // 重置查询条件
   function resetQuery() {
     let pageSize = queryForm.pageSize;
-    Object.assign(queryForm, _.cloneDeep(queryFormState));
+    Object.assign(queryForm, queryFormState);
     queryForm.pageSize = pageSize;
     triggerTimeRange.value = null;
     queryData();
@@ -162,7 +161,7 @@
   async function queryData() {
     tableLoading.value = true;
     try {
-      let queryResult = await alarmLogApi.queryPage(queryForm);
+      let queryResult = await alarmLogApi.queryPage({ ...queryForm });
       tableData.value = queryResult.data.list;
       total.value = queryResult.data.total;
     } catch (e) {

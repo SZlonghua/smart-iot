@@ -3,16 +3,10 @@
   <a-form class="smart-query-form">
     <a-row class="smart-query-form-row">
       <a-form-item label="协议名称" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.name" placeholder="协议名称" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.name" placeholder="协议名称" />
       </a-form-item>
       <a-form-item label="版本号" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.version" placeholder="版本号" />
-      </a-form-item>
-      <a-form-item label="JAR包路径" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.jarPath" placeholder="JAR包路径" />
-      </a-form-item>
-      <a-form-item label="协议描述" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.description" placeholder="协议描述" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.version" placeholder="版本号" />
       </a-form-item>
       <a-form-item class="smart-query-form-item">
         <a-button type="primary" @click="onSearch">
@@ -29,15 +23,15 @@
   <a-card size="small" :bordered="false" :hoverable="true">
     <a-row class="smart-table-btn-block">
       <div class="smart-table-operate-block">
-        <a-button @click="showForm" type="primary" size="small">
-          <template #icon><PlusOutlined /></template>新建
+        <a-button @click="showForm" type="primary">
+          <template #icon><PlusOutlined /></template>新建协议
         </a-button>
-        <a-button @click="confirmBatchDelete" type="primary" danger size="small" :disabled="selectedRowKeyList.length == 0">
+        <a-button @click="confirmBatchDelete" type="primary" danger :disabled="selectedRowKeyList.length == 0">
           <template #icon><DeleteOutlined /></template>批量删除
         </a-button>
       </div>
       <div class="smart-table-setting-block">
-        <TableOperator v-model="columns" :tableId="null" :refresh="queryData" />
+        <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.NETWORK.PROTOCOL" :refresh="queryData" />
       </div>
     </a-row>
 
@@ -53,7 +47,7 @@
       :pagination="false"
       :row-selection="{ selectedRowKeys: selectedRowKeyList, onChange: onSelectChange }"
     >
-      <template #bodyCell="{ text, record, column }">
+      <template #bodyCell="{ record, column }">
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
             <a-button @click="showForm(record)" type="link">编辑</a-button>
@@ -91,7 +85,8 @@
   import { protocolApi } from '/@/api/business/protocol/protocol-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { smartSentry } from '/@/lib/smart-sentry';
-  import TableOperator from '/@/components/support/table-operator/index.vue';
+  import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
+import TableOperator from '/@/components/support/table-operator/index.vue';
   import ProtocolForm from './protocol-form-modal.vue';
   import _ from 'lodash';
 
@@ -110,13 +105,10 @@
   const queryFormState = {
     name: '',
     version: '',
-    jarPath: '',
-    description: '',
     pageNum: 1,
     pageSize: 10,
-    sortItemList: [],
   };
-  const queryForm = reactive(_.cloneDeep(queryFormState));
+  const queryForm = reactive({ ...queryFormState });
   // 表格加载loading
   const tableLoading = ref(false);
   // 表格数据
@@ -127,7 +119,7 @@
   // 重置查询条件
   function resetQuery() {
     let pageSize = queryForm.pageSize;
-    Object.assign(queryForm, _.cloneDeep(queryFormState));
+    Object.assign(queryForm, queryFormState);
     queryForm.pageSize = pageSize;
     queryData();
   }
@@ -142,7 +134,7 @@
   async function queryData() {
     tableLoading.value = true;
     try {
-      let queryResult = await protocolApi.queryPage(queryForm);
+      let queryResult = await protocolApi.queryPage({ ...queryForm });
       tableData.value = queryResult.data.list;
       total.value = queryResult.data.total;
     } catch (e) {

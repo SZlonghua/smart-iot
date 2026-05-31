@@ -8,6 +8,7 @@
         protocol.name,
         protocol.version,
         protocol.jar_path,
+        protocol.jar_name,
         protocol.description,
         protocol.create_time,
         protocol.update_time

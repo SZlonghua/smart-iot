@@ -10,7 +10,7 @@
   <a-form class="smart-query-form" v-privilege="'networkComponent:query'">
     <a-row class="smart-query-form-row">
       <a-form-item label="组件名称" class="smart-query-form-item">
-        <a-input style="width: 200px" v-model:value="queryForm.name" placeholder="组件名称" />
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.name" placeholder="组件名称" />
       </a-form-item>
 
       <a-form-item label="组件类型" class="smart-query-form-item">
@@ -44,7 +44,7 @@
       <div class="smart-table-operate-block">
         <a-button @click="add()" v-privilege="'networkComponent:add'" type="primary">
           <template #icon><PlusOutlined /></template>
-          新建
+          新建组件
         </a-button>
       </div>
     </a-row>
@@ -69,6 +69,7 @@
         </template>
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
+            <a-button @click="viewDetail(record)" size="small" type="link">查看</a-button>
             <a-button @click="update(record.id)" size="small" v-privilege="'networkComponent:update'" type="link">编辑</a-button>
             <a-button @click="confirmDelete(record.id)" size="small" danger v-privilege="'networkComponent:delete'" type="link">删除</a-button>
           </div>
@@ -112,7 +113,7 @@
     {
       title: '组件名称',
       dataIndex: 'name',
-      minWidth: 150,
+      minWidth: 100,
       ellipsis: true,
     },
     {
@@ -124,12 +125,6 @@
       title: '状态',
       dataIndex: 'status',
       width: 80,
-    },
-    {
-      title: '配置(JSON)',
-      dataIndex: 'configuration',
-      minWidth: 200,
-      ellipsis: true,
     },
     {
       title: '描述',
@@ -145,7 +140,7 @@
     {
       title: '操作',
       dataIndex: 'action',
-      width: 120,
+      width: 150,
     },
   ]);
 
@@ -234,7 +229,12 @@
   }
 
   function update(id) {
-    operateRef.value.showModal(id);
+    const record = tableData.value.find((item) => item.id === id);
+    operateRef.value.showModal(record);
+  }
+
+  function viewDetail(record) {
+    operateRef.value.showModal({ ...record, _readonly: true });
   }
 
   onMounted(ajaxQuery);

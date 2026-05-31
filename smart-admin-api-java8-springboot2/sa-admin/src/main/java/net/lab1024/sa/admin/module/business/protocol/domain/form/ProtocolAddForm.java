@@ -26,6 +26,9 @@ public class ProtocolAddForm {
     @Schema(description = "JAR包路径")
     private String jarPath;
 
+    @Schema(description = "JAR包原始文件名")
+    private String jarName;
+
     @Schema(description = "协议描述")
     private String description;
 }

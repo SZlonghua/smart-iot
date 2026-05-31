@@ -17,6 +17,10 @@ let businessOAInitTableId = 30000;
 
 let businessERPInitTableId = 40000;
 
+let businessNetworkInitTableId = 50000;
+
+let businessIOTInitTableId = 60000;
+
 export const TABLE_ID_CONST = {
   /**
    * 业务
@@ -31,6 +35,18 @@ export const TABLE_ID_CONST = {
     },
     ERP: {
       GOODS: businessERPInitTableId + 1, //商品管理
+    },
+    NETWORK: {
+      PROTOCOL: businessNetworkInitTableId + 1, //协议管理
+      GATEWAY: businessNetworkInitTableId + 2, //网关管理
+      NETWORK_COMPONENT: businessNetworkInitTableId + 3, //网络组件
+    },
+    IOT: {
+      DEVICE: businessIOTInitTableId + 1, //设备管理
+      PRODUCT: businessIOTInitTableId + 2, //产品管理
+      PRODUCT_CATEGORY: businessIOTInitTableId + 3, //产品分类
+      DEVICE_LOG: businessIOTInitTableId + 4, //设备日志
+      ALARM_LOG: businessIOTInitTableId + 5, //告警日志
     },
   },
 

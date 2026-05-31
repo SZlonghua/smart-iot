@@ -25,6 +25,10 @@ export const FILE_FOLDER_TYPE_ENUM = {
     value: 4,
     desc: '意见反馈',
   },
+  PROTOCOL: {
+    value: 5,
+    desc: '协议JAR包',
+  },
 };
 export default {
   FILE_FOLDER_TYPE_ENUM,

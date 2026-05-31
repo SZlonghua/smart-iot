@@ -7,8 +7,18 @@
       <a-form-item label="版本号" name="version">
         <a-input v-model:value="form.version" placeholder="请输入版本号" />
       </a-form-item>
-      <a-form-item label="JAR包路径" name="jarPath">
-        <a-input v-model:value="form.jarPath" placeholder="请输入JAR包路径" />
+      <a-form-item label="JAR包" name="jarPath">
+        <a-upload
+          v-model:file-list="jarFileList"
+          :max-count="1"
+          accept=".jar"
+          :customRequest="customUpload"
+        >
+          <a-button>
+            <upload-outlined />
+            上传JAR包
+          </a-button>
+        </a-upload>
       </a-form-item>
       <a-form-item label="协议描述" name="description">
         <a-input v-model:value="form.description" placeholder="请输入协议描述" />
@@ -34,24 +44,25 @@
 </template>
 
 <script setup>
-  import { ref, nextTick, reactive } from 'vue';
+  import { ref, nextTick, reactive, watch } from 'vue';
   import { message } from 'ant-design-vue';
+  import { UploadOutlined } from '@ant-design/icons-vue';
   import { SmartLoading } from '/@/components/framework/smart-loading';
   import { protocolApi } from '/@/api/business/protocol/protocol-api';
+  import { fileApi } from '/@/api/support/file-api';
+  import { FILE_FOLDER_TYPE_ENUM } from '/@/constants/support/file-const';
   import { smartSentry } from '/@/lib/smart-sentry';
   import _ from 'lodash';
 
-  // 事件
   const emit = defineEmits(['reloadList']);
-  // 组件ref
   const formRef = ref();
 
-  // 表单
   const formDefault = {
     id: undefined,
     name: '',
     version: '',
     jarPath: '',
+    jarName: '',
     description: '',
   };
   let form = reactive({ ...formDefault });
@@ -59,16 +70,39 @@
   const rules = {
     name: [{ required: true, message: '协议名称不能为空' }],
     version: [{ required: true, message: '版本号不能为空' }],
+    jarPath: [{ required: true, message: '请上传JAR包' }],
   };
 
-  // 是否显示
   const visible = ref(false);
+  const jarFileList = ref([]);
+
+  function buildJarFileList() {
+    if (form.jarPath) {
+      jarFileList.value = [
+        {
+          uid: '-1',
+          name: form.jarName || form.jarPath.split('/').pop() || form.jarPath,
+          status: 'done',
+          url: form.jarPath,
+        },
+      ];
+    } else {
+      jarFileList.value = [];
+    }
+  }
+
+  watch(jarFileList, (val) => {
+    if (val.length === 0) {
+      form.jarPath = '';
+    }
+  });
 
   function showDrawer(rowData) {
     Object.assign(form, formDefault);
     if (rowData && !_.isEmpty(rowData)) {
       Object.assign(form, rowData);
     }
+    buildJarFileList();
     visible.value = true;
     nextTick(() => {
       formRef.value.clearValidate();
@@ -77,17 +111,34 @@
 
   function onClose() {
     Object.assign(form, formDefault);
+    jarFileList.value = [];
     visible.value = false;
   }
+
+  const customUpload = async (options) => {
+    SmartLoading.show();
+    try {
+      const formData = new FormData();
+      formData.append('file', options.file);
+      let res = await fileApi.uploadFile(formData, FILE_FOLDER_TYPE_ENUM.PROTOCOL.value);
+      form.jarPath = res.data.fileUrl;
+      form.jarName = options.file.name;
+      options.onSuccess(res, options.file);
+    } catch (e) {
+      smartSentry.captureError(e);
+      jarFileList.value = [];
+      options.onError(e);
+    } finally {
+      SmartLoading.hide();
+    }
+  };
 
   function onSubmit() {
     formRef.value
       .validate()
       .then(async () => {
-        // 点击确定，验证表单
         SmartLoading.show();
         try {
-          // 新建、修改API
           if (form.id) {
             await protocolApi.update(form);
           } else {

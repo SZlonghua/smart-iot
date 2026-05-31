@@ -1,30 +1,55 @@
 /*
  * 网络组件
  *
- * @Author:    1024创新实验室
- * @Date:      2026-05-26
+ * @Author:    廖涛
+ * @Date:      2026-05-31
  * @Copyright  1024创新实验室 （ https://1024lab.net ），Since 2012
  */
 
+// 组件类型
 export const COMPONENT_TYPE_ENUM = {
-  MQTT_BROKER: {
-    value: 'mqtt_broker',
-    desc: 'MQTT Broker',
+  TCP: { value: 'tcp', desc: 'TCP服务' },
+  HTTP: { value: 'http', desc: 'HTTP服务' },
+  MQTT_SERVER: { value: 'mqtt-server', desc: 'MQTT服务' },
+  MQTT_CLIENT: { value: 'mqtt-client', desc: 'MQTT客户端' },
+};
+
+// 各组件类型的默认配置模板
+export const COMPONENT_DEFAULT_CONFIG = {
+  'tcp': {
+    localAddress: '0.0.0.0',
+    localPort: null,
+    publicAddress: '',
+    publicPort: null,
+    tlsEnabled: false,
   },
-  HTTP_SERVER: {
-    value: 'http_server',
-    desc: 'HTTP Server',
+  'http': {
+    localAddress: '0.0.0.0',
+    localPort: null,
+    publicAddress: '',
+    publicPort: null,
+    tlsEnabled: false,
   },
-  COAP_SERVER: {
-    value: 'coap_server',
-    desc: 'CoAP Server',
+  'mqtt-server': {
+    localAddress: '0.0.0.0',
+    localPort: null,
+    publicAddress: '',
+    publicPort: null,
+    maxMessageSize: 8192,
+    tlsEnabled: false,
   },
-  TCP_SERVER: {
-    value: 'tcp_server',
-    desc: 'TCP Server',
+  'mqtt-client': {
+    remoteAddress: '',
+    remotePort: null,
+    clientId: '',
+    username: '',
+    password: '',
+    maxMessageSize: 8192,
+    tlsEnabled: false,
   },
 };
 
 export default {
   COMPONENT_TYPE_ENUM,
+  COMPONENT_DEFAULT_CONFIG,
 };

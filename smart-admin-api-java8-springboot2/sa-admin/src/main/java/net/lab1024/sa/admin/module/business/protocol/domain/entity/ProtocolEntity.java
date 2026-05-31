@@ -33,6 +33,9 @@ public class ProtocolEntity {
     /** JAR包路径 */
     private String jarPath;
 
+    /** JAR包原始文件名 */
+    private String jarName;
+
     /** 描述 */
     private String description;
 

@@ -15,13 +15,13 @@ import net.lab1024.sa.base.common.enumeration.BaseEnum;
 @Getter
 public enum ComponentTypeEnum implements BaseEnum {
 
-    MQTT_BROKER("mqtt_broker", "MQTT Broker"),
+    TCP("tcp", "TCP服务"),
 
-    HTTP_SERVER("http_server", "HTTP Server"),
+    HTTP("http", "HTTP服务"),
 
-    COAP_SERVER("coap_server", "CoAP Server"),
+    MQTT_SERVER("mqtt-server", "MQTT服务"),
 
-    TCP_SERVER("tcp_server", "TCP Server"),
+    MQTT_CLIENT("mqtt-client", "MQTT客户端"),
 
     ;
 
