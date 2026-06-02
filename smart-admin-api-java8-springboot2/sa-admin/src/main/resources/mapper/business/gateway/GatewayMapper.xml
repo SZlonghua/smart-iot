@@ -9,6 +9,7 @@
         g.type,
         g.component_id,
         g.protocol_id,
+        g.status,
         g.transport,
         g.description,
         g.create_time,
@@ -30,9 +31,6 @@
             </if>
             <if test="queryForm.type != null and queryForm.type != ''">
                 AND g.type = #{queryForm.type}
-            </if>
-            <if test="queryForm.transport != null and queryForm.transport != ''">
-                AND g.transport = #{queryForm.transport}
             </if>
         </where>
         <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">

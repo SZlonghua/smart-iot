@@ -11,45 +11,35 @@ import java.time.LocalDateTime;
  * 设备网关 实体类
  *
  * @Author 廖涛
- * @Date 2026/05/26
+ * @Date 2026/06/01
  * @Copyright 1024创新实验室
  */
 @Data
 @TableName("gateway")
 public class GatewayEntity {
 
-    /** 主键ID */
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    /**
-     * 网关名称
-     */
+    /** 网关名称 */
     private String name;
 
-    /**
-     * 网关类型
-     */
+    /** 网关类型 */
     private String type;
 
-    /**
-     * 关联网络组件id
-     */
+    /** 关联网络组件id */
     private Long componentId;
 
-    /**
-     * 关联协议id
-     */
+    /** 关联协议id */
     private Long protocolId;
 
-    /**
-     * 传输方式
-     */
+    /** 传输方式 */
     private String transport;
 
-    /**
-     * 描述
-     */
+    /** 启用状态 1:启用 0:禁用 */
+    private Integer status;
+
+    /** 描述 */
     private String description;
 
     /** 创建时间 */

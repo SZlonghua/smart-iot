@@ -94,4 +94,13 @@ public class NetworkComponentService {
         PageResult<NetworkComponentVO> pageResult = SmartPageUtil.convert2PageResult(page, list);
         return ResponseDTO.ok(pageResult);
     }
+
+    /**
+     * 根据id查询
+     */
+    public NetworkComponentVO getById(Long id) {
+        NetworkComponentEntity entity = networkComponentManager.getById(id);
+        return entity == null ? null : SmartBeanUtil.copy(entity, NetworkComponentVO.class);
+    }
+
 }

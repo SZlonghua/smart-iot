@@ -36,5 +36,4 @@
             ORDER BY protocol.id DESC
         </if>
     </select>
-
 </mapper>

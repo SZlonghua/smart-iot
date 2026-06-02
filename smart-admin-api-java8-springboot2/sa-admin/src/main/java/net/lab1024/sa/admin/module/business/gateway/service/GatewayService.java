@@ -6,8 +6,11 @@ import net.lab1024.sa.admin.module.business.gateway.domain.entity.GatewayEntity;
 import net.lab1024.sa.admin.module.business.gateway.domain.form.GatewayAddForm;
 import net.lab1024.sa.admin.module.business.gateway.domain.form.GatewayQueryForm;
 import net.lab1024.sa.admin.module.business.gateway.domain.form.GatewayUpdateForm;
+import net.lab1024.sa.admin.module.business.gateway.domain.vo.GatewayDetailVO;
 import net.lab1024.sa.admin.module.business.gateway.domain.vo.GatewayVO;
 import net.lab1024.sa.admin.module.business.gateway.manager.GatewayManager;
+import net.lab1024.sa.admin.module.business.networkcomponent.service.NetworkComponentService;
+import net.lab1024.sa.admin.module.business.protocol.service.ProtocolService;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
@@ -35,6 +38,12 @@ public class GatewayService {
 
     @Resource
     private GatewayManager gatewayManager;
+
+    @Resource
+    private NetworkComponentService networkComponentService;
+
+    @Resource
+    private ProtocolService protocolService;
 
     /**
      * 添加
@@ -86,6 +95,20 @@ public class GatewayService {
     }
 
     /**
+     * 启用/禁用
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public ResponseDTO<String> updateStatus(Long id, Integer status) {
+        GatewayEntity entity = gatewayManager.getById(id);
+        if (entity == null) {
+            return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST);
+        }
+        entity.setStatus(status);
+        gatewayManager.updateById(entity);
+        return ResponseDTO.ok();
+    }
+
+    /**
      * 分页查询
      */
     public ResponseDTO<PageResult<GatewayVO>> queryPage(GatewayQueryForm queryForm) {
@@ -93,5 +116,23 @@ public class GatewayService {
         List<GatewayVO> list = gatewayDao.queryPage(page, queryForm);
         PageResult<GatewayVO> pageResult = SmartPageUtil.convert2PageResult(page, list);
         return ResponseDTO.ok(pageResult);
+    }
+
+    /**
+     * 查询详情（含网络组件和协议完整信息）
+     */
+    public ResponseDTO<GatewayDetailVO> getDetail(Long id) {
+        GatewayEntity entity = gatewayManager.getById(id);
+        if (entity == null) {
+            return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST);
+        }
+        GatewayDetailVO detail = SmartBeanUtil.copy(entity, GatewayDetailVO.class);
+        if (entity.getComponentId() != null) {
+            detail.setNetworkComponent(networkComponentService.getById(entity.getComponentId()));
+        }
+        if (entity.getProtocolId() != null) {
+            detail.setProtocol(protocolService.getById(entity.getProtocolId()));
+        }
+        return ResponseDTO.ok(detail);
     }
 }

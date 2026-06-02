@@ -15,6 +15,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import net.lab1024.sa.admin.module.business.protocol.manager.ProtocolManager;
+
 import java.util.List;
 
 /**
@@ -29,6 +31,17 @@ public class ProtocolService {
 
     @Resource
     private ProtocolDao protocolDao;
+
+    @Resource
+    private ProtocolManager protocolManager;
+
+    /**
+     * 根据id查询
+     */
+    public ProtocolVO getById(Long id) {
+        ProtocolEntity entity = protocolManager.getById(id);
+        return entity == null ? null : SmartBeanUtil.copy(entity, ProtocolVO.class);
+    }
 
     /**
      * 分页查询

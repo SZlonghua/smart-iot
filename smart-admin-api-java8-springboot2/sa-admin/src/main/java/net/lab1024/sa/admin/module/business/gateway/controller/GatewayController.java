@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import net.lab1024.sa.admin.module.business.gateway.domain.form.GatewayAddForm;
 import net.lab1024.sa.admin.module.business.gateway.domain.form.GatewayQueryForm;
 import net.lab1024.sa.admin.module.business.gateway.domain.form.GatewayUpdateForm;
+import net.lab1024.sa.admin.module.business.gateway.domain.vo.GatewayDetailVO;
 import net.lab1024.sa.admin.module.business.gateway.domain.vo.GatewayVO;
 import net.lab1024.sa.admin.module.business.gateway.service.GatewayService;
 import net.lab1024.sa.base.common.domain.PageResult;
@@ -56,6 +57,19 @@ public class GatewayController {
     @SaCheckPermission("gateway:delete")
     public ResponseDTO<String> batchDelete(@RequestBody @Valid ValidateList<Long> idList) {
         return gatewayService.batchDelete(idList);
+    }
+
+    @Operation(summary = "查询设备网关详情 @author 廖涛")
+    @GetMapping("/gateway/getDetail/{id}")
+    public ResponseDTO<GatewayDetailVO> getDetail(@PathVariable Long id) {
+        return gatewayService.getDetail(id);
+    }
+
+    @Operation(summary = "启用/禁用设备网关 @author 廖涛")
+    @GetMapping("/gateway/updateStatus/{id}/{status}")
+    @SaCheckPermission("gateway:update")
+    public ResponseDTO<String> updateStatus(@PathVariable Long id, @PathVariable Integer status) {
+        return gatewayService.updateStatus(id, status);
     }
 
     @Operation(summary = "删除设备网关 @author 1024")

@@ -42,4 +42,16 @@ export const gatewayApi = {
   delete: (id) => {
     return getRequest(`/gateway/delete/${id}`);
   },
+  getDetail: (id) => {
+    return getRequest(`/gateway/getDetail/${id}`);
+  },
+  updateStatus: (id, status) => {
+    return getRequest(`/gateway/updateStatus/${id}/${status}`);
+  },
+  queryProtocols: (param) => {
+    return postRequest('/protocol/queryPage', param);
+  },
+  queryNetworkComponents: (param) => {
+    return postRequest('/networkComponent/queryPage', param);
+  },
 };
