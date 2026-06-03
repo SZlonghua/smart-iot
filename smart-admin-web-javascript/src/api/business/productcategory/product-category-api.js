@@ -12,6 +12,11 @@ export const productCategoryApi = {
   queryTree: () => getRequest('/productCategory/queryTree'),
 
   /**
+   * 查询子分类
+   */
+  queryChildren: (parentId) => getRequest(`/productCategory/children/${parentId}`),
+
+  /**
    * 添加
    */
   add: (param) => postRequest('/productCategory/add', param),

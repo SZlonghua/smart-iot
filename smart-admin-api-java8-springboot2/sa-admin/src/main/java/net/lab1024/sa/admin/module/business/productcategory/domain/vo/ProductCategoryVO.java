@@ -39,4 +39,7 @@ public class ProductCategoryVO {
 
     @Schema(description = "子分类")
     private List<ProductCategoryVO> children;
+
+    @Schema(description = "是否有子分类")
+    private Boolean hasChildren;
 }

@@ -1,5 +1,6 @@
 package net.lab1024.sa.admin.module.business.productcategory.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import net.lab1024.sa.admin.module.business.productcategory.dao.ProductCategoryDao;
 import net.lab1024.sa.admin.module.business.productcategory.domain.entity.ProductCategoryEntity;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,15 +48,24 @@ public class ProductCategoryService {
      * 查询分类树
      */
     public List<ProductCategoryVO> queryTree() {
-        List<ProductCategoryEntity> allList = productCategoryDao.selectList(null);
+        QueryWrapper<ProductCategoryEntity> wrapper = new QueryWrapper<>();
+        wrapper.orderByAsc("sort_order").orderByDesc("id");
+        List<ProductCategoryEntity> allList = productCategoryDao.selectList(wrapper);
         List<ProductCategoryVO> voList = SmartBeanUtil.copyList(allList, ProductCategoryVO.class);
         return buildTree(voList, 0L);
+    }
+
+    /**
+     * 根据父ID查询子分类列表
+     */
+    public List<ProductCategoryVO> queryChildren(Long parentId) {
+        return productCategoryDao.queryByParentId(parentId);
     }
 
     private List<ProductCategoryVO> buildTree(List<ProductCategoryVO> allList, Long parentId) {
         Map<Long, List<ProductCategoryVO>> parentMap = allList.stream()
                 .filter(e -> e.getParentId() != null)
-                .collect(Collectors.groupingBy(ProductCategoryVO::getParentId));
+                .collect(Collectors.groupingBy(ProductCategoryVO::getParentId, LinkedHashMap::new, Collectors.toList()));
         List<ProductCategoryVO> children = parentMap.getOrDefault(parentId, new ArrayList<>());
         children.forEach(e -> e.setChildren(buildChildren(allList, parentMap, e.getId())));
         return children;

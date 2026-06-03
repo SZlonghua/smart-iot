@@ -69,21 +69,12 @@
           </a-input-group>
         </a-form-item>
         <a-form-item name="password">
-          <a-popover placement="top">
-            <template #content>
-              <a-flex :vertical="true" justify="center" align="center">
-               <img :src="gzh" />
-               <a-typography-text type="danger">扫码关注：【六边形工程师】</a-typography-text>
-               <a-typography-text type="danger">完成问卷调查，获取登录密码</a-typography-text>
-              </a-flex>
-            </template>
-            <a-input-password
-              v-model:value="loginForm.password"
-              autocomplete="on"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="请输入密码"
-            />
-          </a-popover>
+          <a-input-password
+            v-model:value="loginForm.password"
+            autocomplete="on"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="请输入密码"
+          />
         </a-form-item>
         <a-form-item name="captchaCode">
           <a-input class="captcha-input" v-model:value.trim="loginForm.captchaCode" placeholder="请输入验证码" />
@@ -92,9 +83,6 @@
 
         <a-form-item>
           <div class="btn" @click="onLogin">登录</div>
-        </a-form-item>
-        <a-form-item>
-          <span>  账号：admin, 关注【六边形工程师】，参与问卷，获取密码</span>
         </a-form-item>
       </a-form>
       <div class="more">

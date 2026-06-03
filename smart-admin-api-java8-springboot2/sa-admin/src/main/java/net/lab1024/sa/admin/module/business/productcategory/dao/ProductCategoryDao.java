@@ -28,4 +28,12 @@ public interface ProductCategoryDao extends BaseMapper<ProductCategoryEntity> {
      * @return 分页结果
      */
     List<ProductCategoryVO> queryPage(Page page, @Param("queryForm") ProductCategoryQueryForm queryForm);
+
+    /**
+     * 根据父ID查询子分类列表
+     *
+     * @param parentId 父分类ID
+     * @return 子分类列表
+     */
+    List<ProductCategoryVO> queryByParentId(@Param("parentId") Long parentId);
 }

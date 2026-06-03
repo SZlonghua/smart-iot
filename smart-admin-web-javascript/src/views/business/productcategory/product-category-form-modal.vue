@@ -1,25 +1,22 @@
 <template>
-  <a-drawer :title="form.id ? '编辑' : '添加'" :width="500" :open="visible" :body-style="{ paddingBottom: '80px' }" @close="onClose">
+  <a-drawer :title="drawerTitle" :width="500" :open="visible" :body-style="{ paddingBottom: '80px' }" @close="onClose">
     <a-form ref="formRef" :model="form" :rules="rules" :label-col="{ span: 5 }">
       <a-form-item label="分类名称" name="name">
         <a-input v-model:value="form.name" placeholder="请输入分类名称" />
       </a-form-item>
       <a-form-item label="父分类" name="parentId">
-        <a-tree-select
-          v-model:value="form.parentId"
-          style="width: 100%"
-          :tree-data="treeData"
-          :fieldNames="{ label: 'name', value: 'id', children: 'children' }"
+        <ProductCategoryTreeSelect
+          ref="treeSelectRef"
+          :value="form.parentId || undefined"
+          @update:value="(val) => (form.parentId = val || 0)"
           placeholder="请选择父分类（留空为顶级）"
-          allow-clear
-          :replaceFields="{ title: 'name', value: 'id', children: 'children' }"
         />
       </a-form-item>
       <a-form-item label="排序值" name="sortOrder">
         <a-input-number style="width: 100%" v-model:value="form.sortOrder" placeholder="请输入排序值" :min="0" />
       </a-form-item>
       <a-form-item label="描述" name="description">
-        <a-input v-model:value="form.description" placeholder="请输入描述" />
+        <a-textarea v-model:value="form.description" placeholder="请输入描述" :rows="5" />
       </a-form-item>
     </a-form>
     <div
@@ -42,11 +39,12 @@
 </template>
 
 <script setup>
-  import { ref, nextTick, reactive } from 'vue';
+  import { ref, nextTick, reactive, computed } from 'vue';
   import { message } from 'ant-design-vue';
   import { SmartLoading } from '/@/components/framework/smart-loading';
   import { productCategoryApi } from '/@/api/business/productcategory/product-category-api';
   import { smartSentry } from '/@/lib/smart-sentry';
+  import ProductCategoryTreeSelect from '/@/components/business/product-category-tree-select/index.vue';
   import _ from 'lodash';
 
   // 事件
@@ -58,7 +56,7 @@
   const formDefault = {
     id: undefined,
     name: '',
-    parentId: undefined,
+    parentId: 0,
     sortOrder: 0,
     description: '',
   };
@@ -70,26 +68,20 @@
 
   // 是否显示
   const visible = ref(false);
-  const treeData = ref([]);
+  const treeSelectRef = ref();
 
-  async function loadTree() {
-    try {
-      let res = await productCategoryApi.queryTree();
-      treeData.value = res.data || [];
-    } catch (e) {
-      smartSentry.captureError(e);
-    }
-  }
+  const drawerTitle = computed(() => {
+    if (form.id) return '编辑';
+    if (form.parentId) return '添加子分类';
+    return '添加';
+  });
 
   function showDrawer(rowData) {
     Object.assign(form, formDefault);
     if (rowData && !_.isEmpty(rowData)) {
       Object.assign(form, rowData);
     }
-    if (form.parentId === 0) {
-      form.parentId = undefined;
-    }
-    loadTree();
+    treeSelectRef.value?.loadTree();
     visible.value = true;
     nextTick(() => {
       formRef.value.clearValidate();
@@ -109,9 +101,6 @@
         SmartLoading.show();
         try {
           let submitData = { ...form };
-          if (submitData.parentId === undefined || submitData.parentId === null) {
-            submitData.parentId = 0;
-          }
           // 新建、修改API
           if (submitData.id) {
             await productCategoryApi.update(submitData);
@@ -120,7 +109,7 @@
           }
           message.success(`${submitData.id ? '修改' : '添加'}成功`);
           onClose();
-          emit('reloadList');
+          emit('reloadList', submitData.parentId);
         } catch (error) {
           smartSentry.captureError(error);
         } finally {

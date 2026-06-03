@@ -42,14 +42,15 @@
       bordered
       :loading="tableLoading"
       :pagination="false"
+      :defaultExpandAllRows="false"
+      :expandedRowKeys="expandedRowKeys"
       :row-selection="{ selectedRowKeys: selectedRowKeyList, onChange: onSelectChange }"
+      @expand="onExpand"
     >
-      <template #bodyCell="{ text, record, column }">
-        <template v-if="column.dataIndex === 'parentId'">
-          <span>{{ text === 0 ? '顶级分类' : text }}</span>
-        </template>
+      <template #bodyCell="{ record, column }">
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
+            <a-button @click="showAddChild(record)" type="link">添加子分类</a-button>
             <a-button @click="showForm(record)" type="link">编辑</a-button>
             <a-button @click="onDelete(record)" danger type="link">删除</a-button>
           </div>
@@ -74,7 +75,7 @@
       />
     </div>
 
-    <ProductCategoryForm ref="formRef" @reloadList="queryData" />
+    <ProductCategoryForm ref="formRef" @reloadList="handleReload" />
   </a-card>
 </template>
 
@@ -86,43 +87,41 @@
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { smartSentry } from '/@/lib/smart-sentry';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
-import TableOperator from '/@/components/support/table-operator/index.vue';
+  import TableOperator from '/@/components/support/table-operator/index.vue';
   import ProductCategoryForm from './product-category-form-modal.vue';
   import _ from 'lodash';
 
   // 表格列
   const columns = ref([
-    { title: '分类名称', dataIndex: 'name', resizable: true, width: 200 },
-    { title: '父分类ID', dataIndex: 'parentId', resizable: true, width: 120 },
+    { title: '分类名称', dataIndex: 'name', resizable: true, width: 250 },
     { title: '排序值', dataIndex: 'sortOrder', resizable: true, width: 100 },
     { title: '描述', dataIndex: 'description', resizable: true, width: 200 },
     { title: '创建时间', dataIndex: 'createTime', resizable: true, width: 170 },
-    { title: '操作', dataIndex: 'action', fixed: 'right', width: 150 },
+    { title: '操作', dataIndex: 'action', fixed: 'right', width: 210 },
   ]);
 
-  // 查询数据表单和方法
+  // 查询表单
   const queryFormState = {
     name: '',
+    parentId: 0,
     pageNum: 1,
     pageSize: 10,
   };
   const queryForm = reactive({ ...queryFormState });
-  // 表格加载loading
+  // 表格加载
   const tableLoading = ref(false);
   // 表格数据
   const tableData = ref([]);
   // 总数
   const total = ref(0);
+  // 当前展开的行
+  const expandedRowKeys = ref([]);
 
-  // 重置查询条件
   function resetQuery() {
-    let pageSize = queryForm.pageSize;
-    Object.assign(queryForm, queryFormState);
-    queryForm.pageSize = pageSize;
+    Object.assign(queryForm, queryFormState, { pageSize: queryForm.pageSize });
     queryData();
   }
 
-  // 搜索
   function onSearch() {
     queryForm.pageNum = 1;
     queryData();
@@ -133,8 +132,16 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
     tableLoading.value = true;
     try {
       let queryResult = await productCategoryApi.queryPage({ ...queryForm });
-      tableData.value = queryResult.data.list;
+      tableData.value = (queryResult.data.list || []).map((item) => {
+        const node = { ...item };
+        if (node.hasChildren) {
+          node.children = [];
+        }
+        return node;
+      });
       total.value = queryResult.data.total;
+
+      expandedRowKeys.value = [];
     } catch (e) {
       smartSentry.captureError(e);
     } finally {
@@ -142,22 +149,86 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
     }
   }
 
+  // 递归查找节点
+  function findNode(nodes, id) {
+    for (const node of nodes) {
+      if (node.id === id) return node;
+      if (node.children && node.children.length > 0) {
+        const found = findNode(node.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  // 获取子节点
+  async function fetchChildren(record) {
+    try {
+      const res = await productCategoryApi.queryChildren(record.id);
+      const childrenList = (res.data || []).map((item) => {
+        const node = { ...item };
+        if (node.hasChildren) {
+          node.children = [];
+        }
+        return node;
+      });
+      if (childrenList.length > 0) {
+        record.children = childrenList;
+      } else {
+        delete record.children;
+      }
+    } catch (e) {
+      smartSentry.captureError(e);
+    }
+  }
+
+  // 表单提交后刷新
+  async function handleReload(parentId) {
+    if (parentId > 0) {
+      // 子节点操作：在当前已加载的树中找父节点，刷新其子节点
+      const parent = findNode(tableData.value, parentId);
+      if (parent) {
+        await fetchChildren(parent);
+        if (!expandedRowKeys.value.includes(parentId)) {
+          expandedRowKeys.value = [...expandedRowKeys.value, parentId];
+        }
+        return;
+      }
+    }
+    // 根节点操作或父节点不在当前页：全量刷新
+    await queryData();
+  }
+
+  // 展开时懒加载子节点
+  async function onExpand(expanded, record) {
+    if (expanded) {
+      // children 为空数组 = 有子节点但未加载
+      if (record.children && record.children.length === 0) {
+        await fetchChildren(record);
+      }
+      expandedRowKeys.value = [...expandedRowKeys.value, record.id];
+    } else {
+      expandedRowKeys.value = expandedRowKeys.value.filter((k) => k !== record.id);
+    }
+  }
+
   onMounted(queryData);
 
   const formRef = ref();
-  // 添加/修改
   function showForm(rowData) {
     formRef.value.showDrawer(rowData);
   }
 
-  // 单个删除
+  function showAddChild(rowData) {
+    formRef.value.showDrawer({ parentId: rowData.id });
+  }
+
   function onDelete(record) {
     Modal.confirm({
       title: '提示',
       content: '确定要删除【' + record.name + '】吗?',
       okText: '删除',
       okType: 'danger',
-      // 确认删除
       onOk() {
         singleDelete(record);
       },
@@ -166,7 +237,6 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
     });
   }
 
-  // 请求删除
   async function singleDelete(record) {
     try {
       SmartLoading.show();
@@ -180,13 +250,11 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
     }
   }
 
-  // 选择表格行
   const selectedRowKeyList = ref([]);
   function onSelectChange(selectedRowKeys) {
     selectedRowKeyList.value = selectedRowKeys;
   }
 
-  // 批量删除
   function confirmBatchDelete() {
     Modal.confirm({
       title: '提示',
@@ -201,7 +269,6 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
     });
   }
 
-  // 请求批量删除
   async function batchDelete() {
     try {
       SmartLoading.show();

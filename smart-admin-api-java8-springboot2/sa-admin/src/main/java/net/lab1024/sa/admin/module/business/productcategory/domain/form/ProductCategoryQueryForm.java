@@ -18,4 +18,7 @@ public class ProductCategoryQueryForm extends PageParam {
 
     @Schema(description = "分类名称")
     private String name;
+
+    @Schema(description = "父分类ID")
+    private Long parentId;
 }

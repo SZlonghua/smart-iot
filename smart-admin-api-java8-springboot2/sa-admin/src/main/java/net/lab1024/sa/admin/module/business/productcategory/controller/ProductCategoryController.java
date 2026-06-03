@@ -49,6 +49,13 @@ public class ProductCategoryController {
         return ResponseDTO.ok(productCategoryService.queryTree());
     }
 
+    @Operation(summary = "查询子分类 @author 廖涛")
+    @GetMapping("/productCategory/children/{parentId}")
+    @SaCheckPermission("productCategory:query")
+    public ResponseDTO<List<ProductCategoryVO>> queryChildren(@PathVariable Long parentId) {
+        return ResponseDTO.ok(productCategoryService.queryChildren(parentId));
+    }
+
     @Operation(summary = "添加 @author 廖涛")
     @PostMapping("/productCategory/add")
     @SaCheckPermission("productCategory:add")

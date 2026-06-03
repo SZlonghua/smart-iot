@@ -5,14 +5,7 @@
         <a-input v-model:value="form.name" placeholder="请输入产品名称" />
       </a-form-item>
       <a-form-item label="产品分类" name="categoryId">
-        <a-tree-select
-          v-model:value="form.categoryId"
-          style="width: 100%"
-          :tree-data="categoryTree"
-          :fieldNames="{ label: 'name', value: 'id', children: 'children' }"
-          placeholder="请选择产品分类"
-          allow-clear
-        />
+        <ProductCategoryTreeSelect ref="treeSelectRef" v-model:value="form.categoryId" placeholder="请选择产品分类" @select="onCategorySelect" />
       </a-form-item>
       <a-form-item label="设备类型" name="deviceType">
         <SmartEnumSelect v-model:value="form.deviceType" enum-name="DEVICE_TYPE_ENUM" placeholder="请选择设备类型" width="100%" />
@@ -54,9 +47,9 @@
   import { message } from 'ant-design-vue';
   import { SmartLoading } from '/@/components/framework/smart-loading';
   import { productApi } from '/@/api/business/product/product-api';
-  import { productCategoryApi } from '/@/api/business/productcategory/product-category-api';
   import { smartSentry } from '/@/lib/smart-sentry';
   import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import ProductCategoryTreeSelect from '/@/components/business/product-category-tree-select/index.vue';
   import _ from 'lodash';
 
   // 事件
@@ -84,14 +77,11 @@
 
   // 是否显示
   const visible = ref(false);
-  const categoryTree = ref([]);
+  const treeSelectRef = ref();
 
-  async function loadCategoryTree() {
-    try {
-      let res = await productCategoryApi.queryTree();
-      categoryTree.value = res.data || [];
-    } catch (e) {
-      smartSentry.captureError(e);
+  function onCategorySelect(node) {
+    if (node) {
+      form.categoryName = node.name;
     }
   }
 
@@ -100,7 +90,7 @@
     if (rowData && !_.isEmpty(rowData)) {
       Object.assign(form, rowData);
     }
-    loadCategoryTree();
+    treeSelectRef.value?.loadTree();
     visible.value = true;
     nextTick(() => {
       formRef.value.clearValidate();
@@ -119,12 +109,6 @@
         // 点击确定，验证表单
         SmartLoading.show();
         try {
-          if (form.categoryId) {
-            let cat = findCategory(categoryTree.value, form.categoryId);
-            if (cat) {
-              form.categoryName = cat.name;
-            }
-          }
           // 新建、修改API
           if (form.id) {
             await productApi.update(form);
@@ -144,17 +128,6 @@
         console.log('error', error);
         message.error('参数验证错误，请仔细填写表单数据!');
       });
-  }
-
-  function findCategory(nodes, id) {
-    for (let node of nodes) {
-      if (node.id === id) return node;
-      if (node.children) {
-        let found = findCategory(node.children, id);
-        if (found) return found;
-      }
-    }
-    return null;
   }
 
   defineExpose({ showDrawer });
