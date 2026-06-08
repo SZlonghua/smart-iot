@@ -32,6 +32,14 @@ public class ProductService {
     private ProductDao productDao;
 
     /**
+     * 查询详情
+     */
+    public ProductVO getById(Long id) {
+        ProductEntity entity = productDao.selectById(id);
+        return SmartBeanUtil.copy(entity, ProductVO.class);
+    }
+
+    /**
      * 分页查询
      */
     public PageResult<ProductVO> queryPage(ProductQueryForm queryForm) {
@@ -41,22 +49,51 @@ public class ProductService {
     }
 
     /**
-     * 添加
+     * 添加产品：自动生成 productKey / productSecret，物模型默认空结构
      */
     public ResponseDTO<String> add(ProductAddForm addForm) {
         ProductEntity entity = SmartBeanUtil.copy(addForm, ProductEntity.class);
-        entity.setProductKey(generateProductKey());
-        entity.setProductSecret(generateProductSecret());
-        entity.setStatus(1);
+        entity.setProductKey(generateProductKey());                                     // PK- 前缀 + 16位大写 UUID
+        entity.setProductSecret(generateProductSecret());                                // 32位 UUID
+        entity.setModelJson("{\"properties\":[],\"functions\":[],\"events\":[]}");       // 默认空物模型
+        entity.setStatus(0);                                                              // 默认禁用，需手动启用
         productDao.insert(entity);
         return ResponseDTO.ok();
     }
 
     /**
-     * 更新
+     * 更新产品：modelJson 为 null 时保留已有物模型（编辑产品信息不覆盖物模型）
      */
     public ResponseDTO<String> update(ProductUpdateForm updateForm) {
         ProductEntity entity = SmartBeanUtil.copy(updateForm, ProductEntity.class);
+        if (updateForm.getModelJson() == null) {
+            ProductEntity existing = productDao.selectById(updateForm.getId());
+            if (existing != null) {
+                entity.setModelJson(existing.getModelJson());   // 保留已有物模型
+            }
+        }
+        productDao.updateById(entity);
+        return ResponseDTO.ok();
+    }
+
+    /**
+     * 保存物模型：独立接口，只更新 id + modelJson，不触发 name/deviceType 校验
+     */
+    public ResponseDTO<String> saveModelJson(Long id, String modelJson) {
+        ProductEntity entity = new ProductEntity();
+        entity.setId(id);
+        entity.setModelJson(modelJson);
+        productDao.updateById(entity);
+        return ResponseDTO.ok();
+    }
+
+    /**
+     * 切换启用/禁用状态
+     */
+    public ResponseDTO<String> toggleStatus(Long id, Integer status) {
+        ProductEntity entity = new ProductEntity();
+        entity.setId(id);
+        entity.setStatus(status);
         productDao.updateById(entity);
         return ResponseDTO.ok();
     }

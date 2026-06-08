@@ -4,6 +4,7 @@ import cn.dev33.satoken.annotation.SaCheckPermission;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductAddForm;
+import net.lab1024.sa.admin.module.business.product.domain.form.ProductModelSaveForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductUpdateForm;
 import net.lab1024.sa.admin.module.business.product.domain.vo.ProductVO;
@@ -41,11 +42,38 @@ public class ProductController {
         return ResponseDTO.ok(productService.queryPage(queryForm));
     }
 
+    @Operation(summary = "查询详情 @author 廖涛")
+    @GetMapping("/product/getById/{id}")
+    @SaCheckPermission("product:query")
+    public ResponseDTO<ProductVO> getById(@PathVariable Long id) {
+        return ResponseDTO.ok(productService.getById(id));
+    }
+
     @Operation(summary = "添加 @author 廖涛")
     @PostMapping("/product/add")
     @SaCheckPermission("product:add")
     public ResponseDTO<String> add(@RequestBody @Valid ProductAddForm addForm) {
         return productService.add(addForm);
+    }
+
+    /**
+     * 保存物模型：独立接口，仅更新 id + modelJson，不校验 name/deviceType
+     */
+    @Operation(summary = "保存物模型 @author 廖涛")
+    @PostMapping("/product/saveModel")
+    @SaCheckPermission("product:update")
+    public ResponseDTO<String> saveModel(@RequestBody @Valid ProductModelSaveForm form) {
+        return productService.saveModelJson(form.getId(), form.getModelJson());
+    }
+
+    /**
+     * 切换启用/禁用状态
+     */
+    @Operation(summary = "切换启用/禁用 @author 廖涛")
+    @PostMapping("/product/toggleStatus")
+    @SaCheckPermission("product:update")
+    public ResponseDTO<String> toggleStatus(@RequestBody ProductUpdateForm form) {
+        return productService.toggleStatus(form.getId(), form.getStatus());
     }
 
     @Operation(summary = "更新 @author 廖涛")

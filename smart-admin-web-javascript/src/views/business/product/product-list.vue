@@ -9,7 +9,13 @@
         <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.productKey" placeholder="Product Key" />
       </a-form-item>
       <a-form-item label="设备类型" class="smart-query-form-item">
-        <SmartEnumSelect @pressEnter="onSearch" v-model:value="queryForm.deviceType" enum-name="DEVICE_TYPE_ENUM" width="160px" placeholder="设备类型" />
+        <SmartEnumSelect
+          @pressEnter="onSearch"
+          v-model:value="queryForm.deviceType"
+          enum-name="DEVICE_TYPE_ENUM"
+          width="160px"
+          placeholder="设备类型"
+        />
       </a-form-item>
       <a-form-item class="smart-query-form-item">
         <a-button type="primary" @click="onSearch">
@@ -59,7 +65,9 @@
         </template>
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
-            <a-button @click="showForm(record)" type="link">编辑</a-button>
+            <a-button @click="viewProduct(record)" type="link">查看</a-button>
+            <a-button @click="showForm(record)" type="link" :disabled="record.status === 1" :title="record.status === 1 ? '请先禁用再编辑' : ''">编辑</a-button>
+            <a-button @click="toggleStatus(record)" type="link">{{ record.status === 1 ? '禁用' : '启用' }}</a-button>
             <a-button @click="onDelete(record)" danger type="link">删除</a-button>
           </div>
         </template>
@@ -88,14 +96,15 @@
 </template>
 
 <script setup>
-  import { reactive, ref, onMounted } from 'vue';
+  import { reactive, ref, onMounted, onActivated } from 'vue';
+  import { useRouter } from 'vue-router';
   import { message, Modal } from 'ant-design-vue';
   import { SmartLoading } from '/@/components/framework/smart-loading';
   import { productApi } from '/@/api/business/product/product-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { smartSentry } from '/@/lib/smart-sentry';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
-import TableOperator from '/@/components/support/table-operator/index.vue';
+  import TableOperator from '/@/components/support/table-operator/index.vue';
   import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
   import ProductForm from './product-form-modal.vue';
   import _ from 'lodash';
@@ -157,11 +166,30 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
   }
 
   onMounted(queryData);
+  onActivated(queryData);
 
+  const router = useRouter();
   const formRef = ref();
   // 添加/修改
   function showForm(rowData) {
     formRef.value.showDrawer(rowData);
+  }
+
+  function viewProduct(record) {
+    router.push({ name: 'ProductView', query: { id: record.id } });
+  }
+
+  async function toggleStatus(record) {
+    try {
+      SmartLoading.show();
+      await productApi.toggleStatus({ id: record.id, status: record.status === 1 ? 0 : 1 });
+      message.success(record.status === 1 ? '已禁用' : '已启用');
+      queryData();
+    } catch (e) {
+      smartSentry.captureError(e);
+    } finally {
+      SmartLoading.hide();
+    }
   }
 
   // 单个删除

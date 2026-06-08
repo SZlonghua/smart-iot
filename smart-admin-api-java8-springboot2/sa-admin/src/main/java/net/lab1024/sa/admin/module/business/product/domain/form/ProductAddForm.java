@@ -35,7 +35,4 @@ public class ProductAddForm {
 
     @Schema(description = "产品描述")
     private String description;
-
-    @Schema(description = "物模型JSON")
-    private String modelJson;
 }

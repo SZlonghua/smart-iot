@@ -8,19 +8,21 @@
         <ProductCategoryTreeSelect ref="treeSelectRef" v-model:value="form.categoryId" placeholder="请选择产品分类" @select="onCategorySelect" />
       </a-form-item>
       <a-form-item label="设备类型" name="deviceType">
-        <SmartEnumSelect v-model:value="form.deviceType" enum-name="DEVICE_TYPE_ENUM" placeholder="请选择设备类型" width="100%" />
+        <div class="device-type-cards">
+          <div
+            v-for="dt in deviceTypes"
+            :key="dt.value"
+            :class="['device-type-card', { active: form.deviceType === dt.value }]"
+            @click="form.deviceType = dt.value"
+          >
+            <div class="card-icon">{{ dt.icon }}</div>
+            <div class="card-label">{{ dt.label }}</div>
+            <div class="card-desc">{{ dt.desc }}</div>
+          </div>
+        </div>
       </a-form-item>
       <a-form-item label="产品描述" name="description">
         <a-textarea v-model:value="form.description" placeholder="请输入产品描述" :rows="3" />
-      </a-form-item>
-      <a-form-item label="物模型" name="modelJson">
-        <a-textarea v-model:value="form.modelJson" placeholder="请输入物模型JSON" :rows="8" />
-      </a-form-item>
-      <a-form-item v-if="form.id" label="状态" name="status">
-        <a-radio-group v-model:value="form.status">
-          <a-radio :value="1">启用</a-radio>
-          <a-radio :value="0">禁用</a-radio>
-        </a-radio-group>
       </a-form-item>
     </a-form>
     <div
@@ -48,16 +50,19 @@
   import { SmartLoading } from '/@/components/framework/smart-loading';
   import { productApi } from '/@/api/business/product/product-api';
   import { smartSentry } from '/@/lib/smart-sentry';
-  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
   import ProductCategoryTreeSelect from '/@/components/business/product-category-tree-select/index.vue';
   import _ from 'lodash';
 
-  // 事件
   const emit = defineEmits(['reloadList']);
-  // 组件ref
   const formRef = ref();
 
-  // 表单
+  // 设备类型卡片选项
+  const deviceTypes = [
+    { value: 'direct', label: '直连设备', icon: '📡', desc: '直接连接平台，支持MQTT协议' },
+    { value: 'gateway', label: '网关设备', icon: '🌐', desc: '管理子设备，数据汇聚上报' },
+    { value: 'gateway_child', label: '网关子设备', icon: '🔌', desc: '通过网关连接平台' },
+  ];
+
   const formDefault = {
     id: undefined,
     name: '',
@@ -65,8 +70,7 @@
     categoryName: '',
     deviceType: 'direct',
     description: '',
-    modelJson: '',
-    status: 1,
+    status: 0,
   };
   let form = reactive({ ...formDefault });
 
@@ -75,7 +79,6 @@
     deviceType: [{ required: true, message: '设备类型不能为空' }],
   };
 
-  // 是否显示
   const visible = ref(false);
   const treeSelectRef = ref();
 
@@ -106,16 +109,15 @@
     formRef.value
       .validate()
       .then(async () => {
-        // 点击确定，验证表单
         SmartLoading.show();
         try {
-          // 新建、修改API
-          if (form.id) {
-            await productApi.update(form);
+          let submitData = { ...form };
+          if (submitData.id) {
+            await productApi.update(submitData);
           } else {
-            await productApi.add(form);
+            await productApi.add(submitData);
           }
-          message.success(`${form.id ? '修改' : '添加'}成功`);
+          message.success(`${submitData.id ? '修改' : '添加'}成功`);
           onClose();
           emit('reloadList');
         } catch (error) {
@@ -124,11 +126,47 @@
           SmartLoading.hide();
         }
       })
-      .catch((error) => {
-        console.log('error', error);
+      .catch(() => {
         message.error('参数验证错误，请仔细填写表单数据!');
       });
   }
 
   defineExpose({ showDrawer });
 </script>
+
+<style scoped>
+  .device-type-cards {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+  .device-type-card {
+    flex: 1;
+    padding: 16px 12px;
+    border: 2px solid #e8e8e8;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .device-type-card:hover {
+    border-color: #91caff;
+  }
+  .device-type-card.active {
+    border-color: #1677ff;
+    background: #f0f5ff;
+  }
+  .card-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  .card-label {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .card-desc {
+    font-size: 12px;
+    color: #999;
+  }
+</style>

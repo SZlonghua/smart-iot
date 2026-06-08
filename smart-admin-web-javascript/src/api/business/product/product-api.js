@@ -7,9 +7,24 @@ export const productApi = {
   queryPage: (param) => postRequest('/product/queryPage', param),
 
   /**
+   * 查询详情
+   */
+  getById: (id) => getRequest(`/product/getById/${id}`),
+
+  /**
    * 添加
    */
   add: (param) => postRequest('/product/add', param),
+
+  /**
+   * 保存物模型
+   */
+  saveModel: (param) => postRequest('/product/saveModel', param),
+
+  /**
+   * 切换启用/禁用
+   */
+  toggleStatus: (param) => postRequest('/product/toggleStatus', param),
 
   /**
    * 修改
