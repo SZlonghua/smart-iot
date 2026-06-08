@@ -12,19 +12,14 @@
 </template>
 
 <script setup>
-  import { watch } from 'vue';
+  import { watch, onMounted } from 'vue';
   import { UNIT_GROUPS } from '/@/constants/business/product/unit-const';
   const props = defineProps({ value: { type: Object, required: true }, disabled: Boolean });
-  watch(
-    () => props.value.type,
-    (t) => {
-      if (!t) return;
-      if (props.value.min === undefined) props.value.min = null;
-      if (props.value.max === undefined) props.value.max = null;
-      if (props.value.unit === undefined) props.value.unit = '';
-    },
-    { immediate: true }
-  );
+  onMounted(() => {
+    if (props.value.min === undefined) props.value.min = null;
+    if (props.value.max === undefined) props.value.max = null;
+    if (props.value.unit === undefined) props.value.unit = '';
+  });
 
   const EXTREMES = {
     int: { min: -2147483648, max: 2147483647 },
@@ -52,6 +47,15 @@
     if (vt.unit) r.unit = vt.unit;
     return r;
   }
+
+  const emit = defineEmits(['valueChange']);
+  watch(
+    () => props.value,
+    () => {
+      emit('valueChange');
+    },
+    { deep: true }
+  );
 
   defineExpose({ validate: () => null, normalize, clean, serialize });
 </script>

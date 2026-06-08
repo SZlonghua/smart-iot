@@ -7,19 +7,14 @@
 </template>
 
 <script setup>
-  import { watch } from 'vue';
+  import { watch, onMounted } from 'vue';
   const props = defineProps({ value: { type: Object, required: true }, disabled: Boolean });
-  watch(
-    () => props.value.type,
-    (t) => {
-      if (!t) return;
-      if (props.value.trueText === undefined) props.value.trueText = '是';
-      if (props.value.falseText === undefined) props.value.falseText = '否';
-      if (props.value.trueValue === undefined) props.value.trueValue = 'true';
-      if (props.value.falseValue === undefined) props.value.falseValue = 'false';
-    },
-    { immediate: true }
-  );
+  onMounted(() => {
+    if (props.value.trueText === undefined) props.value.trueText = '是';
+    if (props.value.falseText === undefined) props.value.falseText = '否';
+    if (props.value.trueValue === undefined) props.value.trueValue = 'true';
+    if (props.value.falseValue === undefined) props.value.falseValue = 'false';
+  });
   function validate() {
     const err = [];
     if (!props.value.trueText) err.push('true文本不能为空');
@@ -37,5 +32,13 @@
       falseValue: vt.falseValue || '',
     };
   }
+
+  const emit = defineEmits(['valueChange']);
+  watch(
+    () => props.value,
+    () => emit('valueChange'),
+    { deep: true }
+  );
+
   defineExpose({ validate, normalize: () => {}, clean: () => {}, serialize });
 </script>

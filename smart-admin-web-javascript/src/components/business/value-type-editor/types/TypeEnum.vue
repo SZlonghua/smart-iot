@@ -12,15 +12,11 @@
 </template>
 
 <script setup>
-  import { watch } from 'vue';
+  import { watch, onMounted } from 'vue';
   const props = defineProps({ value: { type: Object, required: true }, disabled: Boolean });
-  watch(
-    () => props.value.type,
-    (t) => {
-      if (t && !props.value.elements) props.value.elements = [];
-    },
-    { immediate: true }
-  );
+  onMounted(() => {
+    if (!props.value.elements) props.value.elements = [];
+  });
   function addElement() {
     props.value.elements.push({ value: '', text: '', description: '' });
   }
@@ -38,5 +34,13 @@
     if (vt.elements?.length) r.elements = vt.elements;
     return r;
   }
+
+  const emit = defineEmits(['valueChange']);
+  watch(
+    () => props.value,
+    () => emit('valueChange'),
+    { deep: true }
+  );
+
   defineExpose({ validate, normalize: () => {}, clean: () => {}, serialize });
 </script>

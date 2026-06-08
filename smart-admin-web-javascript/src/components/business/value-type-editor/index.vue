@@ -3,8 +3,8 @@
     <a-form-item label="数据类型" required>
       <a-select v-model:value="localValue.type" :options="availableTypes" placeholder="请选择数据类型" :disabled="disabled" @change="onTypeChange" />
     </a-form-item>
-    <!-- 动态分发 + ref 用于父组件调用 validate -->
-    <component :is="currentEditor" v-if="currentEditor" ref="editorRef" :value="localValue" :disabled="disabled" />
+    <!-- 子组件变更 → 通知 index → 序列化 → 通知父 -->
+    <component :is="currentEditor" v-if="currentEditor" ref="editorRef" :value="localValue" :disabled="disabled" @valueChange="onChildChange" />
   </div>
 </template>
 
@@ -26,67 +26,53 @@
   const currentEditor = computed(() => typeEditorMap[localValue.type]);
   const editorRef = ref(null);
 
+  // 内部编辑副本：子组件直接修改此对象
   let localValue = reactive({ ...(props.value || {}) });
 
-  let internalUpdate = false;
-
+  // ---- 外部数据流入：props → localValue ----
   watch(
     () => props.value,
     (v) => {
-      console.log('props.value', v);
-      if (internalUpdate) {
-        console.log('internalUpdate', internalUpdate);
-        internalUpdate = false;
-        return;
-      }
       if (!v?.type) {
-        console.log('no type, clear localValue');
         Object.keys(localValue).forEach((k) => delete localValue[k]);
         return;
       }
-      const copy = _.cloneDeep(v);
-      Object.assign(localValue, copy);
-      internalUpdate = true;
-      nextTick(() => editorRef.value?.clean?.(localValue)); // 极值归空（查看页直接挂载）
+      Object.assign(localValue, _.cloneDeep(v));
+      nextTick(() => editorRef.value?.clean?.(localValue));
     },
     { deep: true, immediate: true }
   );
 
-  // 用户切换类型：只设 type，字段默认值由子组件内部填充
+  // ---- 子组件通知 → 序列化 → 通知父组件 ----
+  let lastEmit = '';
+  function onChildChange() {
+    const val = JSON.stringify(editorRef.value?.serialize?.(localValue) || localValue);
+    // 没有变更 避免重复触发事件
+    if (val === lastEmit) return;
+    lastEmit = val;
+    emit('update:value', editorRef.value?.serialize?.(localValue) || _.cloneDeep(localValue));
+  }
+
+  // ---- 用户切换类型：只设 type，子组件补完默认值后自动通知 ----
   function onTypeChange(newType) {
-    internalUpdate = true;
     Object.keys(localValue).forEach((k) => delete localValue[k]);
     localValue.type = newType;
   }
 
-  let lastEmit = '';
-  watch(
-    localValue,
-    () => {
-      console.log('localValue', localValue);
-      const val = JSON.stringify(localValue);
-      if (val === lastEmit) return;
-      lastEmit = val;
-      internalUpdate = true;
-      emit('update:value', editorRef.value?.serialize?.(localValue) || _.cloneDeep(localValue));
-    },
-    { deep: true }
-  );
-
-  // 对外暴露：validate / normalize / clean 委托给子组件，递归由子组件内部处理
+  // ---- 对外暴露方法 ----
   function validate() {
     if (!localValue.type) return ['数据类型不能为空'];
     return editorRef.value?.validate?.();
   }
-  // 归一化：处理极值(min max不能超过取值范围)和空值--面向后台数据的
   function normalize() {
     editorRef.value?.normalize?.(localValue);
-    // 序列化：将值转换为对象,将空值字段删除 只留有值的字段
     return editorRef.value?.serialize?.(localValue) || _.cloneDeep(localValue);
   }
-  // 清空：将值(min max为极值时设为空值展示)设为空对象--面向界面的
   function clean() {
     editorRef.value?.clean?.(localValue);
   }
-  defineExpose({ validate, normalize, clean });
+  function serialize() {
+    return editorRef.value?.serialize?.(localValue) || _.cloneDeep(localValue);
+  }
+  defineExpose({ validate, normalize, clean, serialize });
 </script>

@@ -12,18 +12,14 @@
 </template>
 
 <script setup>
-  import { ref, watch, defineAsyncComponent } from 'vue';
+  import { ref, watch, onMounted, defineAsyncComponent } from 'vue';
   const ValueTypeEditor = defineAsyncComponent(() => import('../index.vue'));
   const props = defineProps({ value: { type: Object, required: true }, disabled: Boolean });
   const basicTypes = ['int', 'double', 'float', 'long', 'boolean', 'string', 'enum', 'date'];
   const nestedRef = ref(null);
-  watch(
-    () => props.value.type,
-    (t) => {
-      if (t && !props.value.elementType) props.value.elementType = { type: 'string' };
-    },
-    { immediate: true }
-  );
+  onMounted(() => {
+    if (!props.value.elementType) props.value.elementType = { type: 'string' };
+  });
 
   function normalize() {
     nestedRef.value?.normalize?.();
@@ -36,6 +32,13 @@
     if (vt.elementType) r.elementType = nestedRef.value?.serialize?.() || vt.elementType;
     return r;
   }
+
+  const emit = defineEmits(['valueChange']);
+  watch(
+    () => props.value.elementType,
+    () => emit('valueChange'),
+    { deep: true }
+  );
 
   defineExpose({ validate: () => null, normalize, clean, serialize });
 </script>

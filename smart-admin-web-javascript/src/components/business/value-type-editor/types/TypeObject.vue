@@ -34,18 +34,14 @@
 </template>
 
 <script setup>
-  import { ref, watch, defineAsyncComponent } from 'vue';
+  import { ref, watch, onMounted, defineAsyncComponent } from 'vue';
   const ValueTypeEditor = defineAsyncComponent(() => import('../index.vue'));
   const props = defineProps({ value: { type: Object, required: true }, disabled: Boolean });
   const basicTypes = ['int', 'double', 'float', 'long', 'boolean', 'string', 'enum', 'date'];
   const propRefs = ref([]); // 子属性的 ValueTypeEditor 实例
-  watch(
-    () => props.value.type,
-    (t) => {
-      if (t && !props.value.properties) props.value.properties = [];
-    },
-    { immediate: true }
-  );
+  onMounted(() => {
+    if (!props.value.properties) props.value.properties = [];
+  });
   function addProperty() {
     props.value.properties.push({ id: '', name: '', valueType: { type: 'string' } });
   }
@@ -66,9 +62,20 @@
   }
   function serialize(vt) {
     const r = { type: vt.type };
-    const ps = propRefs.value.map((ref) => ref?.serialize?.()).filter(Boolean);
+    const ps = vt.properties.map((p, i) => ({
+      id: p.id,
+      name: p.name,
+      valueType: propRefs.value[i]?.serialize?.() || p.valueType,
+    }));
     if (ps.length) r.properties = ps;
     return r;
   }
+
+  const emit = defineEmits(['valueChange']);
+  watch(
+    () => props.value.properties,
+    () => emit('valueChange'),
+    { deep: true }
+  );
   defineExpose({ validate, normalize, clean, serialize });
 </script>

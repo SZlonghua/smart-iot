@@ -7,17 +7,12 @@
 </template>
 
 <script setup>
-  import { watch } from 'vue';
+  import { watch, onMounted } from 'vue';
   const props = defineProps({ value: { type: Object, required: true }, disabled: Boolean });
-  watch(
-    () => props.value.type,
-    (t) => {
-      if (!t) return;
-      if (props.value.format === undefined) props.value.format = 'yyyy-MM-dd HH:mm:ss';
-      if (props.value.tz === undefined) props.value.tz = 'Asia/Shanghai';
-    },
-    { immediate: true }
-  );
+  onMounted(() => {
+    if (props.value.format === undefined) props.value.format = 'yyyy-MM-dd HH:mm:ss';
+    if (props.value.tz === undefined) props.value.tz = 'Asia/Shanghai';
+  });
   function validate() {
     const err = [];
     if (!props.value.format) err.push('日期格式不能为空');
@@ -27,5 +22,13 @@
   function serialize(vt) {
     return { type: vt.type, format: vt.format || '', tz: vt.tz || '' };
   }
+
+  const emit = defineEmits(['valueChange']);
+  watch(
+    () => props.value,
+    () => emit('valueChange'),
+    { deep: true }
+  );
+
   defineExpose({ validate, normalize: () => {}, clean: () => {}, serialize });
 </script>
