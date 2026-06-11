@@ -7,10 +7,13 @@ import net.lab1024.sa.admin.module.business.product.domain.form.ProductAddForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductUpdateForm;
 import net.lab1024.sa.admin.module.business.product.domain.vo.ProductVO;
+import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.common.util.SmartPageUtil;
+import net.lab1024.sa.base.metadata.ParseResult;
+import net.lab1024.sa.base.module.support.thingsmodel.IotThingsMetadataCodec;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -77,12 +80,17 @@ public class ProductService {
     }
 
     /**
-     * 保存物模型：独立接口，只更新 id + modelJson，不触发 name/deviceType 校验
+     * 保存物模型：解析 → 校验 → 归一化 → 入库
      */
     public ResponseDTO<String> saveModelJson(Long id, String modelJson) {
+        ParseResult r = IotThingsMetadataCodec.getInstance().parseAndValidate(modelJson);
+        if (!r.isValid()) {
+            return ResponseDTO.error(UserErrorCode.PARAM_ERROR, String.join("; ", r.getErrors()));
+        }
+        String canonical = IotThingsMetadataCodec.getInstance().encode(r.getMetadata());
         ProductEntity entity = new ProductEntity();
         entity.setId(id);
-        entity.setModelJson(modelJson);
+        entity.setModelJson(canonical);
         productDao.updateById(entity);
         return ResponseDTO.ok();
     }
