@@ -2,11 +2,14 @@
   <!---------- 查询表单 begin ---------->
   <a-form class="smart-query-form">
     <a-row class="smart-query-form-row">
+      <a-form-item label="Device Key" class="smart-query-form-item">
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.deviceKey" placeholder="Device Key" />
+      </a-form-item>
       <a-form-item label="设备名称" class="smart-query-form-item">
         <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.name" placeholder="设备名称" />
       </a-form-item>
-      <a-form-item label="Device Key" class="smart-query-form-item">
-        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.deviceKey" placeholder="Device Key" />
+      <a-form-item label="产品名称" class="smart-query-form-item">
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.productName" placeholder="产品名称" />
       </a-form-item>
       <a-form-item label="状态" class="smart-query-form-item">
         <SmartEnumSelect @pressEnter="onSearch" v-model:value="queryForm.status" enum-name="DEVICE_STATUS_ENUM" width="160px" placeholder="状态" />
@@ -52,11 +55,12 @@
     >
       <template #bodyCell="{ text, record, column }">
         <template v-if="column.dataIndex === 'status'">
-          <span>{{ $smartEnumPlugin.getDescByValue('DEVICE_STATUS_ENUM', text) }}</span>
+          <a-tag :color="statusColor(text)">{{ $smartEnumPlugin.getDescByValue('DEVICE_STATUS_ENUM', text) }}</a-tag>
         </template>
         <template v-if="column.dataIndex === 'action'">
           <div class="smart-table-operate">
             <a-button @click="showForm(record)" type="link">编辑</a-button>
+            <a-button @click="showView(record)" type="link">查看</a-button>
             <a-button @click="onDelete(record)" danger type="link">删除</a-button>
           </div>
         </template>
@@ -86,24 +90,32 @@
 
 <script setup>
   import { reactive, ref, onMounted } from 'vue';
+  import { useRouter } from 'vue-router';
   import { message, Modal } from 'ant-design-vue';
   import { SmartLoading } from '/@/components/framework/smart-loading';
   import { deviceApi } from '/@/api/business/device/device-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { smartSentry } from '/@/lib/smart-sentry';
   import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
-import TableOperator from '/@/components/support/table-operator/index.vue';
+  import TableOperator from '/@/components/support/table-operator/index.vue';
   import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
   import DeviceForm from './device-form-modal.vue';
   import _ from 'lodash';
+
+  const router = useRouter();
+
+  function statusColor(status) {
+    const map = { 0: 'blue', 1: 'green', 2: 'red' };
+    return map[status] || 'default';
+  }
 
   // 表格列
   const columns = ref([
     { title: 'Device Key', dataIndex: 'deviceKey', resizable: true, width: 180 },
     { title: '设备名称', dataIndex: 'name', resizable: true, width: 150 },
-    { title: '产品ID', dataIndex: 'productId', resizable: true, width: 100 },
+    { title: '产品名称', dataIndex: 'productName', resizable: true, width: 120 },
     { title: '状态', dataIndex: 'status', resizable: true, width: 80 },
-    { title: '最后上线时间', dataIndex: 'lastOnlineTime', resizable: true, width: 170 },
+    { title: '描述', dataIndex: 'description', resizable: true, width: 200, ellipsis: true },
     { title: '创建时间', dataIndex: 'createTime', resizable: true, width: 170 },
     { title: '操作', dataIndex: 'action', fixed: 'right', width: 150 },
   ]);
@@ -112,20 +124,16 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
   const queryFormState = {
     name: '',
     deviceKey: '',
-    productId: undefined,
+    productName: '',
     status: undefined,
     pageNum: 1,
     pageSize: 10,
   };
   const queryForm = reactive({ ...queryFormState });
-  // 表格加载loading
   const tableLoading = ref(false);
-  // 表格数据
   const tableData = ref([]);
-  // 总数
   const total = ref(0);
 
-  // 重置查询条件
   function resetQuery() {
     let pageSize = queryForm.pageSize;
     Object.assign(queryForm, queryFormState);
@@ -133,13 +141,11 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
     queryData();
   }
 
-  // 搜索
   function onSearch() {
     queryForm.pageNum = 1;
     queryData();
   }
 
-  // 查询数据
   async function queryData() {
     tableLoading.value = true;
     try {
@@ -156,19 +162,20 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
   onMounted(queryData);
 
   const formRef = ref();
-  // 添加/修改
   function showForm(rowData) {
     formRef.value.showDrawer(rowData);
   }
 
-  // 单个删除
+  function showView(rowData) {
+    router.push({ name: 'DeviceView', query: { id: rowData.id } });
+  }
+
   function onDelete(record) {
     Modal.confirm({
       title: '提示',
       content: '确定要删除【' + record.name + '】吗?',
       okText: '删除',
       okType: 'danger',
-      // 确认删除
       onOk() {
         singleDelete(record);
       },
@@ -177,7 +184,6 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
     });
   }
 
-  // 请求删除
   async function singleDelete(record) {
     try {
       SmartLoading.show();
@@ -191,13 +197,11 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
     }
   }
 
-  // 选择表格行
   const selectedRowKeyList = ref([]);
   function onSelectChange(selectedRowKeys) {
     selectedRowKeyList.value = selectedRowKeys;
   }
 
-  // 批量删除
   function confirmBatchDelete() {
     Modal.confirm({
       title: '提示',
@@ -212,7 +216,6 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
     });
   }
 
-  // 请求批量删除
   async function batchDelete() {
     try {
       SmartLoading.show();

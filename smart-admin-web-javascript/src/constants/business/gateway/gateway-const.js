@@ -32,8 +32,24 @@ export const COMPONENT_TYPE_TRANSPORT_MAP = {
   'tcp': 'TCP',
 };
 
+// 网络组件 配置项 label 映射
+export const NETWORK_COMPONENT_CONFIG_LABEL_MAP = {
+  localAddress: '本地地址',
+  localPort: '本地端口',
+  publicAddress: '公网地址',
+  publicPort: '公网端口',
+  remoteAddress: '远程地址',
+  remotePort: '远程端口',
+  clientId: 'Client ID',
+  username: '用户名',
+  password: '密码',
+  maxMessageSize: '最大消息长度',
+  tlsEnabled: '开启TLS',
+};
+
 export default {
   ACCESS_TYPE_ENUM,
   ACCESS_TYPE_COMPONENT_MAP,
   COMPONENT_TYPE_TRANSPORT_MAP,
+  NETWORK_COMPONENT_CONFIG_LABEL_MAP,
 };

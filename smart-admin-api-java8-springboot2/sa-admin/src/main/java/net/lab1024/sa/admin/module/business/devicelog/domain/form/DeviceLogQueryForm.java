@@ -3,7 +3,10 @@ package net.lab1024.sa.admin.module.business.devicelog.domain.form;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import net.lab1024.sa.admin.module.business.devicelog.domain.constant.DeviceLogTypeEnum;
 import net.lab1024.sa.base.common.domain.PageParam;
+import net.lab1024.sa.base.common.swagger.SchemaEnum;
+import net.lab1024.sa.base.common.validator.enumeration.CheckEnum;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +28,8 @@ public class DeviceLogQueryForm extends PageParam {
     private String deviceName;
 
     @Schema(description = "日志类型")
+    @SchemaEnum(value = DeviceLogTypeEnum.class)
+    @CheckEnum(value = DeviceLogTypeEnum.class, required = false, message = "日志类型错误")
     private String type;
 
     @Schema(description = "创建时间-开始")

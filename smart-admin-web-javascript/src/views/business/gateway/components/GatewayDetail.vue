@@ -54,20 +54,9 @@
 <script setup>
   import { ref, computed } from 'vue';
   import { gatewayApi } from '/@/api/business/gateway/gateway-api';
+  import { NETWORK_COMPONENT_CONFIG_LABEL_MAP } from '/@/constants/business/gateway/gateway-const';
 
-  const configLabelMap = {
-    localAddress: '本地地址',
-    localPort: '本地端口',
-    publicAddress: '公网地址',
-    publicPort: '公网端口',
-    remoteAddress: '远程地址',
-    remotePort: '远程端口',
-    clientId: 'Client ID',
-    username: '用户名',
-    password: '密码',
-    maxMessageSize: '最大消息长度',
-    tlsEnabled: '开启TLS',
-  };
+  const configLabelMap = NETWORK_COMPONENT_CONFIG_LABEL_MAP;
 
   const visible = ref(false);
   const loading = ref(false);

@@ -62,7 +62,7 @@ public class GatewayController {
     @Operation(summary = "查询设备网关详情 @author 廖涛")
     @GetMapping("/gateway/getDetail/{id}")
     public ResponseDTO<GatewayDetailVO> getDetail(@PathVariable Long id) {
-        return gatewayService.getDetail(id);
+        return ResponseDTO.ok(gatewayService.getDetail(id));
     }
 
     @Operation(summary = "启用/禁用设备网关 @author 廖涛")

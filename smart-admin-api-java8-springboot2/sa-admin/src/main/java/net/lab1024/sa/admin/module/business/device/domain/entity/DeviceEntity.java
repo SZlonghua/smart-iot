@@ -39,8 +39,17 @@ public class DeviceEntity {
     /** 产品ID */
     private Long productId;
 
+    /** 产品名称 */
+    private String productName;
+
     /** 状态 */
     private Integer status;
+
+    /** 设备网关ID */
+    private Long gatewayId;
+
+    /** 描述 */
+    private String description;
 
     /** 最后上线时间 */
     private LocalDateTime lastOnlineTime;

@@ -121,10 +121,10 @@ public class GatewayService {
     /**
      * 查询详情（含网络组件和协议完整信息）
      */
-    public ResponseDTO<GatewayDetailVO> getDetail(Long id) {
+    public GatewayDetailVO getDetail(Long id) {
         GatewayEntity entity = gatewayManager.getById(id);
         if (entity == null) {
-            return ResponseDTO.error(UserErrorCode.DATA_NOT_EXIST);
+            return null;
         }
         GatewayDetailVO detail = SmartBeanUtil.copy(entity, GatewayDetailVO.class);
         if (entity.getComponentId() != null) {
@@ -133,6 +133,6 @@ public class GatewayService {
         if (entity.getProtocolId() != null) {
             detail.setProtocol(protocolService.getById(entity.getProtocolId()));
         }
-        return ResponseDTO.ok(detail);
+        return detail;
     }
 }

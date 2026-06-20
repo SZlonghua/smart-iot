@@ -6,7 +6,13 @@
         <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.deviceName" placeholder="设备名称" />
       </a-form-item>
       <a-form-item label="日志类型" class="smart-query-form-item">
-        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.type" placeholder="日志类型" />
+        <SmartEnumSelect
+          @pressEnter="onSearch"
+          v-model:value="queryForm.type"
+          enum-name="DEVICE_LOG_TYPE_ENUM"
+          width="200px"
+          placeholder="日志类型"
+        />
       </a-form-item>
       <a-form-item label="创建时间" class="smart-query-form-item">
         <a-range-picker
@@ -41,6 +47,9 @@
       :pagination="false"
     >
       <template #bodyCell="{ text, record, column }">
+        <template v-if="column.dataIndex === 'type'">
+          {{ $smartEnumPlugin.getDescByValue('DEVICE_LOG_TYPE_ENUM', text) }}
+        </template>
         <template v-if="column.dataIndex === 'content'">
           <a-typography-paragraph :ellipsis="{ rows: 2, expandable: true, symbol: '展开' }" style="margin-bottom: 0; max-width: 400px">
             {{ text }}
@@ -73,6 +82,7 @@
   import { deviceLogApi } from '/@/api/business/devicelog/device-log-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { smartSentry } from '/@/lib/smart-sentry';
+  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
   import _ from 'lodash';
 
   // 表格列

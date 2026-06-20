@@ -20,16 +20,17 @@ public class DeviceUpdateForm {
     @Schema(description = "设备ID")
     private Long id;
 
+    @NotNull(message = "产品 不能为空")
+    @Schema(description = "产品ID")
+    private Long productId;
+
+    @Schema(description = "产品名称")
+    private String productName;
+
     @NotBlank(message = "设备名称 不能为空")
     @Schema(description = "设备名称")
     private String name;
 
-    @Schema(description = "父设备ID")
-    private Long parentDeviceId;
-
-    @Schema(description = "产品ID")
-    private Long productId;
-
-    @Schema(description = "状态")
-    private Integer status;
+    @Schema(description = "描述")
+    private String description;
 }

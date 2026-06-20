@@ -2,18 +2,20 @@ package net.lab1024.sa.admin.module.business.device.domain.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
+import net.lab1024.sa.admin.module.business.gateway.domain.vo.GatewayDetailVO;
+import net.lab1024.sa.admin.module.business.product.domain.vo.ProductDetailVO;
 
 import java.time.LocalDateTime;
 
 /**
- * 设备 VO
+ * 设备详情 VO
  *
  * @Author 廖涛
- * @Date 2026/05/26
+ * @Date 2026/06/12
  * @Copyright 1024创新实验室
  */
 @Data
-public class DeviceVO {
+public class DeviceDetailVO {
 
     @Schema(description = "设备ID")
     private Long id;
@@ -53,4 +55,13 @@ public class DeviceVO {
 
     @Schema(description = "更新时间")
     private LocalDateTime updateTime;
+
+    @Schema(description = "父设备（仅含基础信息）")
+    private DeviceVO parentDevice;
+
+    @Schema(description = "产品详情")
+    private ProductDetailVO productDetail;
+
+    @Schema(description = "设备网关详情")
+    private GatewayDetailVO gatewayDetail;
 }

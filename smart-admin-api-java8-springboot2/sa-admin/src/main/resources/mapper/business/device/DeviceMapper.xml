@@ -10,7 +10,10 @@
         device.device_secret,
         device.parent_device_id,
         device.product_id,
+        device.product_name,
         device.status,
+        device.gateway_id,
+        device.description,
         device.last_online_time,
         device.create_time,
         device.update_time
@@ -30,8 +33,14 @@
             <if test="queryForm.productId != null">
                 AND device.product_id = #{queryForm.productId}
             </if>
+            <if test="queryForm.productName != null and queryForm.productName != ''">
+                AND INSTR(device.product_name, #{queryForm.productName})
+            </if>
             <if test="queryForm.status != null">
                 AND device.status = #{queryForm.status}
+            </if>
+            <if test="queryForm.gatewayId != null">
+                AND device.gateway_id = #{queryForm.gatewayId}
             </if>
         </where>
         <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">

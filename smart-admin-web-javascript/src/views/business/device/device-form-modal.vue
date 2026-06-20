@@ -1,21 +1,20 @@
 <template>
-  <a-drawer :title="form.id ? '编辑' : '添加'" :width="500" :open="visible" :body-style="{ paddingBottom: '80px' }" @close="onClose">
-    <a-form ref="formRef" :model="form" :rules="rules" :label-col="{ span: 5 }">
+  <a-drawer
+    :title="form.id ? (readonly ? '查看' : '编辑') : '添加'"
+    :width="500"
+    :open="visible"
+    :body-style="{ paddingBottom: '80px' }"
+    @close="onClose"
+  >
+    <a-form ref="formRef" :model="form" :rules="readonly ? {} : rules" :label-col="{ span: 5 }">
+      <a-form-item label="产品" name="productId">
+        <ProductSelect v-model:value="form.productId" placeholder="请选择产品" @select="onProductSelect" :disabled="readonly" />
+      </a-form-item>
       <a-form-item label="设备名称" name="name">
-        <a-input v-model:value="form.name" placeholder="请输入设备名称" />
+        <a-input v-model:value="form.name" placeholder="请输入设备名称" :disabled="readonly" />
       </a-form-item>
-      <a-form-item label="父设备ID" name="parentDeviceId">
-        <a-input-number v-model:value="form.parentDeviceId" placeholder="请输入父设备ID" style="width: 100%" :min="0" />
-      </a-form-item>
-      <a-form-item label="产品ID" name="productId">
-        <a-input-number v-model:value="form.productId" placeholder="请输入产品ID" style="width: 100%" :min="0" />
-      </a-form-item>
-      <a-form-item v-if="form.id" label="状态" name="status">
-        <a-radio-group v-model:value="form.status">
-          <a-radio :value="0">离线</a-radio>
-          <a-radio :value="1">在线</a-radio>
-          <a-radio :value="2">禁用</a-radio>
-        </a-radio-group>
+      <a-form-item label="描述" name="description">
+        <a-textarea v-model:value="form.description" placeholder="请输入描述" :rows="3" :disabled="readonly" />
       </a-form-item>
     </a-form>
     <div
@@ -31,8 +30,8 @@
         zIndex: 1,
       }"
     >
-      <a-button style="margin-right: 8px" @click="onClose">取消</a-button>
-      <a-button type="primary" @click="onSubmit">提交</a-button>
+      <a-button style="margin-right: 8px" @click="onClose">关闭</a-button>
+      <a-button v-if="!readonly" type="primary" @click="onSubmit">提交</a-button>
     </div>
   </a-drawer>
 </template>
@@ -43,31 +42,31 @@
   import { SmartLoading } from '/@/components/framework/smart-loading';
   import { deviceApi } from '/@/api/business/device/device-api';
   import { smartSentry } from '/@/lib/smart-sentry';
+  import ProductSelect from '/@/components/business/product-select/index.vue';
   import _ from 'lodash';
 
-  // 事件
   const emit = defineEmits(['reloadList']);
-  // 组件ref
   const formRef = ref();
 
-  // 表单
   const formDefault = {
     id: undefined,
-    name: '',
-    parentDeviceId: undefined,
     productId: undefined,
-    status: undefined,
+    productName: '',
+    name: '',
+    description: '',
   };
   let form = reactive({ ...formDefault });
 
   const rules = {
+    productId: [{ required: true, message: '产品不能为空' }],
     name: [{ required: true, message: '设备名称不能为空' }],
   };
 
-  // 是否显示
   const visible = ref(false);
+  const readonly = ref(false);
 
   function showDrawer(rowData) {
+    readonly.value = false;
     Object.assign(form, formDefault);
     if (rowData && !_.isEmpty(rowData)) {
       Object.assign(form, rowData);
@@ -76,6 +75,10 @@
     nextTick(() => {
       formRef.value.clearValidate();
     });
+  }
+
+  function onProductSelect(val, option) {
+    form.productName = option.name || '';
   }
 
   function onClose() {
@@ -87,10 +90,8 @@
     formRef.value
       .validate()
       .then(async () => {
-        // 点击确定，验证表单
         SmartLoading.show();
         try {
-          // 新建、修改API
           if (form.id) {
             await deviceApi.update(form);
           } else {
@@ -106,7 +107,6 @@
         }
       })
       .catch((error) => {
-        console.log('error', error);
         message.error('参数验证错误，请仔细填写表单数据!');
       });
   }

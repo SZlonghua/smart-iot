@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 /**
  * 设备 新建表单
@@ -15,13 +16,17 @@ import javax.validation.constraints.NotBlank;
 @Data
 public class DeviceAddForm {
 
+    @NotNull(message = "产品 不能为空")
+    @Schema(description = "产品ID")
+    private Long productId;
+
+    @Schema(description = "产品名称")
+    private String productName;
+
     @NotBlank(message = "设备名称 不能为空")
     @Schema(description = "设备名称")
     private String name;
 
-    @Schema(description = "父设备ID")
-    private Long parentDeviceId;
-
-    @Schema(description = "产品ID")
-    private Long productId;
+    @Schema(description = "描述")
+    private String description;
 }

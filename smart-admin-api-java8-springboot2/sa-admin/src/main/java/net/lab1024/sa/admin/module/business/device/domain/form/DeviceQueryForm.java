@@ -25,6 +25,12 @@ public class DeviceQueryForm extends PageParam {
     @Schema(description = "产品ID")
     private Long productId;
 
+    @Schema(description = "产品名称")
+    private String productName;
+
     @Schema(description = "状态")
     private Integer status;
+
+    @Schema(description = "设备网关ID")
+    private Long gatewayId;
 }

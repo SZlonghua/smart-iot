@@ -6,6 +6,7 @@ import net.lab1024.sa.admin.module.business.product.domain.entity.ProductEntity;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductAddForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductQueryForm;
 import net.lab1024.sa.admin.module.business.product.domain.form.ProductUpdateForm;
+import net.lab1024.sa.admin.module.business.product.domain.vo.ProductDetailVO;
 import net.lab1024.sa.admin.module.business.product.domain.vo.ProductVO;
 import net.lab1024.sa.base.common.code.UserErrorCode;
 import net.lab1024.sa.base.common.domain.PageResult;
@@ -13,6 +14,7 @@ import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.common.util.SmartPageUtil;
 import net.lab1024.sa.base.metadata.ParseResult;
+import net.lab1024.sa.base.module.support.thingsmodel.IotThingsMetadataCodec;
 import net.lab1024.sa.base.module.support.thingsmodel.IotThingsMetadataCodec;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,19 @@ public class ProductService {
     /**
      * 查询详情
      */
+    /** 获取产品详情（含物模型） */
+    public ProductDetailVO getDetail(Long id) {
+        ProductEntity entity = productDao.selectById(id);
+        if (entity == null) {
+            return null;
+        }
+        ProductDetailVO vo = SmartBeanUtil.copy(entity, ProductDetailVO.class);
+        if (entity.getModelJson() != null) {
+            vo.setThingsMetadata(IotThingsMetadataCodec.getInstance().decode(entity.getModelJson()));
+        }
+        return vo;
+    }
+
     public ProductVO getById(Long id) {
         ProductEntity entity = productDao.selectById(id);
         return SmartBeanUtil.copy(entity, ProductVO.class);

@@ -11,7 +11,7 @@
       <template #bodyCell="{ record, column }">
         <template v-if="column.dataIndex === 'valueType'">{{ record.valueType?.type }}</template>
         <template v-if="column.dataIndex === 'accessMode'">
-          <a-tag :color="accessModeColor[record.accessMode]">{{ accessModeMap[record.accessMode] }}</a-tag>
+          <a-tag :color="am(record.accessMode).color">{{ am(record.accessMode).label }}</a-tag>
         </template>
         <template v-if="column.dataIndex === 'action'">
           <a-button type="link" size="small" @click="viewRecord = record">查看</a-button>
@@ -49,6 +49,7 @@
   import { message } from 'ant-design-vue';
   import ValueTypeEditor from '/@/components/business/value-type-editor/index.vue';
   import PropertyViewModal from './property-view-modal.vue';
+  import { accessMode as am } from '/@/constants/business/access-mode-const';
   import _ from 'lodash';
 
   const props = defineProps({ modelValue: { type: Array, default: () => [] } });
@@ -63,9 +64,6 @@
     { title: '描述', dataIndex: 'description' },
     { title: '操作', dataIndex: 'action', width: 150 },
   ];
-
-  const accessModeMap = { r: '只读', rw: '读写', w: '只写' };
-  const accessModeColor = { r: 'blue', rw: 'green', w: 'orange' };
 
   // ---- 响应式数据 ----
   const properties = ref([...props.modelValue]);
