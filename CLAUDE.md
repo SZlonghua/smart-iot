@@ -392,5 +392,5 @@ mvn spring-boot:run -Pdev   # Run with dev profile (working dir: sa-admin/)
 ### Database
 ```bash
 # Import SQL:
-# mysql -u root -p < 数据库SQL脚本/mysql/smart_admin_v3.sql
+# mysql -u root -p < 数据库SQL脚本/mysql/smart_admin_v3_old.sql
 ```

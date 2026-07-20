@@ -16,6 +16,22 @@ server:
   servlet:
     context-path: /
 
+# CRUD 事件配置（不发送事件的表名列表）
+crud-event:
+  enabled: true
+  exclude-table-names:
+    # ====== 用户/权限管理 ======
+    - t_employee
+    - t_menu
+    - t_role
+    - t_role_menu
+    - t_role_employee
+    - t_department
+    - t_position
+    # ====== 系统支撑 ======
+    - t_operate_log
+    - t_data_tracer
+
 # 环境
 spring:
   profiles:
