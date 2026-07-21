@@ -6,6 +6,7 @@ import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 
 import java.lang.reflect.Field;
+import java.util.Map;
 
 /**
  * CRUD 事件上下文 — 封装实体类、元数据等解析后的基础信息，
@@ -58,11 +59,19 @@ public class EventContext {
     }
 
     /**
-     * 从 DELETE 参数中提取主键值（兼容 Number 类型参数）
+     * 从 DELETE 参数中提取主键值。Number 直接转 Long；Map（ParamMap 包装）返回 null。
      */
     public Long extractDeleteId(Object parameter) {
         if (parameter instanceof Number) {
             return ((Number) parameter).longValue();
+        }
+        // 自定义删除语句不支持 如下:
+        /*delete
+        from t_login_fail
+        where user_id = #{userId}
+        and user_type = #{userType}*/
+        if (parameter instanceof Map) {
+            return null;
         }
         return extractEntityId(parameter);
     }
