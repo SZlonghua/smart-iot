@@ -64,15 +64,15 @@
         <a-row class="smart-table-btn-block">
             <div class="smart-table-operate-block">
 #if($insertAndUpdate.isSupportInsertAndUpdate)
-                <a-button @click="showForm" type="primary" size="small">
+                <a-button @click="showForm" type="primary">
                     <template #icon>
                         <PlusOutlined />
                     </template>
-                    新建
+                    新建${basic.description}
                 </a-button>
 #end
 #if($deleteInfo.isSupportDelete && ($deleteInfo.deleteEnum == "Batch"||$deleteInfo.deleteEnum == "SingleAndBatch"))
-                <a-button @click="confirmBatchDelete" type="primary" danger size="small" :disabled="selectedRowKeyList.length == 0">
+                <a-button @click="confirmBatchDelete" type="primary" danger :disabled="selectedRowKeyList.length == 0">
                     <template #icon>
                         <DeleteOutlined />
                     </template>
@@ -238,7 +238,7 @@
     async function queryData() {
         tableLoading.value = true;
         try {
-            let queryResult = await $!{name.lowerCamel}Api.queryPage(queryForm);
+            let queryResult = await $!{name.lowerCamel}Api.queryPage({ ...queryForm });
             tableData.value = queryResult.data.list;
             total.value = queryResult.data.total;
         } catch (e) {
@@ -276,7 +276,7 @@
     function onDelete(data){
         Modal.confirm({
             title: '提示',
-            content: '确定要删除选吗?',
+            content: '确定要删除【' + data.name + '】吗?',
             okText: '删除',
             okType: 'danger',
             onOk() {
@@ -291,9 +291,6 @@
     async function requestDelete(data){
         SmartLoading.show();
         try {
-            let deleteForm = {
-                goodsIdList: selectedRowKeyList.value,
-            };
             await $!{name.lowerCamel}Api.delete(data.$!{primaryKeyFieldName});
             message.success('删除成功');
             queryData();

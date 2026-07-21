@@ -26,6 +26,10 @@ public class AdminSwaggerTagConst extends SwaggerTagConst {
 
         public static final String OA_NOTICE = "OA办公-通知公告";
 
+        public static final String MANAGER_ALARM_LOG = "智能物联-告警日志管理";
+
+        public static final String MANAGER_DEVICE_LOG = "智能物联-设备日志管理";
+
     }
 
 

@@ -98,7 +98,7 @@ file:
   storage:
     mode: local
     local:
-      upload-path: /home/smart_admin_v3/upload/   #文件上传目录
+      upload-path: C:\workspace\temp\smart_admin_v3\upload\   #文件上传目录
       url-prefix:
     cloud:
       region: oss-cn-hangzhou

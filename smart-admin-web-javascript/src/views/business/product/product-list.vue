@@ -1,0 +1,259 @@
+<template>
+  <!---------- 查询表单 begin ---------->
+  <a-form class="smart-query-form">
+    <a-row class="smart-query-form-row">
+      <a-form-item label="产品名称" class="smart-query-form-item">
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.name" placeholder="产品名称" />
+      </a-form-item>
+      <a-form-item label="Product Key" class="smart-query-form-item">
+        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.productKey" placeholder="Product Key" />
+      </a-form-item>
+      <a-form-item label="设备类型" class="smart-query-form-item">
+        <SmartEnumSelect
+          @pressEnter="onSearch"
+          v-model:value="queryForm.deviceType"
+          enum-name="DEVICE_TYPE_ENUM"
+          width="160px"
+          placeholder="设备类型"
+        />
+      </a-form-item>
+      <a-form-item class="smart-query-form-item">
+        <a-button type="primary" @click="onSearch">
+          <template #icon><SearchOutlined /></template>查询
+        </a-button>
+        <a-button @click="resetQuery" class="smart-margin-left10">
+          <template #icon><ReloadOutlined /></template>重置
+        </a-button>
+      </a-form-item>
+    </a-row>
+  </a-form>
+  <!---------- 查询表单 end ---------->
+
+  <a-card size="small" :bordered="false" :hoverable="true">
+    <a-row class="smart-table-btn-block">
+      <div class="smart-table-operate-block">
+        <a-button @click="showForm" type="primary">
+          <template #icon><PlusOutlined /></template>新建产品
+        </a-button>
+        <a-button @click="confirmBatchDelete" type="primary" danger :disabled="selectedRowKeyList.length == 0">
+          <template #icon><DeleteOutlined /></template>批量删除
+        </a-button>
+      </div>
+      <div class="smart-table-setting-block">
+        <TableOperator v-model="columns" :tableId="TABLE_ID_CONST.BUSINESS.IOT.PRODUCT" :refresh="queryData" />
+      </div>
+    </a-row>
+
+    <!-- 表格 begin -->
+    <a-table
+      size="small"
+      :scroll="{ y: 800 }"
+      :dataSource="tableData"
+      :columns="columns"
+      rowKey="id"
+      bordered
+      :loading="tableLoading"
+      :pagination="false"
+      :row-selection="{ selectedRowKeys: selectedRowKeyList, onChange: onSelectChange }"
+    >
+      <template #bodyCell="{ text, record, column }">
+        <template v-if="column.dataIndex === 'deviceType'">
+          <span>{{ $smartEnumPlugin.getDescByValue('DEVICE_TYPE_ENUM', text) }}</span>
+        </template>
+        <template v-if="column.dataIndex === 'status'">
+          <a-tag :color="text === 1 ? 'green' : 'red'">{{ text === 1 ? '启用' : '禁用' }}</a-tag>
+        </template>
+        <template v-if="column.dataIndex === 'action'">
+          <div class="smart-table-operate">
+            <a-button @click="viewProduct(record)" type="link">查看</a-button>
+            <a-button @click="showForm(record)" type="link" :disabled="record.status === 1" :title="record.status === 1 ? '请先禁用再编辑' : ''">编辑</a-button>
+            <a-button @click="toggleStatus(record)" type="link">{{ record.status === 1 ? '禁用' : '启用' }}</a-button>
+            <a-button @click="onDelete(record)" danger type="link">删除</a-button>
+          </div>
+        </template>
+      </template>
+    </a-table>
+    <!-- 表格 end -->
+
+    <div class="smart-query-table-page">
+      <a-pagination
+        showSizeChanger
+        showQuickJumper
+        show-less-items
+        :pageSizeOptions="PAGE_SIZE_OPTIONS"
+        :defaultPageSize="queryForm.pageSize"
+        v-model:current="queryForm.pageNum"
+        v-model:pageSize="queryForm.pageSize"
+        :total="total"
+        @change="queryData"
+        @showSizeChange="queryData"
+        :show-total="(total) => `共${total}条`"
+      />
+    </div>
+
+    <ProductForm ref="formRef" @reloadList="queryData" />
+  </a-card>
+</template>
+
+<script setup>
+  import { reactive, ref, onMounted, onActivated } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { message, Modal } from 'ant-design-vue';
+  import { SmartLoading } from '/@/components/framework/smart-loading';
+  import { productApi } from '/@/api/business/product/product-api';
+  import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
+  import { smartSentry } from '/@/lib/smart-sentry';
+  import { TABLE_ID_CONST } from '/@/constants/support/table-id-const';
+  import TableOperator from '/@/components/support/table-operator/index.vue';
+  import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import ProductForm from './product-form-modal.vue';
+  import _ from 'lodash';
+
+  // 表格列
+  const columns = ref([
+    { title: 'Product Key', dataIndex: 'productKey', resizable: true, width: 180 },
+    { title: '产品名称', dataIndex: 'name', resizable: true, width: 150 },
+    { title: '产品分类', dataIndex: 'categoryName', resizable: true, width: 120 },
+    { title: '设备类型', dataIndex: 'deviceType', resizable: true, width: 120 },
+    { title: '状态', dataIndex: 'status', resizable: true, width: 80 },
+    { title: '描述', dataIndex: 'description', resizable: true, width: 150 },
+    { title: '创建时间', dataIndex: 'createTime', resizable: true, width: 170 },
+    { title: '操作', dataIndex: 'action', fixed: 'right', width: 150 },
+  ]);
+
+  // 查询数据表单和方法
+  const queryFormState = {
+    name: '',
+    productKey: '',
+    deviceType: undefined,
+    pageNum: 1,
+    pageSize: 10,
+  };
+  const queryForm = reactive({ ...queryFormState });
+  // 表格加载loading
+  const tableLoading = ref(false);
+  // 表格数据
+  const tableData = ref([]);
+  // 总数
+  const total = ref(0);
+
+  // 重置查询条件
+  function resetQuery() {
+    let pageSize = queryForm.pageSize;
+    Object.assign(queryForm, queryFormState);
+    queryForm.pageSize = pageSize;
+    queryData();
+  }
+
+  // 搜索
+  function onSearch() {
+    queryForm.pageNum = 1;
+    queryData();
+  }
+
+  // 查询数据
+  async function queryData() {
+    tableLoading.value = true;
+    try {
+      let queryResult = await productApi.queryPage({ ...queryForm });
+      tableData.value = queryResult.data.list;
+      total.value = queryResult.data.total;
+    } catch (e) {
+      smartSentry.captureError(e);
+    } finally {
+      tableLoading.value = false;
+    }
+  }
+
+  onMounted(queryData);
+  onActivated(queryData);
+
+  const router = useRouter();
+  const formRef = ref();
+  // 添加/修改
+  function showForm(rowData) {
+    formRef.value.showDrawer(rowData);
+  }
+
+  function viewProduct(record) {
+    router.push({ name: 'ProductView', query: { id: record.id } });
+  }
+
+  async function toggleStatus(record) {
+    try {
+      SmartLoading.show();
+      await productApi.toggleStatus({ id: record.id, status: record.status === 1 ? 0 : 1 });
+      message.success(record.status === 1 ? '已禁用' : '已启用');
+      queryData();
+    } catch (e) {
+      smartSentry.captureError(e);
+    } finally {
+      SmartLoading.hide();
+    }
+  }
+
+  // 单个删除
+  function onDelete(record) {
+    Modal.confirm({
+      title: '提示',
+      content: '确定要删除【' + record.name + '】吗?',
+      okText: '删除',
+      okType: 'danger',
+      // 确认删除
+      onOk() {
+        singleDelete(record);
+      },
+      cancelText: '取消',
+      onCancel() {},
+    });
+  }
+
+  // 请求删除
+  async function singleDelete(record) {
+    try {
+      SmartLoading.show();
+      await productApi.delete(record.id);
+      message.success('删除成功');
+      queryData();
+    } catch (e) {
+      smartSentry.captureError(e);
+    } finally {
+      SmartLoading.hide();
+    }
+  }
+
+  // 选择表格行
+  const selectedRowKeyList = ref([]);
+  function onSelectChange(selectedRowKeys) {
+    selectedRowKeyList.value = selectedRowKeys;
+  }
+
+  // 批量删除
+  function confirmBatchDelete() {
+    Modal.confirm({
+      title: '提示',
+      content: '确定要删除选中的产品吗?',
+      okText: '删除',
+      okType: 'danger',
+      onOk() {
+        batchDelete();
+      },
+      cancelText: '取消',
+      onCancel() {},
+    });
+  }
+
+  // 请求批量删除
+  async function batchDelete() {
+    try {
+      SmartLoading.show();
+      await productApi.batchDelete(selectedRowKeyList.value);
+      message.success('删除成功');
+      queryData();
+    } catch (e) {
+      smartSentry.captureError(e);
+    } finally {
+      SmartLoading.hide();
+    }
+  }
+</script>

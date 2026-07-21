@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.productcategory.dao.ProductCategoryDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        product_category.id,
+        product_category.name,
+        product_category.parent_id,
+        product_category.sort_order,
+        product_category.description,
+        product_category.create_time,
+        product_category.update_time
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.productcategory.domain.vo.ProductCategoryVO">
+        SELECT <include refid="base_columns"/>,
+            EXISTS(SELECT 1 FROM product_category pc WHERE pc.parent_id = product_category.id) AS has_children
+        FROM product_category
+        <where>
+            <if test="queryForm.parentId != null">
+                AND product_category.parent_id = #{queryForm.parentId}
+            </if>
+            <if test="queryForm.name != null and queryForm.name != ''">
+                AND INSTR(product_category.name, #{queryForm.name})
+            </if>
+        </where>
+        <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">
+            ORDER BY product_category.sort_order ASC, product_category.id DESC
+        </if>
+    </select>
+
+    <!-- 根据父ID查询子分类 -->
+    <select id="queryByParentId" resultType="net.lab1024.sa.admin.module.business.productcategory.domain.vo.ProductCategoryVO">
+        SELECT <include refid="base_columns"/>,
+            EXISTS(SELECT 1 FROM product_category pc WHERE pc.parent_id = product_category.id) AS has_children
+        FROM product_category
+        WHERE product_category.parent_id = #{parentId}
+        ORDER BY product_category.sort_order ASC, product_category.id DESC
+    </select>
+
+</mapper>

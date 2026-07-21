@@ -12,6 +12,13 @@ SmartAdmin v3.0.0 — an enterprise-grade admin platform by [1024 Innovation Lab
 
 **Philosophy:** "High-quality code" is the core principle — clean naming, clear structure, no magic numbers, strong conventions.
 
+**Coding principles:**
+1. **Keep it simple** — prefer straightforward solutions over clever abstractions. Three similar lines is better than a premature helper. Don't add features, refactors, or abstractions beyond what the task requires.
+2. **Separation of concerns** — each function/component does one thing. Data queries don't mix with UI state management. Avoid coupling unrelated logic in one place.
+3. **Elegance** — code should be readable at a glance. Well-named identifiers, no unnecessary indirection. Follow existing project patterns. **All generated code must have comments.**
+
+4. **Ask before splitting** — when a module has multiple behaviors that vary by type/field/enum (like valueType with 7 subtypes), ask the user whether to split into separate components/modules before implementing. If splitting, follow high cohesion + low coupling: each variant's logic (validate, view, normalize, clean, serialize, etc.) lives inside its own file, registered via a map, never scattered in shared utilities with if-else chains.
+
 ---
 
 ## Frontend: `smart-admin-web-javascript/`
@@ -142,7 +149,7 @@ Centralized enum constants in `src/constants/`. Each enum object has `{ value, d
 | `prod` | (production) |
 
 ### Code Conventions (Frontend)
-- **`<script setup>`** only — no Options API
+- **`<script setup>`** only — 不允许出现两个 `<script>` 块，只能有一个 `<script setup>`
 - **Single quotes**, semicolons, 150 char line width (Prettier config)
 - Component files: `kebab-case.vue`
 - Import paths: absolute `/@/` alias always
@@ -150,6 +157,9 @@ Centralized enum constants in `src/constants/`. Each enum object has `{ value, d
 - `defineProps` / `defineEmits` with `v-model:value` + `update:value` event pattern
 - `onMounted` for data fetching in components
 - Error handling: wrap with `smartSentry.captureError()`
+- **Vue SFC 缩进规则**：`<script setup>` 和 `<style>` 内的内容必须缩进 2 空格（对齐项目 Prettier 配置），`<template>` 内的内容也缩进 2 空格
+- **按钮图标**：必须使用 `<template #icon><XxxOutlined /></template>` 插槽，不能直接写在按钮文本里，否则图标间距和样式与全局不一致
+- **按钮尺寸**：不要加 `size="small"`，使用默认尺寸以保持与全局样式一致
 
 ### Scripts
 ```bash
@@ -345,6 +355,12 @@ Velocity-based code generator that produces both frontend and backend code from 
 - Manager often extends `ServiceImpl<Dao, Entity>` to inherit MyBatis-Plus CRUD
 - Controller methods: `@PostMapping` for mutations, `@GetMapping` for queries
 - Mapper XML: dynamic SQL with `<where>`, `<if>`, `<foreach>`; INSTR() for keyword search
+- **新增 Entity 字段时，必须同步更新以下所有位置**：
+  1. `*Entity.java` — 新增字段
+  2. `*VO.java` / `*AddForm.java` / `*UpdateForm.java` — 对应的 DTO 也需要新增
+  3. **`*Mapper.xml` 的 `base_columns` SQL 片段** — 添加对应数据库列名（极易遗漏！）
+  4. 数据库表 — ALTER TABLE 添加列
+  5. 前端表单和列表 — 对应的字段绑定
 - All entity tables use `t_` prefix: `t_employee`, `t_menu`, etc.
 
 ---
@@ -376,5 +392,5 @@ mvn spring-boot:run -Pdev   # Run with dev profile (working dir: sa-admin/)
 ### Database
 ```bash
 # Import SQL:
-# mysql -u root -p < 数据库SQL脚本/mysql/smart_admin_v3.sql
+# mysql -u root -p < 数据库SQL脚本/mysql/smart_admin_v3_old.sql
 ```

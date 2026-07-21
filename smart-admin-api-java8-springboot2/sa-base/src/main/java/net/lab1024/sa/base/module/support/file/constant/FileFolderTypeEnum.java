@@ -37,6 +37,11 @@ public enum FileFolderTypeEnum implements BaseEnum {
      */
     FEEDBACK(4, FileFolderTypeEnum.FOLDER_PRIVATE + "/feedback/", "意见反馈"),
 
+    /**
+     * 协议JAR包
+     */
+    PROTOCOL(5, FileFolderTypeEnum.FOLDER_PRIVATE + "/protocol/", "协议JAR包"),
+
     ;
 
     /**

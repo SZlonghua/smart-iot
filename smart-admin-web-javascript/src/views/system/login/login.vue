@@ -69,21 +69,12 @@
           </a-input-group>
         </a-form-item>
         <a-form-item name="password">
-          <a-popover placement="top">
-            <template #content>
-              <a-flex :vertical="true" justify="center" align="center">
-               <img :src="gzh" />
-               <a-typography-text type="danger">扫码关注：【六边形工程师】</a-typography-text>
-               <a-typography-text type="danger">完成问卷调查，获取登录密码</a-typography-text>
-              </a-flex>
-            </template>
-            <a-input-password
-              v-model:value="loginForm.password"
-              autocomplete="on"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="请输入密码"
-            />
-          </a-popover>
+          <a-input-password
+            v-model:value="loginForm.password"
+            autocomplete="on"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="请输入密码"
+          />
         </a-form-item>
         <a-form-item name="captchaCode">
           <a-input class="captcha-input" v-model:value.trim="loginForm.captchaCode" placeholder="请输入验证码" />
@@ -92,9 +83,6 @@
 
         <a-form-item>
           <div class="btn" @click="onLogin">登录</div>
-        </a-form-item>
-        <a-form-item>
-          <span>  账号：admin, 关注【六边形工程师】，参与问卷，获取密码</span>
         </a-form-item>
       </a-form>
       <div class="more">
@@ -117,7 +105,7 @@
   </div>
 </template>
 <script setup>
-  import { message, notification, Button } from 'ant-design-vue';
+  import { message } from 'ant-design-vue';
   import { onMounted, onUnmounted, reactive, ref } from 'vue';
   import { useRouter } from 'vue-router';
   import { loginApi } from '/@/api/system/login-api';
@@ -138,7 +126,7 @@
   import { buildRoutes } from '/@/router/index';
   import { smartSentry } from '/@/lib/smart-sentry';
   import { encryptData } from '/@/lib/encrypt';
-  import { h } from 'vue';
+
   import { localSave } from '/@/utils/local-util';
   import LocalStorageKeyConst from '/@/constants/local-storage-key-const';
   import { useDictStore } from '/@/store/modules/system/dict';
@@ -171,24 +159,6 @@
       }
     };
 
-    notification['success']({
-      message: '温馨提示',
-      description: 'SmartAdmin 提供 9种 登录背景风格哦！',
-      duration: 8,
-      onClick: () => {},
-      btn: () =>
-        h(
-          Button,
-          {
-            type: 'primary',
-            target: '_blank',
-            size: 'small',
-            href: 'https://smartadmin.vip/views/doc/front/Login.html',
-            onClick: () => {},
-          },
-          { default: () => '去看看' }
-        ),
-    });
   });
 
   onUnmounted(() => {

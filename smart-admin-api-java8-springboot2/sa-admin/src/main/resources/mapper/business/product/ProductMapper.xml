@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.product.dao.ProductDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        product.id,
+        product.product_key,
+        product.product_secret,
+        product.name,
+        product.category_id,
+        product.category_name,
+        product.device_type,
+        product.description,
+        product.model_json,
+        product.status,
+        product.create_time,
+        product.update_time
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.product.domain.vo.ProductVO">
+        SELECT <include refid="base_columns"/>
+        FROM product
+        <where>
+            <if test="queryForm.name != null and queryForm.name != ''">
+                AND INSTR(product.name, #{queryForm.name})
+            </if>
+            <if test="queryForm.productKey != null and queryForm.productKey != ''">
+                AND INSTR(product.product_key, #{queryForm.productKey})
+            </if>
+            <if test="queryForm.categoryId != null">
+                AND product.category_id = #{queryForm.categoryId}
+            </if>
+            <if test="queryForm.deviceType != null and queryForm.deviceType != ''">
+                AND product.device_type = #{queryForm.deviceType}
+            </if>
+        </where>
+        <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">
+            ORDER BY product.id DESC
+        </if>
+    </select>
+
+</mapper>

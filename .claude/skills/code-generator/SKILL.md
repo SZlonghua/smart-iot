@@ -198,6 +198,8 @@ public class ${Name}Entity {
 - 不需要生成 `deletedFlag` 字段（框架自动处理）
 - **不写 @Schema 等 Swagger 注解**（Entity 不暴露给 API）
 - **不要写 getter/setter**（@Data 已处理）
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} 实体类 */` + `@Author ${author}` + `@Date ${date}` + `@Copyright ${copyright}`
+- **【强制】每个字段必须有字段注释**：`/** ${columnComment} */`
 
 ### 4.2 AddForm.java
 
@@ -241,22 +243,15 @@ public class ${Name}AddForm {
 - 枚举字段加 `@CheckEnum` + `@SchemaEnum`
 - 所有字段加 `@Schema(description = "...")`
 - **只包含前端表单需要填写的字段**
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} 新建表单 */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.3 UpdateForm.java
 
 **模板参照**: `code-generator-template/java/domain/form/UpdateForm.java.vm`
 
-与 AddForm 相同，但**必须包含主键字段**且标记为 `@NotNull`。
-
-```java
-@Data
-public class ${Name}UpdateForm {
-    @NotNull(message = "${primaryKeyLabel} 不能为空")
-    @Schema(description = "${primaryKeyLabel}")
-    private ${primaryKeyType} ${primaryKeyField};
-    // ... 其余字段同 AddForm
-}
-```
+**约束**:
+- UpdateForm 与 AddForm 字段相同，但**必须包含主键字段**且标记为 `@NotNull`
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} 更新表单 */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.4 QueryForm.java
 
@@ -295,6 +290,7 @@ public class ${Name}QueryForm extends PageParam {
 - **必须有 `@EqualsAndHashCode(callSuper = false)`**
 - DateRange 字段拆分为 `Begin` + `End` 两个字段
 - 不包含 `pageNum`/`pageSize`/`sortItemList`（PageParam 已定义）
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} 查询表单 */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.5 VO.java
 
@@ -318,6 +314,7 @@ public class ${Name}VO {
 - 包含所有需要在列表/详情中展示的字段
 - 每个字段加 `@Schema`
 - **不需要 @CheckEnum**（VO 是只读的）
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} VO */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.6 Controller.java
 
@@ -391,6 +388,7 @@ public class ${Name}Controller {
 - 权限格式: `{moduleName}:{action}` (如 `goods:query`)
 - add/update 返回 `ResponseDTO<String>`
 - queryPage 返回 `ResponseDTO<PageResult<${Name}VO>>`
+- **【强制】Controller 类上必须有 Javadoc 注释**：`/** ${description} Controller */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.7 Service.java
 
@@ -469,6 +467,8 @@ public class ${Name}Service {
 - 软删除: 调用 `updateDeleted` / `batchUpdateDeleted`
 - 硬删除: 调用 `deleteById` / `deleteBatchIds`（MyBatis-Plus 内置方法）
 - 空集合检查: `CollectionUtils.isEmpty(idList)`
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} Service */` + `@Author ${author}` + `@Date ${date}`
+- **【强制】每个 public 方法必须有方法级 Javadoc**：`/** 分页查询 */`、`/** 添加 */`、`/** 更新 */`、`/** 批量删除 */`、`/** 单个删除 */`
 
 ### 4.8 Manager.java
 
@@ -489,6 +489,7 @@ public class ${Name}Manager extends ServiceImpl<${Name}Dao, ${Name}Entity> {
 - **必须继承 `ServiceImpl<Dao, Entity>`**（MyBatis-Plus 提供 CRUD 实现）
 - 使用 `@Service`（不用 `@Component`）
 - 空类体即可，复杂业务逻辑可在此扩展
+- **【强制】类上必须有 Javadoc 注释**：`/** ${description} Manager */` + `@Author ${author}` + `@Date ${date}`
 
 ### 4.9 Dao.java
 
@@ -521,6 +522,8 @@ public interface ${Name}Dao extends BaseMapper<${Name}Entity> {
 - `queryPage` 方法: 第一个参数是 `Page`（MyBatis-Plus 分页），第二个用 `@Param("queryForm")`
 - 软删除方法: `updateDeleted`（单个）+ `batchUpdateDeleted`（批量）
 - 硬删除直接用 `BaseMapper.deleteById` / `deleteBatchIds`，不需要声明
+- **【强制】接口上必须有 Javadoc 注释**：`/** ${description} DAO */` + `@Author ${author}` + `@Date ${date}`
+- **【强制】queryPage 方法必须有方法级 Javadoc**：`/** 分页查询 */` + `@param page` + `@param queryForm` + `@return`
 
 ### 4.10 Mapper.xml
 
@@ -579,11 +582,13 @@ public interface ${Name}Dao extends BaseMapper<${Name}Entity> {
 
 **约束**:
 - namespace 用 DAO 的**全限定类名**
-- `<sql id="base_columns">` 列出所有列，带表别名前缀
-- **模糊搜索用 `INSTR()`**（不是 `LIKE`）
+- **【强制】必须定义 `<sql id="base_columns">`，列出表中所有列，每列带表名别名前缀（如 `${tableName}.id, ${tableName}.name, ...`）**
+- **【强制】queryPage 查询必须使用 `SELECT <include refid="base_columns"/>`，不得使用 `SELECT *` 或内联列名**
+- **模糊搜索用 `INSTR()`**（不是 `LIKE`），且条件中的列名必须带表名别名前缀
 - DateRange 用 `Begin >=` + `End <=`
 - 条件判断: String 用 `!= null and != ''`, 数字用 `!= null`
 - 软删除 SQL: `UPDATE ... SET deleted_flag = ...`
+- **【强制】Mapper.xml 中必须包含注释**：`<!-- 查询结果列 -->`（在 base_columns 上方）、`<!-- 分页查询 -->`（在 queryPage 上方）
 
 ### 4.11 Menu.sql
 
@@ -672,6 +677,7 @@ export const ${name}Api = {
 - 查询/新增/修改/批量删除 → `postRequest`
 - 单个删除 → `getRequest`
 - URL 前缀与后端 Controller 一致（`/{name}/...`）
+- **【强制】每个 API 方法上必须有 JSDoc 注释**：`/** 分页查询 */`、`/** 添加 */`、`/** 修改 */`、`/** 删除 */`、`/** 批量删除 */`
 
 ### 5.2 常量文件 (`{name}-const.js`)
 
@@ -692,6 +698,9 @@ export default {
 - 文件路径: `src/constants/{domain}/{module}/{name}-const.js`
 - 每个枚举对象有 `{ value, desc }` 结构
 - default export 聚合所有枚举（供 `smart-enums-plugin` 注册）
+- **【强制】生成常量文件后，必须在 `src/constants/index.js` 中完成两步注册**：
+  1. 顶部添加 `import ${module} from './{domain}/{module}/{name}-const';`
+  2. default export 中添加 `...${module},`
 
 ### 5.3 列表页面 (`{name}-list.vue`)
 
@@ -731,8 +740,8 @@ export default {
   <a-card size="small" :bordered="false" :hoverable="true">
     <a-row class="smart-table-btn-block">
       <div class="smart-table-operate-block">
-        <a-button @click="showForm" type="primary" size="small"><template #icon><PlusOutlined /></template>新建</a-button>
-        <a-button @click="confirmBatchDelete" type="primary" danger size="small" :disabled="selectedRowKeyList.length == 0"><template #icon><DeleteOutlined /></template>批量删除</a-button>
+        <a-button @click="showForm" type="primary"><template #icon><PlusOutlined /></template>新建${basic.description}</a-button>
+        <a-button @click="confirmBatchDelete" type="primary" danger :disabled="selectedRowKeyList.length == 0"><template #icon><DeleteOutlined /></template>批量删除</a-button>
       </div>
       <div class="smart-table-setting-block">
         <TableOperator v-model="columns" :tableId="null" :refresh="queryData" />
@@ -767,16 +776,116 @@ export default {
 import { reactive, ref, onMounted } from 'vue';
 import { message, Modal } from 'ant-design-vue';
 import { SmartLoading } from '/@/components/framework/smart-loading';
-import { ${name}Api } from '/@/api/${domain}/${module}/${name}-api';
+import { ${name.lowerCamel}Api } from '/@/api/business/${name.lowerHyphenCamel}/${name.lowerHyphenCamel}-api';
 import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
 import { smartSentry } from '/@/lib/smart-sentry';
 import TableOperator from '/@/components/support/table-operator/index.vue';
+import ${Name}Form from './${name.lowerHyphenCamel}-form-modal.vue';
 // ... enum/dict imports as needed
+
+// ---------------------------- 表格列 ----------------------------
+const columns = ref([ ... ]);
+
+// ---------------------------- 查询数据表单和方法 ----------------------------
+const queryFormState = {
+  #{foreach queryField}
+  ${field}: undefined, // ${label}
+  #{end}
+  pageNum: 1,
+  pageSize: 10,
+};
+const queryForm = reactive({ ...queryFormState });
+const tableLoading = ref(false); // 表格加载loading
+const tableData = ref([]); // 表格数据
+const total = ref(0); // 总数
+
+function resetQuery() {
+  let pageSize = queryForm.pageSize;
+  Object.assign(queryForm, queryFormState);
+  queryForm.pageSize = pageSize;
+  queryData();
+}
+
+function onSearch() { queryForm.pageNum = 1; queryData(); }
+
+async function queryData() {
+  tableLoading.value = true;
+  try {
+    let queryResult = await ${name.lowerCamel}Api.queryPage({ ...queryForm });
+    tableData.value = queryResult.data.list;
+    total.value = queryResult.data.total;
+  } catch (e) {
+    smartSentry.captureError(e);
+  } finally {
+    tableLoading.value = false;
+  }
+}
+
+onMounted(queryData);
+
+// ---------------------------- 添加/修改 ----------------------------
+const formRef = ref();
+function showForm(data) { formRef.value.show(data); }
+
+// ---------------------------- 单个删除 ----------------------------
+function onDelete(data) {
+  Modal.confirm({
+    title: '提示',
+    content: '确定要删除【' + data.name + '】吗?',
+    okText: '删除', okType: 'danger',
+    onOk() { requestDelete(data); },
+    cancelText: '取消', onCancel() {},
+  });
+}
+
+async function requestDelete(data) {
+  SmartLoading.show();
+  try {
+    await ${name.lowerCamel}Api.delete(data.${primaryKeyFieldName});
+    message.success('删除成功');
+    queryData();
+  } catch (e) {
+    smartSentry.captureError(e);
+  } finally {
+    SmartLoading.hide();
+  }
+}
+
+// ---------------------------- 批量删除 ----------------------------
+const selectedRowKeyList = ref([]);
+function onSelectChange(selectedRowKeys) { selectedRowKeyList.value = selectedRowKeys; }
+
+function confirmBatchDelete() {
+  Modal.confirm({
+    title: '提示',
+    content: '确定要批量删除这些数据吗?',
+    okText: '删除', okType: 'danger',
+    onOk() { requestBatchDelete(); },
+    cancelText: '取消', onCancel() {},
+  });
+}
+
+async function requestBatchDelete() {
+  try {
+    SmartLoading.show();
+    await ${name.lowerCamel}Api.batchDelete(selectedRowKeyList.value);
+    message.success('删除成功');
+    queryData();
+  } catch (e) {
+    smartSentry.captureError(e);
+  } finally {
+    SmartLoading.hide();
+  }
+}
 </script>
 ```
 
 **约束**:
 - **`v-model:value`** 双向绑定（不是 `v-model:modelValue`）
+- **`queryFormState` 不包含 `sortItemList`**（PageParam 已定义，前端不需要传）
+- **`reactive({ ...queryFormState })`** 初始化（不用 `_.cloneDeep`，避免 lodash + Vue reactivity 问题）
+- **`queryPage({ ...queryForm })`** 展开传递（将 reactive 代理转为普通对象，确保序列化正确）
+- **`Object.assign(queryForm, queryFormState)`** 重置（不用 `_.cloneDeep`）
 - 查询表单用 class `smart-query-form`, `smart-query-form-row`, `smart-query-form-item`
 - 表格操作区用 `smart-table-btn-block`, `smart-table-operate-block`
 - 分页区 class `smart-query-table-page`
@@ -784,6 +893,13 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
 - 错误处理: `smartSentry.captureError(e)`
 - `onMounted(queryData)` 初始加载
 - DateRange 需要 onChange 回调拆分 Begin/End
+- **单个删除确认**: `'确定要删除【' + data.name + '】吗?'`（包含记录名称）
+- **批量删除确认**: `'确定要批量删除这些数据吗?'`
+- **新建按钮**: `type="primary"`（不带 `size="small"`），文案 `新建${basic.description}`
+- **批量删除按钮**: `type="primary" danger`（不带 `size="small"`）
+- **【强制】必须包含 HTML 结构注释**：`<!-- 查询表单 begin -->`/`<!-- 查询表单 end -->`、`<!-- 表格 begin -->`/`<!-- 表格 end -->`
+- **【强制】script 中必须包含分组注释**：`// 表格列`、`// 查询数据表单和方法`、`// 添加/修改`、`// 单个删除`、`// 批量删除`
+- **【强制】每个变量声明必须有行内注释**：`// 表格加载loading`、`// 表格数据`、`// 总数` 等
 
 ### 5.4 表单页面 (`{name}-form-modal.vue`)
 
@@ -791,36 +907,155 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
 
 ```vue
 <template>
-  <a-modal title="..." :width="..." :open="visibleFlag" @cancel="onClose" :maskClosable="false" :destroyOnClose="true">
+  <a-${insertAndUpdate.pageType}
+    :title="form.${primaryKeyFieldName} ? '编辑' : '添加'"
+    :width="${insertAndUpdate.width}"
+    :open="visibleFlag"
+    @close="onClose"   <!-- drawer 用 @close，modal 用 @cancel -->
+    :maskClosable="false"
+    :destroyOnClose="true"
+  >
     <a-form ref="formRef" :model="form" :rules="rules" :label-col="{ span: 5 }">
       #{foreach formField}
       #{if component == "Input"}
       <a-form-item label="${label}" name="${field}">
-        <a-input v-model:value="form.${field}" placeholder="${label}" />
+        <a-input style="width: 100%" v-model:value="form.${field}" placeholder="${label}" />
+      </a-form-item>
+      #{else if component == "InputNumber"}
+      <a-form-item label="${label}" name="${field}">
+        <a-input-number style="width: 100%" v-model:value="form.${field}" placeholder="${label}" />
+      </a-form-item>
+      #{else if component == "Textarea"}
+      <a-form-item label="${label}" name="${field}">
+        <a-textarea style="width: 100%" v-model:value="form.${field}" placeholder="${label}" />
+      </a-form-item>
+      #{else if component == "BooleanSelect"}
+      <a-form-item label="${label}" name="${field}">
+        <BooleanSelect v-model:value="form.${field}" style="width: 100%" />
       </a-form-item>
       #{else if component == "SmartEnumSelect"}
       <a-form-item label="${label}" name="${field}">
-        <SmartEnumSelect v-model:value="form.${field}" enum-name="${enumName}" placeholder="${label}" />
+        <SmartEnumSelect width="100%" v-model:value="form.${field}" enum-name="${enumName}" placeholder="${label}" />
       </a-form-item>
-      #{... etc}
+      #{else if component == "DictSelect"}
+      <a-form-item label="${label}" name="${field}">
+        <DictSelect width="100%" v-model:value="form.${field}" :dict-code="'${dictCode}'" placeholder="${label}" />
+      </a-form-item>
+      #{else if component == "Date"}
+      <a-form-item label="${label}" name="${field}">
+        <a-date-picker valueFormat="YYYY-MM-DD" v-model:value="form.${field}" style="width: 100%" placeholder="${label}" />
+      </a-form-item>
+      #{else if component == "DateTime"}
+      <a-form-item label="${label}" name="${field}">
+        <a-date-picker show-time valueFormat="YYYY-MM-DD HH:mm:ss" v-model:value="form.${field}" style="width: 100%" placeholder="${label}" />
+      </a-form-item>
+      #{else if component == "FileUpload"}
+      <a-form-item label="${label}" name="${field}">
+        <FileUpload :defaultFileList="form.${field}" :folder="FILE_FOLDER_TYPE_ENUM.COMMON.value" buttonText="上传${label}" listType="text" @change="e => form.${field} = e" />
+      </a-form-item>
       #{end}
       #{end}
     </a-form>
     <template #footer>
-      <a-space><a-button @click="onClose">取消</a-button><a-button type="primary" @click="onSubmit">保存</a-button></a-space>
+      <a-space>
+        <a-button @click="onClose">取消</a-button>
+        <a-button type="primary" @click="onSubmit">保存</a-button>
+      </a-space>
     </template>
-  </a-modal>
+  </a-${insertAndUpdate.pageType}>
 </template>
+
+<script setup>
+import { reactive, ref, nextTick } from 'vue';
+import _ from 'lodash';
+import { message } from 'ant-design-vue';
+import { SmartLoading } from '/@/components/framework/smart-loading';
+import { ${name.lowerCamel}Api } from '/@/api/business/${name.lowerHyphenCamel}/${name.lowerHyphenCamel}-api';
+import { smartSentry } from '/@/lib/smart-sentry';
+// ... enum/dict/file imports as needed
+
+// ------------------------ 事件 ------------------------
+const emits = defineEmits(['reloadList']);
+
+// ------------------------ 显示与隐藏 ------------------------
+const visibleFlag = ref(false);
+
+function show(rowData) {
+  Object.assign(form, formDefault);
+  if (rowData && !_.isEmpty(rowData)) {
+    Object.assign(form, rowData);
+  }
+  visibleFlag.value = true;
+  nextTick(() => {
+    formRef.value.clearValidate();
+  });
+}
+
+function onClose() {
+  Object.assign(form, formDefault);
+  visibleFlag.value = false;
+}
+
+// ------------------------ 表单 ------------------------
+const formRef = ref();
+
+const formDefault = {
+  #{foreach formField}
+  ${field}: undefined, // ${label}
+  #{end}
+};
+
+let form = reactive({ ...formDefault });
+
+const rules = {
+  #{foreach formField (required)}
+  ${field}: [{ required: true, message: '${label} 必填' }],
+  #{end}
+};
+
+async function onSubmit() {
+  try {
+    await formRef.value.validateFields();
+    save();
+  } catch (err) {
+    message.error('参数验证错误，请仔细填写表单数据!');
+  }
+}
+
+async function save() {
+  SmartLoading.show();
+  try {
+    if (form.${primaryKeyFieldName}) {
+      await ${name.lowerCamel}Api.update(form);
+    } else {
+      await ${name.lowerCamel}Api.add(form);
+    }
+    message.success('操作成功');
+    emits('reloadList');
+    onClose();
+  } catch (err) {
+    smartSentry.captureError(err);
+  } finally {
+    SmartLoading.hide();
+  }
+}
+
+defineExpose({ show });
+</script>
 ```
 
 **约束**:
-- 组件命名: `{Name}Form`（UpperCamel）
-- 暴露 `show(rowData)` 方法: `defineExpose({ show })`
-- `show()` 逻辑: 复制 rowData 到 form（编辑模式），或清空（新增模式）
-- 保存: `form.${pk} ? update(form) : add(form)`
+- 组件命名: `{Name}Form`（UpperCamel），文件名 `{name}-form-modal.vue`
+- 页面类型: `a-modal` 或 `a-drawer`，由 `${insertAndUpdate.pageType}` 控制
+- **`let form = reactive({ ...formDefault })`**（用 `let`，因为 `Object.assign` 替换整个对象）
+- **`formDefault` 用 `undefined` 初始化**，不是 `''`（避免空字符串污染）
+- `show(rowData)` 先 `Object.assign(form, formDefault)` 重置，再 `Object.assign(form, rowData)` 填充编辑数据
+- `onClose()` 重置 form 并关闭
+- 保存: `form.${primaryKeyFieldName} ? update(form) : add(form)`
 - 完成后 `emits('reloadList')` + `onClose()`
-- 校验规则: required 字段配 `{ required: true, message: '...' }`
+- 校验规则: required 字段配 `{ required: true, message: '... 必填' }`
 - **非 required 字段不加校验规则**
+- 校验提示: `'参数验证错误，请仔细填写表单数据!'`
 
 ---
 
@@ -868,10 +1103,21 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
 - [ ] QueryForm: 继承 `PageParam`, `@EqualsAndHashCode(callSuper = false)`
 - [ ] Manager: 继承 `ServiceImpl<Dao, Entity>`
 - [ ] DAO: 继承 `BaseMapper<Entity>`, `@Mapper`
-- [ ] Mapper.xml: 模糊搜索用 `INSTR()`, namespace 用全限定类名
+- [ ] 所有 Java 文件: 类上必须有 `/** ... */` Javadoc 注释（@Author, @Date）
+- [ ] Mapper.xml: 模糊搜索用 `INSTR()`, namespace 用全限定类名，必须有 `<!-- 查询结果列 -->` 和 `<!-- 分页查询 -->` 注释
+- [ ] **Mapper.xml `base_columns` 必须列出所有列**，新增 Entity 字段时同步更新（极易遗漏！）
 - [ ] Service: 分页用 `SmartPageUtil`, 转换用 `SmartBeanUtil.copy`
 - [ ] Vue: `<script setup>`, `v-model:value`, 绝对路径 `/@/`
 - [ ] API: 导出命名对象 `export const xxxApi = { ... }`
+- [ ] **前端 `queryFormState` 不包含 `sortItemList`**，SQL 排序字段不暴露到前端
+- [ ] **前端 `reactive({ ...queryFormState })`**（不用 `_.cloneDeep` + `reactive`）
+- [ ] **前端 `queryPage({ ...queryForm })`**（展开 reactive 代理为普通对象，确保序列化正确）
+- [ ] **前端 `Object.assign(queryForm, queryFormState)`** 重置（不用 `_.cloneDeep`）
+- [ ] **前端新建按钮**: `type="primary"`（不带 `size="small"`），文案 `新建XX`
+- [ ] **前端批量删除按钮**: `type="primary" danger`（不带 `size="small"`）
+- [ ] **前端删除确认**: `Modal.confirm` 单个 `'确定要删除【' + data.name + '】吗?'`，批量 `'确定要批量删除这些数据吗?'`
+- [ ] 前端常量: 生成后必须在 `src/constants/index.js` 中 import 并 spread
+- [ ] 前端表单: `let form = reactive({ ...formDefault })`（用 `let`），`Object.assign` 重置/填充
 - [ ] 软删除表: 所有 Mapper 查询加上 `deleted_flag` 过滤条件（生成后提醒用户）
 
 ---

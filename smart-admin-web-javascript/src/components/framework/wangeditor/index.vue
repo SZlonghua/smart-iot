@@ -10,7 +10,7 @@
 -->
 <template>
   <div style="border: 1px solid #ccc">
-    <Toolbar style="border-bottom: 1px solid #ccc" :editor="editorRef" />
+    <Toolbar v-if="props.toolbar" style="border-bottom: 1px solid #ccc" :editor="editorRef" />
     <Editor
       style="overflow-y: hidden"
       :style="{ height: `${height}px` }"
@@ -56,6 +56,10 @@
     height: {
       type: Number,
       default: 500,
+    },
+    toolbar: {
+      type: Boolean,
+      default: true,
     },
   });
   watch(

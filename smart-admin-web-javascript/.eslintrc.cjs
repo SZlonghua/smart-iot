@@ -48,6 +48,7 @@ module.exports = {
         ignores: ['index'], //需要忽略的组件名
       },
     ],
+    'vue/no-mutating-props': 'off',  // value-type-editor 子组件直接操作父传入的 reactive 对象
     'vue/html-self-closing': [
       'error',
       {

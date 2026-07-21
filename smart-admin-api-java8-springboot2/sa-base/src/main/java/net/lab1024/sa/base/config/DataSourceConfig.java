@@ -98,6 +98,9 @@ public class DataSourceConfig {
     @javax.annotation.Resource
     private DataScopePlugin dataScopePlugin;
 
+    @javax.annotation.Resource
+    private Interceptor crudEventInterceptor;
+
     @Bean
     @Primary
     public DataSource druidDataSource() {
@@ -139,8 +142,11 @@ public class DataSourceConfig {
         Resource[] resources = resolver.getResources("classpath*:/mapper/**/*.xml");
         factoryBean.setMapperLocations(resources);
 
-        // 设置 MyBatis-Plus 分页插件 注意此处myBatisPlugin一定要放在后面
+        // 设置 MyBatis 插件（注意顺序：CRUD事件拦截器放在前面，分页插件放在后面）
         List<Interceptor> pluginsList = new ArrayList<>();
+        if (crudEventInterceptor != null) {
+            pluginsList.add(crudEventInterceptor);
+        }
         pluginsList.add(paginationInterceptor);
         if (dataScopePlugin != null) {
             pluginsList.add(dataScopePlugin);

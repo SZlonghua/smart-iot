@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.lab1024.sa.admin.module.business.networkcomponent.dao.NetworkComponentDao">
+
+    <!-- 查询结果列 -->
+    <sql id="base_columns">
+        network_component.id,
+        network_component.name,
+        network_component.type,
+        network_component.configuration,
+        network_component.status,
+        network_component.description,
+        network_component.create_time,
+        network_component.update_time
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="queryPage" resultType="net.lab1024.sa.admin.module.business.networkcomponent.domain.vo.NetworkComponentVO">
+        SELECT <include refid="base_columns"/>
+        FROM network_component
+        <where>
+            <if test="queryForm.name != null and queryForm.name != ''">
+                AND INSTR(network_component.name, #{queryForm.name})
+            </if>
+            <if test="queryForm.type != null and queryForm.type != ''">
+                AND network_component.type = #{queryForm.type}
+            </if>
+        </where>
+        <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">
+            ORDER BY network_component.id DESC
+        </if>
+    </select>
+</mapper>

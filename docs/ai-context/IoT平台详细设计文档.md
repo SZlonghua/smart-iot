@@ -209,10 +209,10 @@ CREATE STABLE IF NOT EXISTS device_properties_p1 (
 
 ```json
 {
-     "type":"double",
-     "max":100,
-     "min":0,
-     "unit":"percent"
+     "type":"int",
+     "max":100,//最大值
+     "min":0,//最小值 
+     "unit":"percent"//单位
 }
 ```
 
@@ -233,7 +233,7 @@ type: 数字值类型（double/int/float/long）
 }
 ```
 
-**数字类型说明：**
+**布尔类型说明：**
 
 trueText 为true时的文本,默认为是
 falseText 为false时的文本,默认为否
@@ -254,14 +254,14 @@ falseValue 为false时的值,默认为false
   {
       "type":"enum",
       "elements":[
-          {"value":"1","text":"正常"},
-          {"value":"-1","text":"警告"},
-          {"value":"0","text":"未知"}
+          {"value":"1","text":"正常","description":"说明"},
+          {"value":"-1","text":"警告","description":"警告状态"},
+          {"value":"0","text":"未知","description":"未知状态"}  
       ]
    }
 ```
 
-**数字类型说明：**
+**枚举类型说明：**
 
 Element:
 value 枚举值
@@ -294,6 +294,11 @@ tz 时区,如: Asia/Shanghai
       }
 }
 ```
+
+**数组类型说明：**
+
+type: 数组值类型（string/int/float/long）
+elementType: 数组元素类型（string/int/float/long/double/enum/boolean/date）,相应类型对应相应的值类型
 
 #### 2.2.1.7 object对象类型
 
@@ -355,10 +360,12 @@ tz 时区,如: Asia/Shanghai
    "id": "playVoice", //功能标识
    "name": "播放声音", //名称
    "async": false, //是否异步
+   "description": "播放声音", //描述
    "inputs": [  //输入参数
      {
        "id": "text",
        "name": "文字内容",
+       "required": true,
        "valueType": { //参数类型
          "type": "string"
        }
@@ -393,7 +400,8 @@ tz 时区,如: Asia/Shanghai
 ```json
 {
     "id": "事件ID", 
-    "name": "事件名称",
+    "name": "事件名称", //名称
+    "description": "事件描述", //描述
     "type": "warning",
     "valueType": {
       "type": "object",  //对象(结构体)类型
@@ -419,3 +427,39 @@ tz 时区,如: Asia/Shanghai
 | type | string | 事件类型(warning/error/info) |
 
 ---
+
+网络组件type字段说明：
+组件类型：  tcp:TCP服务, http:HTTP服务, mqtt-server:MQTT服务, mqtt-client:MQTT客户端
+JSON配置信息如下：
+
+
+TCP服务：
+-本地地址（必填）：固定为0.0.0.0
+-本地端口（必填）：数字
+-公网地址（必填）
+-公网端口（必填）：数字
+-开启TLS（必填）: 单选：是，否
+
+MQTT客户端：
+-远程地址（必填）
+-远程端口（必填）：数字
+-clientId（必填）
+-用户名（必填）
+-密码（必填）
+-最大消息长度（必填）
+-开启TLS（必填）: 单选：是，否
+
+HTTP服务：
+-本地地址（必填）：固定为0.0.0.0
+-本地端口（必填）：数字
+-公网地址（必填）
+-公网端口（必填）：数字
+-开启TLS（必填）: 单选：是，否
+
+MQTT服务：
+-本地地址（必填）：固定为0.0.0.0
+-本地端口（必填）：数字
+-公网地址（必填）
+-公网端口（必填）：数字
+-最大消息长度（必填）
+-开启TLS（必填）: 单选：是，否
