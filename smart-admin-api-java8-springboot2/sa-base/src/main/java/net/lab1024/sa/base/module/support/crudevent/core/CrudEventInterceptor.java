@@ -4,13 +4,13 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.base.common.event.*;
+import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.SqlCommandType;
 import org.apache.ibatis.plugin.*;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -38,7 +38,7 @@ public class CrudEventInterceptor implements Interceptor {
     private static final String DELETED_FLAG_FIELD = "deletedFlag";
 
     @Autowired
-    private ApplicationEventPublisher eventPublisher;
+    private IEventBus eventBus;
 
     @Lazy
     @Autowired
@@ -107,10 +107,10 @@ public class CrudEventInterceptor implements Interceptor {
         }
         Object entity = ctx.unwrap(parameter);
 
-        eventPublisher.publishEvent(new SaveBeforeEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
+        eventBus.publish(new SaveBeforeEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
                 ctx.tableName(), null, null, entity, ctx.getEntityClass()));
         Object result = invocation.proceed();
-        eventPublisher.publishEvent(new SaveAfterEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
+        eventBus.publish(new SaveAfterEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
                 ctx.tableName(), ctx.extractEntityId(entity), null, entity, ctx.getEntityClass()));
 
         return result;
@@ -127,18 +127,18 @@ public class CrudEventInterceptor implements Interceptor {
         Object beforeData = ctx.queryBeforeData(ms.getId(), entityId);
 
         if (ctx.detectSoftDelete(entity)) {
-            eventPublisher.publishEvent(new DeleteBeforeEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
+            eventBus.publish(new DeleteBeforeEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
                     ctx.tableName(), entityId, beforeData, entity, false, ctx.getEntityClass()));
             Object result = invocation.proceed();
-            eventPublisher.publishEvent(new DeleteAfterEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
+            eventBus.publish(new DeleteAfterEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
                     ctx.tableName(), entityId, beforeData, entity, false, ctx.getEntityClass()));
             return result;
         }
 
-        eventPublisher.publishEvent(new UpdateBeforeEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
+        eventBus.publish(new UpdateBeforeEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
                 ctx.tableName(), entityId, beforeData, entity, ctx.getEntityClass()));
         Object result = invocation.proceed();
-        eventPublisher.publishEvent(new UpdateAfterEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
+        eventBus.publish(new UpdateAfterEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
                 ctx.tableName(), entityId, beforeData, entity, ctx.getEntityClass()));
 
         return result;
@@ -157,10 +157,10 @@ public class CrudEventInterceptor implements Interceptor {
         Long entityId = ctx.extractDeleteId(parameter);
         Object beforeData = ctx.queryBeforeData(ms.getId(), entityId);
 
-        eventPublisher.publishEvent(new DeleteBeforeEvent<>(parameter, ctx.getClassName(), ctx.getSimpleName(),
+        eventBus.publish(new DeleteBeforeEvent<>(parameter, ctx.getClassName(), ctx.getSimpleName(),
                 ctx.tableName(), entityId, beforeData, null, true, ctx.getEntityClass()));
         Object result = invocation.proceed();
-        eventPublisher.publishEvent(new DeleteAfterEvent<>(parameter, ctx.getClassName(), ctx.getSimpleName(),
+        eventBus.publish(new DeleteAfterEvent<>(parameter, ctx.getClassName(), ctx.getSimpleName(),
                 ctx.tableName(), entityId, beforeData, null, true, ctx.getEntityClass()));
 
         return result;
@@ -173,7 +173,7 @@ public class CrudEventInterceptor implements Interceptor {
         for (Object idObj : idList) {
             Long entityId = toLong(idObj);
             Object beforeData = ctx.queryBeforeData(selectMsId, entityId);
-            eventPublisher.publishEvent(new DeleteBeforeEvent<>(idObj, ctx.getClassName(), ctx.getSimpleName(),
+            eventBus.publish(new DeleteBeforeEvent<>(idObj, ctx.getClassName(), ctx.getSimpleName(),
                     ctx.tableName(), entityId, beforeData, null, true, ctx.getEntityClass()));
         }
 
@@ -181,7 +181,7 @@ public class CrudEventInterceptor implements Interceptor {
 
         for (Object idObj : idList) {
             Long entityId = toLong(idObj);
-            eventPublisher.publishEvent(new DeleteAfterEvent<>(idObj, ctx.getClassName(), ctx.getSimpleName(),
+            eventBus.publish(new DeleteAfterEvent<>(idObj, ctx.getClassName(), ctx.getSimpleName(),
                     ctx.tableName(), entityId, null, null, true, ctx.getEntityClass()));
         }
 

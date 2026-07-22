@@ -21,14 +21,14 @@ public class DeviceEventListener {
     public void onSaveBefore(SaveBeforeEvent<DeviceEntity> event) {
         DeviceEntity device = event.getAfterData();
         log.info("[设备事件] 新增前 — id={}, name={}, productId={}",
-                event.getEntityId(), device.getName(), device.getProductId());
+                event.getEntityId(), device != null ? device.getName() : "?", device != null ? device.getProductId() : null);
     }
 
     @EventListener
     public void onSaveAfter(SaveAfterEvent<DeviceEntity> event) {
         DeviceEntity device = event.getAfterData();
         log.info("[设备事件] 新增后 — id={}, name={}, table={}, eventTime={}",
-                event.getEntityId(), device.getName(), event.getTableName(), event.getEventTime());
+                event.getEntityId(), device != null ? device.getName() : "?", event.getTableName(), event.getEventTime());
     }
 
     @EventListener
@@ -38,7 +38,7 @@ public class DeviceEventListener {
         log.info("[设备事件] 修改前 — id={}, beforeName={}, afterName={}",
                 event.getEntityId(),
                 before != null ? before.getName() : "null",
-                after.getName());
+                after != null ? after.getName() : "null");
     }
 
     @EventListener
