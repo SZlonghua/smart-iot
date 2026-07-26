@@ -58,4 +58,9 @@ public class ProductEntity {
     /** 更新时间 */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
+
+    /** 是否启用（0禁用/1启用） */
+    public boolean isEnabled() {
+        return status != null && status != 0;
+    }
 }

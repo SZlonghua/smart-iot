@@ -1,5 +1,7 @@
 package net.lab1024.sa.base.module.support.cache.core;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,6 +18,9 @@ public interface IHashCache extends ICache {
     String getKey();
 
     Value get(String field);
+
+    /** 批量获取，对应 Redis HMGET */
+    List<Value> multiGet(Collection<String> fields);
 
     Boolean set(String field, Object value);
 

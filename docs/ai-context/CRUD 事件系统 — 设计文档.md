@@ -26,8 +26,9 @@
                     └──────────┬───────────────┘
                                │
                     ┌──────────▼───────────────┐
-                    │   ApplicationEventPublisher │
-                    │   发布 Spring 事件            │
+                    │   IEventBus                │
+                    │   发布事件（同时通知动态订阅  │
+                    │   和 Spring @EventListener）│
                     └──────────┬───────────────┘
                                │
           ┌────────────────────┼────────────────────┐
@@ -319,11 +320,13 @@ public class DeleteAfterEvent extends DataChangeEvent {
 | `SaveBeforeEvent` | `null` | 传入的 entity | `null`（自增 ID 尚未生成） | `false` |
 | `SaveAfterEvent` | `null` | 入库后的 entity（含自增 ID） | 入库后的 ID | `false` |
 | `UpdateBeforeEvent` | 从 DB 查出的旧 entity | 传入的新 entity | entity ID | `false` |
-| `UpdateAfterEvent` | 从 DB 查出的旧 entity | 传入的新 entity | entity ID | `false` |
+| `UpdateAfterEvent` | 从 DB 查出的旧 entity | **`invocation.proceed()` 后重新查 DB**，完整的最新数据 | entity ID | `false` |
 | `DeleteBeforeEvent`（物理） | 从 DB 查出的 entity | `null` | entity ID | **`true`** |
 | `DeleteAfterEvent`（物理） | 从 DB 查出的 entity | `null` | entity ID | **`true`** |
 | `DeleteBeforeEvent`（软删） | 从 DB 查出的 entity（deletedFlag=false） | entity（deletedFlag=true） | entity ID | **`false`** |
-| `DeleteAfterEvent`（软删） | 从 DB 查出的 entity（deletedFlag=false） | entity（deletedFlag=true） | entity ID | **`false`** |
+| `DeleteAfterEvent`（软删） | 从 DB 查出的 entity（deletedFlag=false） | **`invocation.proceed()` 后重新查 DB**，完整数据（含 deletedFlag=true） | entity ID | **`false`** |
+
+> **关键设计：** `UpdateAfterEvent` 和 `DeleteAfterEvent`（软删除）的 `afterData` 是在 `invocation.proceed()` 执行 SQL 后，**重新通过独立 SqlSession 查询数据库**获得的完整数据。因为 MyBatis-Plus `updateById` 只更新非 null 字段，前端传入的 `entity` 可能只包含部分字段（如仅 `{name: "新名称"}`），直接使用会导致 `afterData` 残缺。重新查库确保了监听器拿到的是更新后的完整实体。
 
 ### 3.6 软删除检测逻辑
 
@@ -474,11 +477,13 @@ switch (sqlCommandType) {
             // 归类为删除
             publishEvent(new DeleteBeforeEvent(source, ..., /*physicalDelete=*/false));
             result = invocation.proceed();
-            publishEvent(new DeleteAfterEvent(source, ..., /*physicalDelete=*/false));
+            Object afterData = queryBeforeData(selectMsId, entityId);  // 重新查库拿完整数据
+            publishEvent(new DeleteAfterEvent(source, ..., afterData, /*physicalDelete=*/false));
         } else {
             publishEvent(new UpdateBeforeEvent(source, ...));
             result = invocation.proceed();
-            publishEvent(new UpdateAfterEvent(source, ...));
+            Object afterData = queryBeforeData(selectMsId, entityId);  // 重新查库拿完整数据
+            publishEvent(new UpdateAfterEvent(source, ..., beforeData, afterData));
         }
         break;
     case DELETE:
@@ -523,7 +528,39 @@ switch (sqlCommandType) {
 
 ## 六、使用示例（监听器按类名精准匹配）
 
-### 6.1 监听新增后事件
+### 6.1 监听某一实体的所有事件（泛型自动匹配，无需 isEntityType）
+
+```java
+@Component
+@Slf4j
+public class DeviceEventListener {
+
+    /** 直接声明泛型参数，Spring 自动按 SaveAfterEvent<DeviceEntity> 匹配 */
+    @EventListener
+    public void onSave(SaveAfterEvent<DeviceEntity> event) {
+        DeviceEntity device = event.getAfterData();
+        log.info("设备新增成功: id={}, name={}", event.getEntityId(), device.getName());
+        // 更新缓存...
+    }
+
+    @EventListener
+    public void onUpdate(UpdateAfterEvent<DeviceEntity> event) {
+        DeviceEntity before = event.getBeforeData();
+        DeviceEntity after = event.getAfterData();
+        log.info("设备修改: id={}, before={}, after={}", event.getEntityId(),
+                before.getName(), after.getName());
+    }
+
+    @EventListener
+    public void onDelete(DeleteAfterEvent<DeviceEntity> event) {
+        log.info("设备删除: id={}, physicalDelete={}", event.getEntityId(), event.isPhysicalDelete());
+    }
+}
+```
+
+> **关键设计：** `CrudEvent<T>` 实现 `ResolvableTypeProvider`，监听器声明 `SaveAfterEvent<DeviceEntity>` 即可精准匹配该实体类型的保存事件，无需 `isEntityType()` 守卫或强转。
+
+### 6.2 监听新增后事件
 
 ```java
 @Component
@@ -639,7 +676,7 @@ public class DeleteAuditListener {
 }
 ```
 
-### 6.5 监听某一实体的所有事件
+### 6.7 监听某一实体的所有事件（泛型匹配方式）
 
 ```java
 @Component
@@ -647,23 +684,24 @@ public class DeleteAuditListener {
 public class DeviceEventListener {
 
     @EventListener
-    public void onSave(SaveAfterEvent event) {
-        if (event.isEntityType(DeviceEntity.class)) { /* 处理设备新增 */ }
+    public void onSave(SaveAfterEvent<DeviceEntity> event) {
+        DeviceEntity device = event.getAfterData();
+        // 处理设备新增，无需 isEntityType 守卫
     }
 
     @EventListener
-    public void onUpdate(UpdateAfterEvent event) {
-        if (event.isEntityType(DeviceEntity.class)) { /* 处理设备修改 */ }
+    public void onUpdate(UpdateAfterEvent<DeviceEntity> event) {
+        // 处理设备修改
     }
 
     @EventListener
-    public void onDelete(DeleteAfterEvent event) {
-        if (event.isEntityType(DeviceEntity.class)) { /* 处理设备删除 */ }
+    public void onDelete(DeleteAfterEvent<DeviceEntity> event) {
+        // 处理设备删除
     }
 }
 ```
 
-> **对比旧方案：** 旧方案需要 `if (event.getType() != CrudEventType.AFTER_INSERT) return`，新方案直接声明参数类型为 `SaveAfterEvent`，Spring 自动匹配，代码更简洁、类型更安全。
+> **对比旧方案：** 旧方案需要 `if (event.getType() != CrudEventType.AFTER_INSERT) return` 或 `if (event.isEntityType(DeviceEntity.class))`，新方案通过 `ResolvableTypeProvider` 泛型直接声明参数类型为 `SaveAfterEvent<DeviceEntity>`，Spring 自动精准匹配，无需任何 if 守卫。
 
 ---
 

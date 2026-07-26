@@ -50,11 +50,7 @@ public class RedisConfigStorage implements IConfigStorage {
 
     @Override
     public List<Value> getConfigs(Collection<String> fields) {
-        List<Value> result = new ArrayList<>(fields.size());
-        for (String field : fields) {
-            result.add(hashCache.get(field));
-        }
-        return result;
+        return hashCache.multiGet(fields);
     }
 
     @Override

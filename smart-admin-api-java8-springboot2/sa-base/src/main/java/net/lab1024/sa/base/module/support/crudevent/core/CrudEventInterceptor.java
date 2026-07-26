@@ -130,16 +130,18 @@ public class CrudEventInterceptor implements Interceptor {
             eventBus.publish(new DeleteBeforeEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
                     ctx.tableName(), entityId, beforeData, entity, false, ctx.getEntityClass()));
             Object result = invocation.proceed();
+            Object afterData = ctx.queryBeforeData(ms.getId(), entityId);
             eventBus.publish(new DeleteAfterEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
-                    ctx.tableName(), entityId, beforeData, entity, false, ctx.getEntityClass()));
+                    ctx.tableName(), entityId, beforeData, afterData, false, ctx.getEntityClass()));
             return result;
         }
 
         eventBus.publish(new UpdateBeforeEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
                 ctx.tableName(), entityId, beforeData, entity, ctx.getEntityClass()));
         Object result = invocation.proceed();
+        Object afterData = ctx.queryBeforeData(ms.getId(), entityId);
         eventBus.publish(new UpdateAfterEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
-                ctx.tableName(), entityId, beforeData, entity, ctx.getEntityClass()));
+                ctx.tableName(), entityId, beforeData, afterData, ctx.getEntityClass()));
 
         return result;
     }
