@@ -94,6 +94,7 @@ import TableOperator from '/@/components/support/table-operator/index.vue';
   const columns = ref([
     { title: '协议名称', dataIndex: 'name', resizable: true, width: 150 },
     { title: '版本号', dataIndex: 'version', resizable: true, width: 120 },
+    { title: '加载方式', dataIndex: 'loader', resizable: true, width: 100 },
     { title: 'JAR包路径', dataIndex: 'jarPath', resizable: true, width: 200 },
     { title: '协议描述', dataIndex: 'description', resizable: true, width: 200 },
     { title: '创建时间', dataIndex: 'createTime', resizable: true, width: 170 },

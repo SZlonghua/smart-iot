@@ -24,6 +24,9 @@ public class ProtocolVO {
     @Schema(description = "版本号")
     private String version;
 
+    @Schema(description = "加载方式(jar/local)")
+    private String loader;
+
     @Schema(description = "JAR包路径")
     private String jarPath;
 

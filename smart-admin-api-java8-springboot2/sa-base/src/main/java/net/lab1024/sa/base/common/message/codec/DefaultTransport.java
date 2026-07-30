@@ -1,4 +1,4 @@
-package net.lab1024.sa.base.message.codec;
+package net.lab1024.sa.base.common.message.codec;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

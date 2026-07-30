@@ -92,11 +92,7 @@ public class DefaultDeviceOperator implements DeviceOperator {
         boolean success = storedKey != null && storedKey.equals(request.getDeviceKey())
                 && storedSecret != null && storedSecret.equals(request.getDeviceSecret());
 
-        return Mono.just(AuthenticationResponse.builder()
-                .success(success)
-                .deviceId(deviceId)
-                .message(success ? "认证成功" : "认证失败")
-                .build());
+        return Mono.just(AuthenticationResponse.success(deviceId));
     }
 
     @Override

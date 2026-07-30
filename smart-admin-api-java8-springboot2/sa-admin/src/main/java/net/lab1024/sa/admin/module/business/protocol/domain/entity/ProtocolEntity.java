@@ -30,6 +30,9 @@ public class ProtocolEntity {
     /** 版本号 */
     private String version;
 
+    /** 加载方式：jar / local */
+    private String loader;
+
     /** JAR包路径 */
     private String jarPath;
 
@@ -46,4 +49,18 @@ public class ProtocolEntity {
     /** 更新时间 */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
+
+    public net.lab1024.sa.base.common.protocol.ProtocolSupportDefinition toDefinition() {
+        java.util.Map<String, Object> configuration = new java.util.HashMap<>();
+        configuration.put("jarPath", jarPath);
+        configuration.put("jarName", jarName);
+
+        return net.lab1024.sa.base.common.protocol.ProtocolSupportDefinition.builder()
+                .id(String.valueOf(id))
+                .name(name)
+                .description(description)
+                .loader(loader)
+                .configuration(configuration)
+                .build();
+    }
 }

@@ -1,7 +1,7 @@
 package net.lab1024.sa.base.module.support.protocol.websocket.session;
 
 import net.lab1024.sa.base.device.session.support.AbstractDeviceSession;
-import net.lab1024.sa.base.message.codec.DefaultTransport;
+import net.lab1024.sa.base.common.message.codec.DefaultTransport;
 
 /**
  * WebSocket 设备会话 — WebSocket 设备连接。

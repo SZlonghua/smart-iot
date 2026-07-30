@@ -1,7 +1,7 @@
 package net.lab1024.sa.base.module.support.protocol.http.session;
 
 import net.lab1024.sa.base.device.session.support.AbstractDeviceSession;
-import net.lab1024.sa.base.message.codec.DefaultTransport;
+import net.lab1024.sa.base.common.message.codec.DefaultTransport;
 
 /**
  * HTTP 设备会话 — 无连接型，仅追踪最后活跃时间。

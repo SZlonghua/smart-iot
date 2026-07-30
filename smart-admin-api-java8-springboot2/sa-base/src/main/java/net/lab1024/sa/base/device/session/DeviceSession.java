@@ -1,8 +1,7 @@
 package net.lab1024.sa.base.device.session;
 
 import net.lab1024.sa.base.device.DeviceOperator;
-import net.lab1024.sa.base.message.codec.Transport;
-import net.lab1024.sa.base.message.raw.EncodedMessage;
+import net.lab1024.sa.base.common.message.codec.Transport;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;

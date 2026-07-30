@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.lab1024.sa.base.device.DeviceOperator;
 import net.lab1024.sa.base.device.session.DeviceSession;
-import net.lab1024.sa.base.message.codec.Transport;
+import net.lab1024.sa.base.common.message.codec.Transport;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
