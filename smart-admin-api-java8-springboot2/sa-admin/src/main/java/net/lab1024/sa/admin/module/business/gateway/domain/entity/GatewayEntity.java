@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import net.lab1024.sa.admin.module.business.gateway.constant.TypeEnum;
+import net.lab1024.sa.base.common.util.SmartEnumUtil;
 
 import java.time.LocalDateTime;
 
@@ -47,4 +49,28 @@ public class GatewayEntity {
 
     /** 更新时间 */
     private LocalDateTime updateTime;
+
+    /** 是否启用（0=禁用，新增时null视为未禁用，DB默认1启用） */
+    public boolean isEnabled() {
+        return status == null || status != 0;
+    }
+
+    public net.lab1024.sa.base.common.gateway.DeviceGatewayProperties toProperties() {
+        net.lab1024.sa.base.common.gateway.DeviceGatewayProperties p =
+                new net.lab1024.sa.base.common.gateway.DeviceGatewayProperties();
+        p.setId(String.valueOf(id));
+        p.setName(name);
+        p.setDescription(description);
+        p.setProvider(getProviderId());
+        p.setProtocol(String.valueOf(protocolId));
+        p.setTransport(transport);
+        p.setComponentId(String.valueOf(componentId));
+        p.setStatus(status);
+        return p;
+    }
+
+    private String getProviderId() {
+        return SmartEnumUtil.getEnumByValue(type, TypeEnum.class)
+                .getProviderId();
+    }
 }
