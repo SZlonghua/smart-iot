@@ -333,13 +333,16 @@ public class MqttServerDeviceGatewayProvider implements DeviceGatewayProvider {
     private final DeviceRegistry registry;
     private final DeviceSessionManager sessionManager;
     private final ProtocolSupports protocolSupports;
+    private final NetworkManager networkManager;
 
     public MqttServerDeviceGatewayProvider(DeviceRegistry registry,
                                             DeviceSessionManager sessionManager,
-                                            ProtocolSupports protocolSupports) {
+                                            ProtocolSupports protocolSupports,
+                                            NetworkManager networkManager) {
         this.registry = registry;
         this.sessionManager = sessionManager;
         this.protocolSupports = protocolSupports;
+        this.networkManager = networkManager;
     }
 
     @Override public String getId() { return "mqtt-server"; }
@@ -347,11 +350,18 @@ public class MqttServerDeviceGatewayProvider implements DeviceGatewayProvider {
     @Override public Transport getTransport() { return DefaultTransport.MQTT; }
 
     @Override
+    public Mono<DeviceGateway> createDeviceGateway(DeviceGatewayProperties properties) {
+        return networkManager.<MqttServer>getNetwork(getNetworkType(), properties.getComponentId())
+                .map(network -> new MqttServerDeviceGateway(
+                        properties.getId(), registry, sessionManager,
+                        network, messageHandler, Mono.empty()));
+    }
     public Mono<? extends DeviceGateway> createDeviceGateway(DeviceGatewayProperties properties) {
         return Mono.just(new MqttServerDeviceGateway(properties, registry, sessionManager, protocolSupports));
     }
 }
 ```
+**关键技术点：** `createDeviceGateway` 通过 `NetworkManager.getNetwork(type, componentId)` 获取底层网络通道，再包装为 DeviceGateway 实例。DeviceGateway 不自己创建网络连接，而是复用 Network 组件的能力。
 
 所有 `DeviceGatewayProvider` 实现类统一构造函数依赖：
 
@@ -360,6 +370,7 @@ public class MqttServerDeviceGatewayProvider implements DeviceGatewayProvider {
 | `DeviceRegistry` | 设备查找与认证 |
 | `DeviceSessionManager` | 设备连接时创建/管理会话 |
 | `ProtocolSupports` | 协议编解码与认证代理 |
+| `NetworkManager` | 获取底层网络组件（Network） |
 
 ### 5.5 DeviceGateway 实现类
 

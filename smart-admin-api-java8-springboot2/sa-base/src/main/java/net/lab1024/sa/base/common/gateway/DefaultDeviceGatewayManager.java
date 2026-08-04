@@ -1,4 +1,4 @@
-package net.lab1024.sa.base.module.support.protocol.gateway;
+package net.lab1024.sa.base.common.gateway;
 
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.base.common.gateway.*;
@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class DefaultDeviceGatewayManager implements DeviceGatewayManager {
 
-    private final ConcurrentHashMap<String, Mono<DeviceGateway>> registry = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, DeviceGateway> registry = new ConcurrentHashMap<>();
     private final DeviceGatewayProviders providers;
     private final DeviceGatewayPropertiesManager propertiesManager;
     private final IEventBus eventBus;
@@ -64,10 +64,13 @@ public class DefaultDeviceGatewayManager implements DeviceGatewayManager {
         if (id == null) {
             return Mono.empty();
         }
-        return registry.computeIfAbsent(id, this::createGateway);
+        return Mono.justOrEmpty(registry.get(id))
+                .switchIfEmpty(createGateway(id))
+                .doOnNext(gateway -> registry.putIfAbsent(id, gateway));
     }
 
     protected Mono<DeviceGateway> createGateway(String id) {
+        log.info("create gateway {}", id);
         return propertiesManager.getProperties(id)
                 .switchIfEmpty(Mono.error(() ->
                         new UnsupportedOperationException("网关配置[" + id + "]不存在")))
@@ -80,33 +83,55 @@ public class DefaultDeviceGatewayManager implements DeviceGatewayManager {
 
     @Override
     public Mono<Void> reload(String gatewayId) {
+        log.info("reload gateway {}", gatewayId);
         return doReload(gatewayId);
     }
 
     private Mono<Void> doReload(String gatewayId) {
-        return propertiesManager.getProperties(gatewayId)
-                .flatMap(properties -> providers.getProvider(properties.getProvider())
-                        .flatMap(provider -> registry.compute(gatewayId, (id, gateway) -> {
-                            if (gateway != null) {
-                                return gateway.flatMap(g -> provider.reloadDeviceGateway(g, properties));
-                            }
-                            return provider.createDeviceGateway(properties)
-                                    .flatMap(g -> g.startup().thenReturn(g));
-                        })))
+        return Mono.justOrEmpty(registry.get(gatewayId))
+                .flatMap(this::reloadGateway)
+                .switchIfEmpty(Mono.defer(() -> createGateway(gatewayId)))
+                .doOnNext(gateway -> registry.put(gatewayId, gateway))
+                .doOnNext(DeviceGateway::startup)
                 .then();
     }
+
+    private Mono<DeviceGateway> reloadGateway(DeviceGateway gateway) {
+        log.info("reloadGateway gateway:{}", gateway);
+        return propertiesManager.getProperties(gateway.getId())
+                .switchIfEmpty(Mono.error(() ->
+                        new UnsupportedOperationException("网关配置[" + gateway.getId() + "]不存在")))
+                .flatMap(properties -> providers.getProvider(properties.getProvider())
+                        .switchIfEmpty(Mono.error(() ->
+                                new UnsupportedOperationException("网关Provider[" + properties.getProvider() + "]不存在")))
+                        .flatMap(provider -> provider.reloadDeviceGateway(gateway, properties)));
+    }
+
+    /*private Mono<Void> doReload(String gatewayId) {
+        log.info("doReload gatewayId:{}", gatewayId);
+        return Mono.justOrEmpty(registry.get(gatewayId))
+                .flatMap(existing -> propertiesManager.getProperties(gatewayId)
+                        .flatMap(properties -> providers.getProvider(properties.getProvider())
+                                .flatMap(provider -> provider.reloadDeviceGateway(existing, properties))))
+                .switchIfEmpty(Mono.defer(() -> propertiesManager.getProperties(gatewayId)
+                        .flatMap(properties -> providers.getProvider(properties.getProvider())
+                                .flatMap(provider -> provider.createDeviceGateway(properties)
+                                        .flatMap(g -> g.startup().thenReturn(g))))))
+                .doOnNext(gateway -> registry.put(gatewayId, gateway))
+                .then();
+    }*/
 
     @Override
     public Mono<Void> start(String id) {
         return getGateway(id)
                 .flatMap(DeviceGateway::startup)
-                .doOnSuccess(nil -> log.debug("started device gateway {}", id))
+                .doOnSuccess(nil -> log.info("started device gateway {}", id))
                 .doOnError(err -> log.error("start device gateway {} error", id, err));
     }
 
     @Override
     public Mono<Void> shutdown(String gatewayId) {
-        return registry.remove(gatewayId)
+        return Mono.justOrEmpty(registry.remove(gatewayId))
                 .flatMap(DeviceGateway::shutdown)
                 .doOnSuccess(nil -> log.debug("shutdown device gateway {}", gatewayId))
                 .doOnError(err -> log.error("shutdown device gateway {} error", gatewayId, err));
@@ -121,9 +146,9 @@ public class DefaultDeviceGatewayManager implements DeviceGatewayManager {
     }
 
     private void onUnregister(DeviceGatewayProperties props) {
-        Mono<DeviceGateway> removed = registry.remove(props.getId());
+        DeviceGateway removed = registry.remove(props.getId());
         if (removed != null) {
-            removed.flatMap(DeviceGateway::shutdown).subscribe();
+            removed.shutdown().subscribe();
             log.info("[GatewayManager] 网关已注销 — id={}", props.getId());
         }
     }

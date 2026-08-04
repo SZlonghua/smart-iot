@@ -1,4 +1,4 @@
-package net.lab1024.sa.base.module.support.protocol.gateway;
+package net.lab1024.sa.base.common.gateway;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,7 @@ import java.util.function.BiConsumer;
 @Slf4j
 public abstract class AbstractDeviceGateway implements DeviceGateway {
 
-    protected final DeviceGatewayProperties properties;
+    protected final String id;
     protected volatile GatewayState state = GatewayState.shutdown;
     private final static AtomicReferenceFieldUpdater<AbstractDeviceGateway, GatewayState>
             STATE = AtomicReferenceFieldUpdater.newUpdater(AbstractDeviceGateway.class, GatewayState.class, "state");
@@ -33,13 +33,13 @@ public abstract class AbstractDeviceGateway implements DeviceGateway {
     private final List<BiConsumer<GatewayState, GatewayState>> stateListener = new CopyOnWriteArrayList<>();
 
 
-    protected AbstractDeviceGateway(DeviceGatewayProperties properties) {
-        this.properties = properties;
+    protected AbstractDeviceGateway(String id) {
+        this.id = id;
     }
 
     @Override
     public String getId() {
-        return properties.getId();
+        return id;
     }
 
     @Override

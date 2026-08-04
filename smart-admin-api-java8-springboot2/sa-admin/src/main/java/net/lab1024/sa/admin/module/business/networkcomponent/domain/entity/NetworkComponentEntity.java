@@ -1,9 +1,13 @@
 package net.lab1024.sa.admin.module.business.networkcomponent.domain.entity;
 
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import net.lab1024.sa.admin.module.business.networkcomponent.constant.ComponentTypeEnum;
+import net.lab1024.sa.base.common.network.NetworkProperties;
+import net.lab1024.sa.base.common.util.SmartEnumUtil;
 
 import java.time.LocalDateTime;
 
@@ -52,4 +56,23 @@ public class NetworkComponentEntity {
 
     /** 更新时间 */
     private LocalDateTime updateTime;
+
+    public boolean isEnabled() {
+        return status == null || status != 0;
+    }
+
+    public NetworkProperties toProperties() {
+        NetworkProperties p = new NetworkProperties();
+        p.setId(String.valueOf(id));
+        p.setName(name);
+        p.setType(getNetworkProviderId());
+//        p.setType(type);
+        p.setEnabled(status != null && status == 1);
+        p.setConfigurations(JSON.parseObject(configuration, java.util.Map.class));
+        return p;
+    }
+
+    private String getNetworkProviderId() {
+        return SmartEnumUtil.getEnumByValue(type, ComponentTypeEnum.class).getProviderId();
+    }
 }

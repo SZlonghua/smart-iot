@@ -1,4 +1,4 @@
-package net.lab1024.sa.base.module.support.protocol.gateway;
+package net.lab1024.sa.base.common.gateway;
 
 import net.lab1024.sa.base.common.gateway.DeviceGatewayProvider;
 import net.lab1024.sa.base.common.gateway.DeviceGatewayProviders;

@@ -1,9 +1,6 @@
-package net.lab1024.sa.base.module.support.protocol.gateway;
+package net.lab1024.sa.base.common.gateway.config;
 
-import net.lab1024.sa.base.common.gateway.DeviceGatewayManager;
-import net.lab1024.sa.base.common.gateway.DeviceGatewayPropertiesManager;
-import net.lab1024.sa.base.common.gateway.DeviceGatewayProvider;
-import net.lab1024.sa.base.common.gateway.DeviceGatewayProviders;
+import net.lab1024.sa.base.common.gateway.*;
 import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
 import net.lab1024.sa.base.module.support.protocol.children.gateway.ChildrenDeviceGatewayProvider;
 import org.springframework.boot.context.event.ApplicationReadyEvent;

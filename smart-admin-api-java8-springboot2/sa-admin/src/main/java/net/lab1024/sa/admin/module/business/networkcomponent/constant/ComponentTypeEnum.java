@@ -15,17 +15,29 @@ import net.lab1024.sa.base.common.enumeration.BaseEnum;
 @Getter
 public enum ComponentTypeEnum implements BaseEnum {
 
-    TCP("tcp", "TCP服务"),
+    TCP("tcp", "TCP服务", "tcp-server"),
+//    TCP_CLIENT("tcp_client", "TCP客户端", "tcp-client"),
 
-    HTTP("http", "HTTP服务"),
+    MQTT_SERVER("mqtt-server", "MQTT服务", "mqtt-server"),
+    MQTT_CLIENT("mqtt-client", "MQTT客户端", "mqtt-client"),
 
-    MQTT_SERVER("mqtt-server", "MQTT服务"),
+    HTTP("http", "HTTP服务", "http-server"),
+//    HTTP_CLIENT("http-client", "HTTP客户端", "http-client"),
 
-    MQTT_CLIENT("mqtt-client", "MQTT客户端"),
+//    WS_SERVER("ws-server", "WebSocket服务", "ws-server"),
+//    WS_CLIENT("ws-client", "WebSocket客户端", "ws-client"),
+
+    UDP("udp", "UDP", "udp"),
+
+//    COAP_SERVER("coap-server", "CoAP服务", "coap-server"),
+//    COAP_CLIENT("coap-client", "CoAP客户端", "coap-client"),
 
     ;
 
     private final String value;
 
     private final String desc;
+
+    /** 对应 NetworkProvider.getId() */
+    private final String providerId;
 }

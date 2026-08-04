@@ -25,6 +25,10 @@ public enum TypeEnum implements BaseEnum {
 
     TCP_TRANSPARENT("tcp_transparent", "TCP透传接入", "tcp"),
 
+    COAP_DIRECT("coap_direct", "CoAP接入", "coap"),
+
+    WEB_SOCKET("websocket", "WebSocket接入", "websocket"),
+
     ;
 
     private final String value;

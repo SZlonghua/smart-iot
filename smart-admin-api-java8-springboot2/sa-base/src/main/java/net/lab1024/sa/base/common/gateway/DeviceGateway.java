@@ -65,4 +65,12 @@ public interface DeviceGateway {
         });
     }
 
+    default boolean isChangeNetwork(String networkId){
+        return false;
+    }
+
+    default boolean isChangeProtocol(String protocol){
+        return false;
+    }
+
 }
