@@ -6,6 +6,7 @@ import net.lab1024.sa.base.common.network.NetworkType;
 public class VertxWebSocketClientNetwork implements WebSocketClientNetwork {
     @Override public String getId() { return null; }
     @Override public NetworkType getType() { return DefaultNetworkType.WEB_SOCKET_CLIENT; }
+    @Override public void start() { log.info("[VertxWebSocketClient] start"); }
     @Override public void shutdown() { log.info("[VertxWebSocketClient] shutdown"); }
     @Override public boolean isAlive() { return true; }
     @Override public boolean isAutoReload() { return true; }

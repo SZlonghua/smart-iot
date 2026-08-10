@@ -21,13 +21,22 @@ public class ChildrenDeviceSession extends AbstractDeviceSession {
 
     public ChildrenDeviceSession(String deviceId, Transport transport,
                                   DeviceOperator operator, DeviceSession parent) {
-        super(deviceId, transport);
-        this.operator = operator;
+        super(deviceId, operator, transport);
         this.parent = parent;
     }
 
     @Override
+    public long lastPingTime() {
+        return 0;
+    }
+
+    @Override
+    public void close() {
+
+    }
+
+    @Override
     public boolean isAlive() {
-        return !closed && parent != null && parent.isAlive();
+        return parent != null && parent.isAlive();
     }
 }

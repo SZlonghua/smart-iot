@@ -1,11 +1,29 @@
 package net.lab1024.sa.base.module.support.protocol.mqtt.network;
 
-import javax.annotation.Nonnull;
-
+import cn.hutool.core.bean.BeanUtil;
+import io.vertx.core.Vertx;
+import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.base.common.network.*;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.Nonnull;
+
+/**
+ * MQTT Server Network Provider。
+ *
+ * @Author 廖涛
+ * @Date 2026/08/07
+ * @Copyright 1024创新实验室
+ */
+@Slf4j
 public class MqttServerNetworkProvider implements NetworkProvider<MqttServerConfig> {
+
+    private final Vertx vertx;
+
+    public MqttServerNetworkProvider(Vertx vertx) {
+        this.vertx = vertx;
+    }
+
     @Nonnull
     @Override
     public String getId() {
@@ -22,24 +40,21 @@ public class MqttServerNetworkProvider implements NetworkProvider<MqttServerConf
     @Override
     public Mono<MqttServerConfig> createConfig(@Nonnull NetworkProperties properties) {
         MqttServerConfig cfg = new MqttServerConfig();
+        BeanUtil.copyProperties(properties.getConfigurations(), cfg);
         cfg.setId(properties.getId());
-        @SuppressWarnings("unchecked")
-        java.util.Map<String, Object> vals = properties.getConfigurations();
-        if (vals != null) {
-            if (vals.containsKey("host")) cfg.setHost((String) vals.get("host"));
-            if (vals.containsKey("port")) cfg.setPort(Integer.parseInt(String.valueOf(vals.get("port"))));
-        }
         return Mono.just(cfg);
     }
 
     @Nonnull
     @Override
     public Mono<Network> createNetwork(@Nonnull MqttServerConfig config) {
-        return Mono.just(new VertxMqttServerNetwork());
+        return Mono.just(new VertxMqttServerNetwork(config, vertx));
     }
 
     @Override
     public Mono<Network> reload(@Nonnull Network network, @Nonnull MqttServerConfig config) {
+        VertxMqttServerNetwork mqttNetwork = (VertxMqttServerNetwork) network;
+        mqttNetwork.reload(config);
         return Mono.just(network);
     }
 }

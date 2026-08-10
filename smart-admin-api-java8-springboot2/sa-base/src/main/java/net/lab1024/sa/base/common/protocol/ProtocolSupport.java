@@ -4,6 +4,7 @@ import net.lab1024.sa.base.common.defaults.Authenticator;
 import net.lab1024.sa.base.common.message.codec.DeviceMessageCodec;
 import net.lab1024.sa.base.common.message.codec.Transport;
 import net.lab1024.sa.base.device.AuthenticationResponse;
+import net.lab1024.sa.base.device.DeviceRegistry;
 import org.springframework.core.Ordered;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
@@ -70,6 +71,11 @@ public interface ProtocolSupport extends Disposable, Ordered, Comparable<Protoco
     Mono<AuthenticationResponse> authenticate(
             @Nonnull AuthenticationRequest request,
             @Nonnull DeviceOperator deviceOperation);
+
+    @Nonnull
+    Mono<AuthenticationResponse> authenticate(
+            @Nonnull AuthenticationRequest request,
+            @Nonnull DeviceRegistry deviceRegistry);
 
     /**
      * 销毁协议

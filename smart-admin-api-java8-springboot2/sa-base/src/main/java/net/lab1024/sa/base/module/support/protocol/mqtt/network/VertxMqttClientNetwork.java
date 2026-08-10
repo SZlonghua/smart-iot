@@ -6,6 +6,7 @@ import net.lab1024.sa.base.common.network.NetworkType;
 public class VertxMqttClientNetwork implements MqttClientNetwork {
     @Override public String getId() { return null; }
     @Override public NetworkType getType() { return DefaultNetworkType.MQTT_CLIENT; }
+    @Override public void start() { log.info("[VertxMqttClient] start"); }
     @Override public void shutdown() { log.info("[VertxMqttClient] shutdown"); }
     @Override public boolean isAlive() { return true; }
     @Override public boolean isAutoReload() { return true; }

@@ -12,7 +12,25 @@ import net.lab1024.sa.base.common.message.codec.DefaultTransport;
  */
 public class WebSocketDeviceSession extends AbstractDeviceSession {
 
+    private volatile boolean closed;
+    private volatile long lastPingTime = System.currentTimeMillis();
+
     public WebSocketDeviceSession(String deviceId) {
-        super(deviceId, DefaultTransport.WebSocket);
+        super(deviceId, null, DefaultTransport.WebSocket);
+    }
+
+    @Override
+    public long lastPingTime() {
+        return lastPingTime;
+    }
+
+    @Override
+    public void close() {
+        closed = true;
+    }
+
+    @Override
+    public boolean isAlive() {
+        return !closed;
     }
 }

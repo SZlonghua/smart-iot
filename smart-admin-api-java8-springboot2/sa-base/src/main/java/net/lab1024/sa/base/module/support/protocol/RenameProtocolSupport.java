@@ -10,6 +10,7 @@ import net.lab1024.sa.base.common.protocol.ProtocolSupport;
 import net.lab1024.sa.base.device.AuthenticationRequest;
 import net.lab1024.sa.base.device.AuthenticationResponse;
 import net.lab1024.sa.base.device.DeviceOperator;
+import net.lab1024.sa.base.device.DeviceRegistry;
 import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
 import org.jetbrains.annotations.NotNull;
 import reactor.core.publisher.Flux;
@@ -58,5 +59,11 @@ public class RenameProtocolSupport implements ProtocolSupport {
     @Override
     public Mono<AuthenticationResponse> authenticate(@NotNull AuthenticationRequest request, @NotNull DeviceOperator deviceOperation) {
         return target.authenticate(request, deviceOperation);
+    }
+
+    @NotNull
+    @Override
+    public Mono<AuthenticationResponse> authenticate(@NotNull AuthenticationRequest request, @NotNull DeviceRegistry deviceRegistry) {
+        return target.authenticate(request, deviceRegistry);
     }
 }

@@ -185,3 +185,13 @@ smart:
     db-refresh-enabled: true
     # 数据库配置检测-执行间隔 默认120秒 可选
     db-refresh-interval: 60
+
+vertx:
+  # Vertx 配置
+  event-loop-size: 10
+  worker-size: 10
+  max-event-loop-execute-time: 30
+  max-event-loop-execute-time-unit: seconds
+  max-worker-execute-time: 30
+  max-worker-execute-time-unit: seconds
+  prefer-native-transport: true

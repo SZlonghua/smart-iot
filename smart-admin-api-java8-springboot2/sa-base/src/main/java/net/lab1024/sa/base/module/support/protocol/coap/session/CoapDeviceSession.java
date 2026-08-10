@@ -20,22 +20,30 @@ public class CoapDeviceSession extends AbstractDeviceSession {
     /** 超时时间：120 秒无请求视为离线 */
     private static final long TIMEOUT_MS = 120_000;
 
+    private volatile boolean closed;
+    private volatile long lastPingTime = System.currentTimeMillis();
+
     /** Observe 订阅的资源路径集合 */
     private final Set<String> observeResources = ConcurrentHashMap.newKeySet();
 
     public CoapDeviceSession(String deviceId) {
-        super(deviceId, DefaultTransport.CoAP);
+        super(deviceId, null, DefaultTransport.CoAP);
+    }
+
+    @Override
+    public long lastPingTime() {
+        return lastPingTime;
+    }
+
+    @Override
+    public void close() {
+        closed = true;
+        observeResources.clear();
     }
 
     @Override
     public boolean isAlive() {
         return !closed && (System.currentTimeMillis() - lastPingTime) < TIMEOUT_MS;
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        observeResources.clear();
     }
 
     /** 添加 Observe 订阅 */

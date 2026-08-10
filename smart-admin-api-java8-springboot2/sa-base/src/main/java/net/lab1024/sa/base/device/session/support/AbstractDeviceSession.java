@@ -1,22 +1,19 @@
 package net.lab1024.sa.base.device.session.support;
 
-import lombok.Getter;
 import lombok.Setter;
 import net.lab1024.sa.base.device.DeviceOperator;
 import net.lab1024.sa.base.device.session.DeviceSession;
 import net.lab1024.sa.base.common.message.codec.Transport;
-import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
-import java.util.UUID;
 
 /**
  * 设备会话抽象基类 — 提供公共字段和默认实现。
  * 连接型会话持有 Channel/Connection，无连接型仅追踪时间戳。
- *
- * @Author 廖涛
- * @Date 2026/07/27
- * @Copyright 1024创新实验室
+ * <p>
+ * &#064;Author  廖涛
+ * &#064;Date  2026/07/27
+ * &#064;Copyright  1024创新实验室
  */
 public abstract class AbstractDeviceSession implements DeviceSession {
 
@@ -25,20 +22,16 @@ public abstract class AbstractDeviceSession implements DeviceSession {
     protected final Transport transport;
     protected final long connectTime;
 
-    @Getter
     @Setter
     @Nullable
     protected DeviceOperator operator;
 
-    protected volatile long lastPingTime;
-    protected volatile boolean closed;
-
-    protected AbstractDeviceSession(String deviceId, Transport transport) {
-        this.id = UUID.randomUUID().toString();
+    protected AbstractDeviceSession(String deviceId, @Nullable DeviceOperator deviceOperator, Transport transport) {
+        this.id = deviceId;
         this.deviceId = deviceId;
         this.transport = transport;
+        this.operator = deviceOperator;
         this.connectTime = System.currentTimeMillis();
-        this.lastPingTime = this.connectTime;
     }
 
     @Override
@@ -58,11 +51,6 @@ public abstract class AbstractDeviceSession implements DeviceSession {
     }
 
     @Override
-    public long lastPingTime() {
-        return lastPingTime;
-    }
-
-    @Override
     public long connectTime() {
         return connectTime;
     }
@@ -72,23 +60,5 @@ public abstract class AbstractDeviceSession implements DeviceSession {
         return transport;
     }
 
-    @Override
-    public boolean isAlive() {
-        return !closed;
-    }
 
-    @Override
-    public void close() {
-        this.closed = true;
-    }
-
-    @Override
-    public Mono<Boolean> isAliveAsync() {
-        return Mono.fromSupplier(this::isAlive);
-    }
-
-    /** 更新心跳时间 */
-    public void ping() {
-        this.lastPingTime = System.currentTimeMillis();
-    }
 }

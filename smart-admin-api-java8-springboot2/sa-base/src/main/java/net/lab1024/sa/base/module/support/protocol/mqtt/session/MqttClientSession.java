@@ -12,8 +12,21 @@ import net.lab1024.sa.base.common.message.codec.DefaultTransport;
  */
 public class MqttClientSession extends AbstractDeviceSession {
 
+    private volatile boolean closed;
+    private volatile long lastPingTime = System.currentTimeMillis();
+
     public MqttClientSession(String deviceId) {
-        super(deviceId, DefaultTransport.MQTT);
+        super(deviceId, null, DefaultTransport.MQTT);
+    }
+
+    @Override
+    public long lastPingTime() {
+        return lastPingTime;
+    }
+
+    @Override
+    public void close() {
+        closed = true;
     }
 
     @Override

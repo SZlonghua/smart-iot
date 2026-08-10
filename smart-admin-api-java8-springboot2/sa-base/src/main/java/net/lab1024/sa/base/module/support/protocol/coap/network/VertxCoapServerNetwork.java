@@ -6,6 +6,7 @@ import net.lab1024.sa.base.common.network.NetworkType;
 public class VertxCoapServerNetwork implements CoapServerNetwork {
     @Override public String getId() { return null; }
     @Override public NetworkType getType() { return DefaultNetworkType.COAP_SERVER; }
+    @Override public void start() { log.info("[VertxCoapServer] start"); }
     @Override public void shutdown() { log.info("[VertxCoapServer] shutdown"); }
     @Override public boolean isAlive() { return true; }
     @Override public boolean isAutoReload() { return true; }

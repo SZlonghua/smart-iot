@@ -16,8 +16,21 @@ public class HttpDeviceSession extends AbstractDeviceSession {
     /** 超时时间：120 秒无请求视为离线 */
     private static final long TIMEOUT_MS = 120_000;
 
+    private volatile boolean closed;
+    private volatile long lastPingTime = System.currentTimeMillis();
+
     public HttpDeviceSession(String deviceId) {
-        super(deviceId, DefaultTransport.HTTP);
+        super(deviceId, null, DefaultTransport.HTTP);
+    }
+
+    @Override
+    public long lastPingTime() {
+        return lastPingTime;
+    }
+
+    @Override
+    public void close() {
+        closed = true;
     }
 
     @Override

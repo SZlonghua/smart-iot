@@ -17,6 +17,11 @@ public class VertxTcpServerNetwork implements TcpServerNetwork {
     }
 
     @Override
+    public void start() {
+        log.info("[VertxTcpServer] start");
+    }
+
+    @Override
     public void shutdown() {
         log.info("[VertxTcpServer] shutdown");
     }

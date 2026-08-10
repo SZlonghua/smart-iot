@@ -6,6 +6,7 @@ import net.lab1024.sa.base.common.network.NetworkType;
 public class VertxHttpClientNetwork implements HttpClientNetwork {
     @Override public String getId() { return null; }
     @Override public NetworkType getType() { return DefaultNetworkType.HTTP_CLIENT; }
+    @Override public void start() { log.info("[VertxHttpClient] start"); }
     @Override public void shutdown() { log.info("[VertxHttpClient] shutdown"); }
     @Override public boolean isAlive() { return true; }
     @Override public boolean isAutoReload() { return true; }

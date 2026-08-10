@@ -9,8 +9,14 @@ import net.lab1024.sa.base.common.network.NetworkTransport;
 @Setter
 public class MqttServerConfig implements ServerNetworkConfig {
     private String id;
-    private String host;
-    private int port;
+    private String localAddress;
+    private int localPort;
+    private String publicAddress;
+    private int publicPort;
+
+    //最大消息长度
+    private int maxMessageSize = 8096;
+    private boolean tlsEnabled;
 
     @Override
     public NetworkTransport getTransport() {

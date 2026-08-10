@@ -12,7 +12,25 @@ import net.lab1024.sa.base.common.message.codec.DefaultTransport;
  */
 public class TcpDeviceSession extends AbstractDeviceSession {
 
+    private volatile boolean closed;
+    private volatile long lastPingTime = System.currentTimeMillis();
+
     public TcpDeviceSession(String deviceId) {
-        super(deviceId, DefaultTransport.TCP);
+        super(deviceId, null, DefaultTransport.TCP);
+    }
+
+    @Override
+    public long lastPingTime() {
+        return lastPingTime;
+    }
+
+    @Override
+    public void close() {
+        closed = true;
+    }
+
+    @Override
+    public boolean isAlive() {
+        return !closed;
     }
 }

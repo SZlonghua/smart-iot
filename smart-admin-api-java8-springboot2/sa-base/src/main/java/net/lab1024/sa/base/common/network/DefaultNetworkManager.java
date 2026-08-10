@@ -80,6 +80,7 @@ public class DefaultNetworkManager implements NetworkManager {
                     return doCreate(type, id);
                 }))
                 .doOnNext(network -> networkStore.put(id, network))
+                .doOnNext(Network::start)
                 .then();
     }
 

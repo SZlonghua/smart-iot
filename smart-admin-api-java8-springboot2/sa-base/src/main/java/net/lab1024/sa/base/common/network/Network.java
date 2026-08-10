@@ -15,6 +15,11 @@ public interface Network {
     NetworkType getType();
 
     /**
+     * 启动网络组件
+     */
+    void start();
+
+    /**
      * 关闭网络组件
      */
     void shutdown();

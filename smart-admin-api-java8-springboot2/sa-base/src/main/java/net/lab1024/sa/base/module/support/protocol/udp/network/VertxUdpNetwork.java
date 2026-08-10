@@ -6,6 +6,7 @@ import net.lab1024.sa.base.common.network.NetworkType;
 public class VertxUdpNetwork implements UdpNetwork {
     @Override public String getId() { return null; }
     @Override public NetworkType getType() { return DefaultNetworkType.UDP; }
+    @Override public void start() { log.info("[VertxUdp] start"); }
     @Override public void shutdown() { log.info("[VertxUdp] shutdown"); }
     @Override public boolean isAlive() { return true; }
     @Override public boolean isAutoReload() { return true; }

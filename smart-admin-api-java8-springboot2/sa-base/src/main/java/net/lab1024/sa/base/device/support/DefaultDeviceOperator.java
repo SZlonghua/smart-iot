@@ -84,16 +84,16 @@ public class DefaultDeviceOperator implements DeviceOperator {
         return Mono.just(true);
     }
 
-    @Override
+    /*@Override
     public Mono<AuthenticationResponse> authenticate(AuthenticationRequest request) {
         String storedKey = storage.getConfig(DeviceField.DEVICE_KEY.getValue()).asString();
         String storedSecret = storage.getConfig(DeviceField.DEVICE_SECRET.getValue()).asString();
 
-        boolean success = storedKey != null && storedKey.equals(request.getDeviceKey())
-                && storedSecret != null && storedSecret.equals(request.getDeviceSecret());
+        boolean success = storedKey != null && storedKey.equals(request.getUsername())
+                && storedSecret != null && storedSecret.equals(request.getPassword());
 
         return Mono.just(AuthenticationResponse.success(deviceId));
-    }
+    }*/
 
     @Override
     public Mono<ThingsMetadata> getMetadata() {
