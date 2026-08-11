@@ -23,5 +23,9 @@ public class ProtocolSupportDefinition implements Serializable {
 
     private byte state;
 
-    private Map<String,Object> configuration;
+    /** JAR包路径 */
+    private String jarPath;
+
+    /** JAR包原始文件名 */
+    private String jarName;
 }

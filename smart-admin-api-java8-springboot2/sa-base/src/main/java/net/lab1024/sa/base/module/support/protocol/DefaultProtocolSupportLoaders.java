@@ -32,6 +32,11 @@ public class DefaultProtocolSupportLoaders implements ProtocolSupportLoaders {
     }
 
     @Override
+    public void close(String id) {
+        loaders.forEach(l -> l.close(id));
+    }
+
+    @Override
     public Mono<? extends ProtocolSupport> load(ProtocolSupportDefinition definition) {
         return Flux.fromIterable(loaders)
                 .filter(loader -> loader.supports(definition))
@@ -45,7 +50,7 @@ public class DefaultProtocolSupportLoaders implements ProtocolSupportLoaders {
                                 ps.getId(), definition.getLoader(), ps.getClass().getName());
                     }
                 })
-                .doOnError(e -> log.warn("[ProtocolLoaders] 加载失败（稍后可通过事件重试） — id={}, loader={}",
+                .doOnError(e -> log.error("[ProtocolLoaders] 加载失败（稍后可通过事件重试） — id={}, loader={}",
                         definition.getId(), definition.getLoader()));
     }
 }

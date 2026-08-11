@@ -107,28 +107,24 @@ public class DefaultProtocolSupportManager implements ProtocolSupportManager {
         return Mono.empty();
     }
 
-    /** 保存 → 加载并注册 */
+    /** 保存 → 加载并注册（已存在则跳过） */
     private void onSaved(ProtocolSupportDefinition def) {
+        if (registry.containsKey(def.getId())) {
+            return;
+        }
         loadAndRegister(def).subscribe();
     }
 
-    /** 修改 → 注销旧 → 加载新 → 注册 */
+    /** 修改 → 注销旧 → 清除缓存 → 加载新 → 注册 */
     private void onUpdated(ProtocolSupportDefinition def) {
-        ProtocolSupport old = registry.remove(def.getId());
-        if (old != null) {
-            old.dispose();
-            log.info("[ProtocolManager] 协议已注销 — id={}", def.getId());
-        }
+        registry.remove(def.getId());
         loadAndRegister(def).subscribe();
     }
 
-    /** 删除 → 注销并关闭类加载器 */
+    /** 删除 → 注销并释放类加载器 */
     private void onDeleted(ProtocolSupportDefinition def) {
-        ProtocolSupport removed = registry.remove(def.getId());
+        registry.remove(def.getId());
+        loaders.close(def.getId());
         log.info("[ProtocolManager] 协议已移除 — id={}", def.getId());
-        if (removed != null) {
-            removed.dispose();
-            log.info("[ProtocolManager] 协议已移除 — id={}", def.getId());
-        }
     }
 }

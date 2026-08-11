@@ -22,7 +22,7 @@
         </a-upload>
       </a-form-item>
       <a-form-item v-if="form.loader === 'local'" label="本地路径" name="localPath">
-        <a-input v-model:value="form.jarPath" placeholder="请输入 target 目录路径，如 C:\...\sa-admin\target" />
+        <a-input v-model:value="form.jarPath" placeholder="请输入 target 目录路径，如 C:\...\sa-admin\target\classes" />
       </a-form-item>
       <a-form-item label="协议描述" name="description">
         <a-input v-model:value="form.description" placeholder="请输入协议描述" />

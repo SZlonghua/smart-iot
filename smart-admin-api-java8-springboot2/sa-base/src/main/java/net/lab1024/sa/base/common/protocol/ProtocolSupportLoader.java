@@ -9,4 +9,8 @@ public interface ProtocolSupportLoader {
 
     /** 加载协议实例 */
     Mono<? extends ProtocolSupport> load(ProtocolSupportDefinition definition);
+
+    /** 释放指定协议 id 对应的 ClassLoader */
+    default void close(String id) {
+    }
 }

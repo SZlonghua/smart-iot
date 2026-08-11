@@ -24,10 +24,10 @@ import java.util.List;
 
 /**
  * ProtocolSupport 模块自动装配。
- *
- * @Author 廖涛
- * @Date 2026/07/27
- * @Copyright 1024创新实验室
+ * <p>
+ * &#064;Author  廖涛
+ * &#064;Date  2026/07/27
+ * &#064;Copyright  1024创新实验室
  */
 @Configuration
 public class ProtocolAutoConfiguration {
@@ -50,14 +50,14 @@ public class ProtocolAutoConfiguration {
     }
 
     @Bean
-    public ProtocolSupportLoader jarProtocolSupportLoader() {
-        return new JarProtocolSupportLoader();
+    public ProtocolSupportLoader jarProtocolSupportLoader(ServiceContext serviceContext) {
+        return new JarProtocolSupportLoader(serviceContext);
     }
 
     @Bean
     @Profile("dev")
-    public ProtocolSupportLoader localProtocolSupportLoader() {
-        return new LocalProtocolSupportLoader();
+    public ProtocolSupportLoader localProtocolSupportLoader(ServiceContext serviceContext) {
+        return new LocalProtocolSupportLoader(serviceContext);
     }
 
     /** 服务端口就绪后再加载协议（jar 包可能托管在本服务） */
