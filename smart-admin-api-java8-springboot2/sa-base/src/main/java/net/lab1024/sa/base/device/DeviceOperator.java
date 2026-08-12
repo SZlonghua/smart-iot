@@ -34,7 +34,7 @@ public interface DeviceOperator {
 
     Mono<Boolean> disconnect();
 
-//    Mono<AuthenticationResponse> authenticate(AuthenticationRequest request);
+    Mono<AuthenticationResponse> authenticate(DeviceAuthenticationRequest request);
 
     Mono<ThingsMetadata> getMetadata();
 

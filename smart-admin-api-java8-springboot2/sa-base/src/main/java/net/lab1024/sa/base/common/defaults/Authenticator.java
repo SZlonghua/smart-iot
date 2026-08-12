@@ -30,6 +30,7 @@ public interface Authenticator {
      */
     default Mono<AuthenticationResponse> authenticate(@Nonnull AuthenticationRequest request,
                                                       @Nonnull DeviceRegistry registry) {
-        return Mono.just(AuthenticationResponse.error(500,"不支持的认证方式"));
+        return registry.getDevice(request.getProductKey(), request.getDeviceKey())
+                .flatMap(device -> authenticate(request, device));
     }
 }

@@ -15,10 +15,10 @@ import java.util.Map;
 
 /**
  * DeviceOperator 默认实现 — 基于 IConfigStorage。
- *
- * @Author 廖涛
- * @Date 2026/07/22
- * @Copyright 1024创新实验室
+ * <p>
+ * &#064;Author  廖涛
+ * &#064;Date  2026/07/22
+ * &#064;Copyright  1024创新实验室
  */
 @Slf4j
 public class DefaultDeviceOperator implements DeviceOperator {
@@ -84,16 +84,39 @@ public class DefaultDeviceOperator implements DeviceOperator {
         return Mono.just(true);
     }
 
-    /*@Override
-    public Mono<AuthenticationResponse> authenticate(AuthenticationRequest request) {
-        String storedKey = storage.getConfig(DeviceField.DEVICE_KEY.getValue()).asString();
-        String storedSecret = storage.getConfig(DeviceField.DEVICE_SECRET.getValue()).asString();
+    @Override
+    public Mono<AuthenticationResponse> authenticate(DeviceAuthenticationRequest request) {
+        return Mono.fromCallable(() -> {
+            // 1. 防重放：|now - timestamp| ≤ 5分钟
+            long now = System.currentTimeMillis();
+            if (Math.abs(now - request.getTimestamp()) > 300_000) {
+                return AuthenticationResponse.error(401, "时间戳超时");
+            }
 
-        boolean success = storedKey != null && storedKey.equals(request.getUsername())
-                && storedSecret != null && storedSecret.equals(request.getPassword());
+            // 2. 读取设备密钥
+            String deviceSecret = storage.getConfig(DeviceField.DEVICE_SECRET.getValue()).asString();
+            if (deviceSecret == null) {
+                return AuthenticationResponse.error(402, "设备密钥不存在");
+            }
 
-        return Mono.just(AuthenticationResponse.success(deviceId));
-    }*/
+            // 3. 读取产品密钥（一型一密时需要）
+            String productSecret = null;
+            if (request.getMode() == 2) {
+                productSecret = storage.getConfig(DeviceField.PRODUCT_SECRET.getValue()).asString();
+                if (productSecret == null) {
+                    return AuthenticationResponse.error(402, "产品密钥不存在");
+                }
+            }
+
+            // 4. 用服务端密钥构建期望签名 → 比对
+            DeviceAuthenticationRequest expected = request.copy(deviceSecret, productSecret);
+            if (!request.isSignatureMatch(expected)) {
+                return AuthenticationResponse.error(403, "签名验证失败");
+            }
+
+            return AuthenticationResponse.success(deviceId);
+        });
+    }
 
     @Override
     public Mono<ThingsMetadata> getMetadata() {

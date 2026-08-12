@@ -11,6 +11,7 @@ import io.vertx.core.buffer.impl.BufferImpl;
 import io.vertx.mqtt.MqttEndpoint;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.lab1024.sa.base.common.message.codec.Transport;
 import net.lab1024.sa.base.common.message.raw.EncodedMessage;
 import net.lab1024.sa.base.device.AuthenticationRequest;
 import net.lab1024.sa.base.module.support.protocol.mqtt.message.DefaultMqttEncodedMessage;
@@ -26,7 +27,7 @@ import java.util.function.Consumer;
 
 /**
  * Vertx MQTT Connection 实现 — 封装 MqttEndpoint。
- *
+ * <p>
  * &#064;Author  廖涛
  * &#064;Date  2026/08/07
  * &#064;Copyright  1024创新实验室
@@ -97,7 +98,6 @@ public class VertxMqttConnection implements MqttConnection {
     /**
      * accept — 回复 CONNACK 接受连接
      *
-     * @return
      */
     @Override
     public MqttConnection accept() {
@@ -197,7 +197,7 @@ public class VertxMqttConnection implements MqttConnection {
         MqttEncodedMessage mqttMessage = (MqttEncodedMessage) message;
         int messageId = mqttMessage.getMessageId() <= 0 ? nextMessageId() : mqttMessage.getMessageId();
         return Mono
-                .<Void>create(sink -> {
+                .create(sink -> {
                     ByteBuf buf = message.getPayload();
                     Buffer buffer = BufferImpl.buffer(buf);
                     endpoint.publish(
@@ -246,11 +246,12 @@ public class VertxMqttConnection implements MqttConnection {
         disconnectConsumer.accept(this);
     }
 
-    public AuthenticationRequest getAuthenticationRequest() {
+    public AuthenticationRequest getAuthenticationRequest(Transport transport) {
         return MqttAuthenticationRequest.builder()
                 .clientId(getClientId())
                 .username(endpoint.auth().getUsername())
                 .password(endpoint.auth().getPassword())
+                .transport(transport)
                 .build();
     }
 

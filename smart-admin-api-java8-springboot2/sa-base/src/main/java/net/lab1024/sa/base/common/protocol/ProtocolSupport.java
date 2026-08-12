@@ -37,6 +37,12 @@ public interface ProtocolSupport extends Disposable, Ordered, Comparable<Protoco
      */
     Flux<? extends Transport> getSupportedTransport();
 
+    void addMessageCodec(Transport transport, DeviceMessageCodec codec);
+
+    default void addMessageCodec(DeviceMessageCodec codec) {
+        addMessageCodec(codec.getSupportTransport(), codec);
+    }
+
     /**
      * 获取设备消息编码解码器
      * <ul>
@@ -51,13 +57,6 @@ public interface ProtocolSupport extends Disposable, Ordered, Comparable<Protoco
 
 
     void addAuthenticator(Transport transport, Authenticator authenticator);
-
-    void addMessageCodec(Transport transport, DeviceMessageCodec codec);
-
-    default void addMessageCodec(DeviceMessageCodec codec) {
-        addMessageCodec(codec.getSupportTransport(), codec);
-    }
-
 
     /**
      * 进行设备认证

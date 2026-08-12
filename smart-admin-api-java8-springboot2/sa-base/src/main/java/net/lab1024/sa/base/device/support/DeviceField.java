@@ -1,12 +1,15 @@
 package net.lab1024.sa.base.device.support;
 
+import lombok.Getter;
+
 /**
  * Redis Hash 设备字段枚举。
- *
- * @Author 廖涛
- * @Date 2026/07/22
- * @Copyright 1024创新实验室
+ * <p>
+ * &#064;Author  廖涛
+ * &#064;Date  2026/07/22
+ * &#064;Copyright  1024创新实验室
  */
+@Getter
 public enum DeviceField {
 
     DEVICE_NAME("deviceName"),
@@ -29,7 +32,4 @@ public enum DeviceField {
         this.value = value;
     }
 
-    public String getValue() {
-        return value;
-    }
 }

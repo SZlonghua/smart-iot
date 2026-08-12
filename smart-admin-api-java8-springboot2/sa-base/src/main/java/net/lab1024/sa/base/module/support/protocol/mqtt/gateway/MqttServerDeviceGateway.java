@@ -86,7 +86,7 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
                         .then(Mono.empty()))
                 // 2. 设备认证
                 .flatMap(connection -> {
-                    AuthenticationRequest authReq = connection.getAuthenticationRequest();
+                    AuthenticationRequest authReq = connection.getAuthenticationRequest(getTransport());
                     return protocolSupport
                             .flatMap(ps -> ps.authenticate(authReq, registry))
                             .flatMap(authResp -> {
