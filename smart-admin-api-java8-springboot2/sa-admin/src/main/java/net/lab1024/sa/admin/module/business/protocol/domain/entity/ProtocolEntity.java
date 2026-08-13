@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+import net.lab1024.sa.base.common.protocol.ProtocolSupportDefinition;
 
 import java.time.LocalDateTime;
 
@@ -30,6 +31,9 @@ public class ProtocolEntity {
     /** 版本号 */
     private String version;
 
+    /** 加载方式：jar / local */
+    private String loader;
+
     /** JAR包路径 */
     private String jarPath;
 
@@ -46,4 +50,16 @@ public class ProtocolEntity {
     /** 更新时间 */
     @TableField(fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime updateTime;
+
+    public ProtocolSupportDefinition toDefinition() {
+
+        return ProtocolSupportDefinition.builder()
+                .id(String.valueOf(id))
+                .name(name)
+                .description(description)
+                .loader(loader)
+                .jarPath(jarPath)
+                .jarName(jarName)
+                .build();
+    }
 }

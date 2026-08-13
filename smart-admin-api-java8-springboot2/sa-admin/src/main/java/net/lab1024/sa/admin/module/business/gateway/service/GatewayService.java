@@ -135,4 +135,10 @@ public class GatewayService {
         }
         return detail;
     }
+
+    public long countByComponentId(Long componentId) {
+        return gatewayManager.lambdaQuery()
+                .eq(GatewayEntity::getComponentId, componentId)
+                .count();
+    }
 }

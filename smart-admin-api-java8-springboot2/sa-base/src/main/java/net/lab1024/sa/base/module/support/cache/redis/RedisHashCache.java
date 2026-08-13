@@ -4,9 +4,8 @@ import net.lab1024.sa.base.module.support.cache.core.IHashCache;
 import net.lab1024.sa.base.module.support.cache.core.Value;
 import org.springframework.data.redis.core.HashOperations;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Redis Hash 缓存实现。构造时绑定 key，操作只传 field。
@@ -36,6 +35,14 @@ public class RedisHashCache implements IHashCache {
     }
 
     @Override
+    public List<Value> multiGet(Collection<String> fields) {
+        return hashOps.multiGet(key, new ArrayList<>(fields))
+                .stream()
+                .map(SimpleValue::of)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Boolean set(String field, Object value) {
         hashOps.put(key, field, value);
         return true;
@@ -53,13 +60,12 @@ public class RedisHashCache implements IHashCache {
     @Override
     public Boolean delete(String field) {
         Long result = hashOps.delete(key, field);
-        return result != null && result > 0;
+        return result > 0;
     }
 
     @Override
     public Boolean delete(String... fields) {
-        Long result = hashOps.delete(key, (Object[]) fields);
-        return result != null && result > 0;
+        return hashOps.delete(key, (Object[]) fields) > 0;
     }
 
     @Override
@@ -69,29 +75,25 @@ public class RedisHashCache implements IHashCache {
 
     @Override
     public Set<Value> fields() {
-        Set<String> keys = hashOps.keys(key);
-        Set<Value> result = new java.util.LinkedHashSet<>();
-        if (keys != null) {
-            for (String k : keys) {
-                result.add(SimpleValue.of(k));
-            }
-        }
-        return result;
+        return hashOps.keys(key)
+                .stream()
+                .map(SimpleValue::of)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     @Override
     public Map<String, Value> getAll() {
-        Map<String, Object> all = hashOps.entries(key);
-        Map<String, Value> result = new LinkedHashMap<>();
-        if (all != null) {
-            all.forEach((k, v) -> result.put(k, SimpleValue.of(v)));
-        }
-        return result;
+        return hashOps.entries(key)
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        e -> SimpleValue.of(e.getValue()),
+                        (a, b) -> a,
+                        LinkedHashMap::new));
     }
 
     @Override
     public long size() {
-        Long size = hashOps.size(key);
-        return size == null ? 0 : size;
+        return hashOps.size(key);
     }
 }

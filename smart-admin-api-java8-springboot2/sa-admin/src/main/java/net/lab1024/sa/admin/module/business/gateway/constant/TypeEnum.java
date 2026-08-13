@@ -15,19 +15,26 @@ import net.lab1024.sa.base.common.enumeration.BaseEnum;
 @Getter
 public enum TypeEnum implements BaseEnum {
 
-    MQTT_DIRECT("mqtt_direct", "MQTT直接连接"),
+    MQTT_DIRECT("mqtt_direct", "MQTT直接连接", "mqtt-server"),
 
-    GATEWAY_CHILD("gateway_child", "网关子设备接入"),
+    GATEWAY_CHILD("gateway_child", "网关子设备接入", "children"),
 
-    HTTP_PUSH("http_push", "HTTP推送接入"),
+    HTTP_PUSH("http_push", "HTTP推送接入", "http-server"),
 
-    MQTT_BROKER("mqtt_broker", "MQTT Broker接入"),
+    MQTT_BROKER("mqtt_broker", "MQTT Broker接入", "mqtt-client"),
 
-    TCP_TRANSPARENT("tcp_transparent", "TCP透传接入"),
+    TCP_TRANSPARENT("tcp_transparent", "TCP透传接入", "tcp"),
+
+    COAP_DIRECT("coap_direct", "CoAP接入", "coap"),
+
+    WEB_SOCKET("websocket", "WebSocket接入", "websocket"),
 
     ;
 
     private final String value;
 
     private final String desc;
+
+    /** 对应 DeviceGatewayProvider.getId() */
+    private final String providerId;
 }

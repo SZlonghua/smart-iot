@@ -97,7 +97,7 @@
   // 查询数据表单和方法
   const queryFormState = {
     deviceName: '',
-    type: '',
+    type: undefined,
     deviceId: undefined,
     createTimeBegin: undefined,
     createTimeEnd: undefined,
@@ -142,7 +142,11 @@
   async function queryData() {
     tableLoading.value = true;
     try {
-      let queryResult = await deviceLogApi.queryPage({ ...queryForm });
+      let params = { ...queryForm };
+      if (!params.type) {
+        delete params.type;
+      }
+      let queryResult = await deviceLogApi.queryPage(params);
       tableData.value = queryResult.data.list;
       total.value = queryResult.data.total;
     } catch (e) {

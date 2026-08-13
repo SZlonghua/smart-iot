@@ -7,18 +7,22 @@
       <a-form-item label="版本号" name="version">
         <a-input v-model:value="form.version" placeholder="请输入版本号" />
       </a-form-item>
-      <a-form-item label="JAR包" name="jarPath">
-        <a-upload
-          v-model:file-list="jarFileList"
-          :max-count="1"
-          accept=".jar"
-          :customRequest="customUpload"
-        >
+      <a-form-item label="加载方式" name="loader">
+        <a-radio-group v-model:value="form.loader" @change="onLoaderChange">
+          <a-radio value="jar">Jar 包</a-radio>
+          <a-radio value="local">Local 本地</a-radio>
+        </a-radio-group>
+      </a-form-item>
+      <a-form-item v-if="form.loader === 'jar'" label="JAR包" name="jarPath">
+        <a-upload v-model:file-list="jarFileList" :max-count="1" accept=".jar" :customRequest="customUpload">
           <a-button>
             <upload-outlined />
             上传JAR包
           </a-button>
         </a-upload>
+      </a-form-item>
+      <a-form-item v-if="form.loader === 'local'" label="本地路径" name="localPath">
+        <a-input v-model:value="form.jarPath" placeholder="请输入 target 目录路径，如 C:\...\sa-admin\target\classes" />
       </a-form-item>
       <a-form-item label="协议描述" name="description">
         <a-input v-model:value="form.description" placeholder="请输入协议描述" />
@@ -61,6 +65,7 @@
     id: undefined,
     name: '',
     version: '',
+    loader: 'jar',
     jarPath: '',
     jarName: '',
     description: '',
@@ -96,6 +101,10 @@
       form.jarPath = '';
     }
   });
+  function onLoaderChange() {
+    form.jarName = '';
+    jarFileList.value = [];
+  }
 
   function showDrawer(rowData) {
     Object.assign(form, formDefault);
