@@ -25,7 +25,7 @@ public class DeviceInfo {
     private Long offlineTime;
     private Long onlineTime;
     private String sessionId;
-    private String protocolId;
+//    private String protocolId;
     private String gatewayId;
     private String connectionServerId;
 }

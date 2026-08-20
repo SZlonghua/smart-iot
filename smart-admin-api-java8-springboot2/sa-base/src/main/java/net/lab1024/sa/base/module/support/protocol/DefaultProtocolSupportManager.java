@@ -90,9 +90,13 @@ public class DefaultProtocolSupportManager implements ProtocolSupportManager {
         return protocolSupport.flatMap(this::registerInternal);
     }
 
-    /** 加载协议定义 → 注册，失败则静默跳过 */
+    /** 加载协议定义 → 重命名 id → 注册，失败则静默跳过 */
     private Mono<Void> loadAndRegister(ProtocolSupportDefinition def) {
         return loaders.load(def)
+                // jar 包内协议 id 可能写死（如 smart-iot），统一重命名为 DB 配置的 id，
+                // 保证 gateway 按配置的 protocol_id（数字 id）可以匹配到协议
+                .map(support -> new RenameProtocolSupport(
+                        def.getId(), def.getName(), def.getDescription(), support, eventBus))
                 .flatMap(this::registerInternal)
                 .onErrorResume(e -> {
                     log.warn("[ProtocolManager] 加载失败 — id={}, msg={}",
@@ -102,7 +106,19 @@ public class DefaultProtocolSupportManager implements ProtocolSupportManager {
     }
 
     private Mono<Void> registerInternal(ProtocolSupport support) {
-        registry.put(support.getId(), support);
+        registry.compute(support.getId(), (id, old) -> {
+            // 协议更新：保持旧代理实例不变（网关/会话持有的 Mono 快照仍指向它），
+            // 替换 name/description/target 为新协议 — 旧引用自动生效，且无 remove 空窗期
+            if (old instanceof RenameProtocolSupport) {
+                RenameProtocolSupport newSupport = (RenameProtocolSupport) support;
+                RenameProtocolSupport oldSupport = (RenameProtocolSupport) old;
+                oldSupport.setName(newSupport.getName());
+                oldSupport.setDescription(newSupport.getDescription());
+                oldSupport.setTarget(newSupport.getTarget());
+                return oldSupport;
+            }
+            return support;
+        });
         log.info("[ProtocolManager] 注册协议 — id={}, name={}", support.getId(), support.getName());
         return Mono.empty();
     }
@@ -115,9 +131,8 @@ public class DefaultProtocolSupportManager implements ProtocolSupportManager {
         loadAndRegister(def).subscribe();
     }
 
-    /** 修改 → 注销旧 → 清除缓存 → 加载新 → 注册 */
+    /** 修改 → 加载新协议 → registerInternal 原地替换代理 target（保持旧引用可用，无空窗期） */
     private void onUpdated(ProtocolSupportDefinition def) {
-        registry.remove(def.getId());
         loadAndRegister(def).subscribe();
     }
 

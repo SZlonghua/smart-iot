@@ -40,14 +40,15 @@ public class EventContext {
     }
 
     /**
-     * 从实体对象中提取主键值
+     * 从实体对象中提取主键值。
+     * wrapper 更新（ParamMap）等非实体参数直接返回 null，避免反射类型不匹配抛异常。
      */
     public Long extractEntityId(Object entity) {
         if (entity == null) {
             return null;
         }
         Field idField = metadata.getIdField();
-        if (idField == null) {
+        if (idField == null || !idField.getDeclaringClass().isInstance(entity)) {
             return null;
         }
         try {
@@ -77,11 +78,12 @@ public class EventContext {
     }
 
     /**
-     * 检测是否为软删除（UPDATE 且 deletedFlag=true）
+     * 检测是否为软删除（UPDATE 且 deletedFlag=true）。
+     * 非实体参数（wrapper 更新 ParamMap）直接返回 false。
      */
     public boolean detectSoftDelete(Object entity) {
         Field deletedFlagField = metadata.getDeletedFlagField();
-        if (deletedFlagField == null) {
+        if (deletedFlagField == null || !deletedFlagField.getDeclaringClass().isInstance(entity)) {
             return false;
         }
         try {

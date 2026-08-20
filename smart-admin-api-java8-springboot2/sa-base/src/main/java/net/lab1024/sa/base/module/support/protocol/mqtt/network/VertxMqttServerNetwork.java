@@ -26,7 +26,6 @@ public class VertxMqttServerNetwork implements MqttServerNetwork {
     private MqttServerConfig config;
     private final Vertx vertx;
     private volatile MqttServer mqttServer;
-    private volatile boolean alive;
     private volatile Consumer<VertxMqttConnection> connectionListener;
 
     public VertxMqttServerNetwork(MqttServerConfig config, Vertx vertx) {
@@ -54,7 +53,6 @@ public class VertxMqttServerNetwork implements MqttServerNetwork {
             }
         }).listen(ar -> {
             if (ar.succeeded()) {
-                alive = true;
                 log.info("MQTT server started on {},network id {}", config.getLocalPort(), config.getId());
             } else {
                 log.error("MQTT server start failed {},network id {}", ar.cause().getMessage(), config.getId());

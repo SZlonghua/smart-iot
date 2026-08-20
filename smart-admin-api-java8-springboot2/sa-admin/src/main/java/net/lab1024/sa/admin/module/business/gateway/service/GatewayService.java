@@ -141,4 +141,10 @@ public class GatewayService {
                 .eq(GatewayEntity::getComponentId, componentId)
                 .count();
     }
+
+    public long countByProtocolId(Long protocolId) {
+        return gatewayManager.lambdaQuery()
+                .eq(GatewayEntity::getProtocolId, protocolId)
+                .count();
+    }
 }

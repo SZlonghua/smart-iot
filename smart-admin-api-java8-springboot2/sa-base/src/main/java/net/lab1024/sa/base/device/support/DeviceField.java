@@ -22,8 +22,9 @@ public enum DeviceField {
     OFFLINE_TIME("offlineTime"),
     ONLINE_TIME("onlineTime"),
     SESSION_ID("sessionId"),
-    PROTOCOL_ID("protocolId"),
+//    PROTOCOL_ID("protocolId"),
     GATEWAY_ID("gatewayId"),
+    PARENT_DEVICE_ID("parentDeviceId"),
     CONNECTION_SERVER_ID("connectionServerId");
 
     private final String value;

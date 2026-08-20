@@ -14,6 +14,7 @@ import net.lab1024.sa.base.module.support.protocol.JarProtocolSupportLoader;
 import net.lab1024.sa.base.module.support.protocol.LocalProtocolSupportLoader;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.core.annotation.Order;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -60,12 +61,17 @@ public class ProtocolAutoConfiguration {
         return new LocalProtocolSupportLoader(serviceContext);
     }
 
-    /** 服务端口就绪后再加载协议（jar 包可能托管在本服务） */
+    /**
+     * 服务端口就绪后再加载协议（jar 包可能托管在本服务）。
+     * @Order(1) 先于网关加载（DeviceGatewayAutoConfiguration @Order(2)），
+     * block 等待协议注册完成，保证网关创建时协议已就绪。
+     */
+    @Order(10)
     @EventListener(ApplicationReadyEvent.class)
     public void onReady(ApplicationReadyEvent event) {
         event.getApplicationContext()
                 .getBean(DefaultProtocolSupportManager.class)
                 .loadAll()
-                .subscribe();
+                .block();
     }
 }

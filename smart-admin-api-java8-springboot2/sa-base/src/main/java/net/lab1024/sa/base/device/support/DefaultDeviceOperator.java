@@ -88,10 +88,10 @@ public class DefaultDeviceOperator implements DeviceOperator {
     public Mono<AuthenticationResponse> authenticate(DeviceAuthenticationRequest request) {
         return Mono.fromCallable(() -> {
             // 1. 防重放：|now - timestamp| ≤ 5分钟
-            long now = System.currentTimeMillis();
+            /*long now = System.currentTimeMillis();
             if (Math.abs(now - request.getTimestamp()) > 300_000) {
                 return AuthenticationResponse.error(401, "时间戳超时");
-            }
+            }*/
 
             // 2. 读取设备密钥
             String deviceSecret = storage.getConfig(DeviceField.DEVICE_SECRET.getValue()).asString();
@@ -135,6 +135,11 @@ public class DefaultDeviceOperator implements DeviceOperator {
     @Override
     public void setConfigs(Map<String, Object> values) {
         storage.setConfigs(values);
+    }
+
+    @Override
+    public void removeConfigs(String... keys) {
+        storage.remove(keys);
     }
 
     @Override

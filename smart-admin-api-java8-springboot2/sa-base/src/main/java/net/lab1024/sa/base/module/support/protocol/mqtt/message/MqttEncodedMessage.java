@@ -28,4 +28,11 @@ public interface MqttEncodedMessage extends EncodedMessage {
     default boolean isRetain() {
         return false;
     }
+
+    /**
+     * 延迟 ACK — 解码成功后由网关调用（QoS1 回 PUBACK / QoS2 回 PUBREC），
+     * 解码失败则不 ack 并由网关断开连接，客户端超时重发
+     */
+    default void acknowledge() {
+    }
 }

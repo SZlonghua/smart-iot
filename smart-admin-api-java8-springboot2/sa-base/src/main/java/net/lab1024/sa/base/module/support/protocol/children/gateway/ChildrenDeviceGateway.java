@@ -27,7 +27,7 @@ public class ChildrenDeviceGateway implements DeviceGateway {
 
     @Override public String getId() { return properties.getId(); }
     @Override public GatewayState getState() { return state; }
-    @Override public Flux<Message> onMessage() { return Flux.empty(); }
+//    @Override public Flux<Message> onMessage() { return Flux.empty(); }
 
     @Override public Mono<Void> startup() {
         state = GatewayState.started;

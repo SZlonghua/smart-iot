@@ -45,6 +45,9 @@ public interface DeviceOperator {
     /** 批量写入自身配置 */
     void setConfigs(java.util.Map<String, Object> values);
 
+    /** 删除自身配置项 */
+    void removeConfigs(String... keys);
+
     /** 清空自身全部配置 */
     void clear();
 }

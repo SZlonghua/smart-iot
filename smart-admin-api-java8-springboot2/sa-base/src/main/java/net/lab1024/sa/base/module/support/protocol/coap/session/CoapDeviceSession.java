@@ -27,7 +27,7 @@ public class CoapDeviceSession extends AbstractDeviceSession {
     private final Set<String> observeResources = ConcurrentHashMap.newKeySet();
 
     public CoapDeviceSession(String deviceId) {
-        super(deviceId, null, DefaultTransport.CoAP);
+        super(deviceId, null, DefaultTransport.CoAP, null, null, null);
     }
 
     @Override

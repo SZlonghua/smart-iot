@@ -18,7 +18,7 @@ public interface DeviceGateway {
      *
      * @return 设备消息流
      */
-    Flux<Message> onMessage();
+//    Flux<Message> onMessage();
 
     /**
      * 启动网关

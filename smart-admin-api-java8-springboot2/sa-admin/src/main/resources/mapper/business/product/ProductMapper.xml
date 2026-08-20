@@ -35,6 +35,9 @@
             <if test="queryForm.deviceType != null and queryForm.deviceType != ''">
                 AND product.device_type = #{queryForm.deviceType}
             </if>
+            <if test="queryForm.status != null">
+                AND product.status = #{queryForm.status}
+            </if>
         </where>
         <if test="queryForm.sortItemList == null or queryForm.sortItemList.size == 0">
             ORDER BY product.id DESC

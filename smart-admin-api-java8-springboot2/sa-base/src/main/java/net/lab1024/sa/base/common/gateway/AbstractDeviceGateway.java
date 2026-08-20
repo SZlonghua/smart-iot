@@ -47,10 +47,10 @@ public abstract class AbstractDeviceGateway implements DeviceGateway {
         return state;
     }
 
-    @Override
+    /*@Override
     public Flux<Message> onMessage() {
         return Flux.empty();
-    }
+    }*/
 
     @Override
     public Mono<Void> startup() {

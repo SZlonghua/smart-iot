@@ -72,11 +72,15 @@ public class DefaultDeviceGatewayManager implements DeviceGatewayManager {
     protected Mono<DeviceGateway> createGateway(String id) {
         log.info("create gateway {}", id);
         return propertiesManager.getProperties(id)
-                .switchIfEmpty(Mono.error(() ->
-                        new UnsupportedOperationException("网关配置[" + id + "]不存在")))
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("网关配置不存在, 创建网关失败 — gatewayId={}", id);
+                    return Mono.empty();
+                }))
                 .flatMap(properties -> providers.getProvider(properties.getProvider())
-                        .switchIfEmpty(Mono.error(() ->
-                                new UnsupportedOperationException("网关Provider[" + properties.getProvider() + "]不存在")))
+                        .switchIfEmpty(Mono.defer(() -> {
+                            log.warn("网关Provider不存在, 创建网关失败 — provider={}, gatewayId={}", properties.getProvider(), id);
+                            return Mono.empty();
+                        }))
                         .flatMap(provider -> provider.createDeviceGateway(properties)))
                 .cast(DeviceGateway.class);
     }
@@ -93,7 +97,9 @@ public class DefaultDeviceGatewayManager implements DeviceGatewayManager {
                 .switchIfEmpty(Mono.defer(() -> createGateway(gatewayId)))
                 .doOnNext(gateway -> registry.put(gatewayId, gateway))
                 .doOnNext(DeviceGateway::startup)
-                .then();
+                .then()
+                .doOnSuccess(nil -> log.info("reload gateway {} 完成", gatewayId))
+                .doOnError(err -> log.error("reload gateway {} 失败", gatewayId, err));
     }
 
     private Mono<DeviceGateway> reloadGateway(DeviceGateway gateway) {

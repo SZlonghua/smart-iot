@@ -36,12 +36,19 @@ import java.util.function.Consumer;
 public class VertxMqttConnection implements MqttConnection {
     @Setter
     private String deviceId;
+    @Setter
+    private String productKey;
+    @Setter
+    private String deviceKey;
     private final MqttEndpoint endpoint;
     private long keepAliveTimeoutMs;
     private long lastPingTime = System.currentTimeMillis();
     private int messageIdCounter;
 
     private final Sinks.Many<EncodedMessage> messageSink = Sinks.many().multicast().onBackpressureBuffer();
+
+    /** 连接已关闭标志 — 防止 disconnectConsumer 清理链内重复关闭 endpoint */
+    private final java.util.concurrent.atomic.AtomicBoolean closed = new java.util.concurrent.atomic.AtomicBoolean(false);
 
 
     private final Consumer<MqttConnection> defaultListener = mqttConnection -> {
@@ -85,6 +92,16 @@ public class VertxMqttConnection implements MqttConnection {
     }
 
     @Override
+    public String getProductKey() {
+        return productKey;
+    }
+
+    @Override
+    public String getDeviceKey() {
+        return deviceKey;
+    }
+
+    @Override
     public boolean isAlive() {
         return endpoint.isConnected() && (keepAliveTimeoutMs < 0 || ((System.currentTimeMillis() - lastPingTime) < keepAliveTimeoutMs));
     }
@@ -102,6 +119,7 @@ public class VertxMqttConnection implements MqttConnection {
     @Override
     public MqttConnection accept() {
         endpoint.accept();
+        log.info("连接已建立");
         return this;
     }
 
@@ -113,28 +131,30 @@ public class VertxMqttConnection implements MqttConnection {
     /** reject — 回复 CONNACK 拒绝连接 */
     @Override
     public void reject(MqttConnectReturnCode returnCode) {
+        // 已关闭则跳过，避免对已关闭连接重复 reject / 触发清理链
+        if (closed.get() || !endpoint.isConnected()) {
+            return;
+        }
         endpoint.reject(returnCode);
-        endpoint.close();
-
+        complete();
     }
 
     /** init — 链式注册全部 MQTT 包处理器 */
     public VertxMqttConnection init() {
         endpoint
                 .pingHandler(v -> {
+                    log.info("ping");
                     this.ping();
                     if (!endpoint.isAutoKeepAlive()) {
                         endpoint.pong();
                     }
                 })
                 .publishHandler(msg -> {
-                    if (msg.qosLevel() == MqttQoS.AT_LEAST_ONCE) {
-                        endpoint.publishAcknowledge(msg.messageId());
-                    }
-                    if (msg.qosLevel() == MqttQoS.EXACTLY_ONCE) {
-                        endpoint.publishReceived(msg.messageId());
-                    }
-                    messageSink.tryEmitNext(new DefaultMqttEncodedMessage(endpoint.clientIdentifier(), msg));
+                    // 延迟 ACK — 不在此处回复，解码成功后由网关调用 acknowledge()：
+                    // 解码失败不 ack → 网关断开连接 → 客户端超时重发
+                    DefaultMqttEncodedMessage encodedMessage = new DefaultMqttEncodedMessage(getDeviceId(), endpoint.clientIdentifier(), msg);
+                    encodedMessage.setAck(() -> acknowledgePublish(encodedMessage));
+                    messageSink.tryEmitNext(encodedMessage);
                 })
                 //QoS 1 PUBACK
                 .publishAcknowledgeHandler(id -> {
@@ -168,14 +188,8 @@ public class VertxMqttConnection implements MqttConnection {
                 .unsubscribeHandler(unsub ->{
 //                    endpoint.unsubscribeAcknowledge(unsub.messageId());
                 })
-                .disconnectHandler(ignore->{
-                    messageSink.tryEmitComplete();
-                    disconnectConsumer.accept(this);
-                })
-                .closeHandler(v -> {
-                    messageSink.tryEmitComplete();
-                    disconnectConsumer.accept(this);
-                })
+                .disconnectHandler(ignore -> complete())
+                .closeHandler(v -> complete())
                 .exceptionHandler(error ->{
                     if (error instanceof DecoderException) {
                         if (error.getMessage().contains("too large message")) {
@@ -189,6 +203,17 @@ public class VertxMqttConnection implements MqttConnection {
     }
 
     // ===== ClientConnection =====
+
+    /** 延迟确认发布消息 — QoS1 回 PUBACK / QoS2 回 PUBREC（此后客户端回 PUBREL → publishReleaseHandler 回 PUBCOMP） */
+    private void acknowledgePublish(DefaultMqttEncodedMessage message) {
+        if (message.getQos() == MqttQoS.AT_LEAST_ONCE.value()) {
+            endpoint.publishAcknowledge(message.getMessageId());
+            log.debug("延迟 PUBACK mqtt[{}] message[{}]", getClientId(), message.getMessageId());
+        } else if (message.getQos() == MqttQoS.EXACTLY_ONCE.value()) {
+            endpoint.publishReceived(message.getMessageId());
+            log.debug("延迟 PUBREC mqtt[{}] message[{}]", getClientId(), message.getMessageId());
+        }
+    }
 
     @Override
     public Mono<Void> sendMessage(EncodedMessage message) {
@@ -242,7 +267,23 @@ public class VertxMqttConnection implements MqttConnection {
 
     @Override
     public void close() {
-        endpoint.close();
+        // 已关闭则跳过，避免重复关闭抛 IllegalStateException
+        if (closed.get()) {
+            return;
+        }
+        if (endpoint.isConnected()) {
+            endpoint.close();
+        }
+        // 统一由 complete() 置位 closed 并执行清理链
+        complete();
+    }
+
+    private void complete() {
+        // 校验并置位：首次触发执行清理；清理链内重复调用（remove → connection.close）及 closeHandler 二次触发直接跳过
+        if (closed.getAndSet(true)) {
+            return;
+        }
+        log.info("Mqtt connection complete [{}]", getClientId());
         disconnectConsumer.accept(this);
     }
 
