@@ -68,7 +68,12 @@ public class MqttServerDeviceGatewayProvider implements DeviceGatewayProvider {
 
     @Override
     public Mono<? extends DeviceGateway> createDeviceGateway(DeviceGatewayProperties properties) {
-        return networkManager.<MqttServerNetwork>getNetwork(getNetworkType(),properties.getComponentId())
+        return networkManager.<MqttServerNetwork>getNetwork(getNetworkType(), properties.getComponentId())
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("获取MQTT Server网络失败(组件不存在或类型不匹配) — gatewayId={}, componentId={}",
+                            properties.getId(), properties.getComponentId());
+                    return Mono.empty();
+                }))
                 .map(mqttServerNetwork -> new MqttServerDeviceGateway(
                         properties.getId(),
                         registry,

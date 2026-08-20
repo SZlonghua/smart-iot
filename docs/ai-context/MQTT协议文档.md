@@ -48,13 +48,6 @@
 
 ## MQTT接入
 
-### 认证
-
-#### 注意
-secureId以及secureKey可在创建产品数据和设备实例数据时进行配置。
-
-timestamp为当前系统时间戳(毫秒),与系统时间不能相差5分钟
-
 ### 读取设备属性
 
 #### 注意
@@ -205,28 +198,7 @@ timestamp为当前系统时间戳(毫秒),与系统时间不能相差5分钟
 
 data内参数名与输出参数的参数名应一致。
 
-### 子设备属性上报
 
-**上行上报**
-- Topic: `/{gateWayProductId}/{gatewayDeviceId}/child/{gatewaySubDeviceId}/properties/report`
-
-| 参数 | 说明 |
-| --- | --- |
-| gateWayProductId | 网关产品ID |
-| gatewayDeviceId | 子设备所属父设备ID |
-| gatewaySubDeviceId | 网关子设备ID |
-
-- 消息格式: 
-```json
-  {
-    "timestamp":1601196762389, //毫秒时间戳
-    "messageId":"随机消息ID",
-    "deviceId":"1646353792696614912",
-    "properties":{
-      "temp":36.8
-    }
-}
-```
 
 ### 直连设备注册
 
@@ -288,6 +260,37 @@ data内参数名与输出参数的参数名应一致。
   "deviceId":"设备ID"
 }
 ``` 
+
+### 子设备属性上报
+
+**上行上报**
+- Topic: `/{gateWayProductId}/{gatewayDeviceId}/child/{gatewaySubDeviceId}/properties/report`
+
+| 参数 | 说明 |
+| --- | --- |
+| gateWayProductId | 网关产品ID |
+| gatewayDeviceId | 子设备所属父设备ID |
+| gatewaySubDeviceId | 网关子设备ID |
+
+- 消息格式:
+```json
+
+{
+  "timestamp":1601196762389, //毫秒时间戳
+  "messageId":"随机消息ID",
+  "deviceId":"设备ID",
+  "childDeviceId":"子设备ID",
+  "childDeviceMessage":{
+    "timestamp":1601196762389, //毫秒时间戳
+    "messageId":"随机消息ID",
+    "deviceId":"1646353792696614912",
+    "properties":{
+      "temp":36.8
+    }
+  }
+}
+  
+```
 
 ### 子设备注册
 

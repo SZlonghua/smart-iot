@@ -20,6 +20,15 @@ public interface DeviceSessionManager {
     Mono<DeviceSession> getSession(String deviceId);
 
     /**
+     * 按烧录标识（productKey + deviceKey）获取会话 — 子设备会话建立 key 索引，直接命中缓存
+     *
+     * @param productKey 产品 Key
+     * @param deviceKey  设备 Key
+     * @return 会话信息
+     */
+    Mono<DeviceSession> getSession(String productKey, String deviceKey);
+
+    /**
      * 获取设备会话.会话不存在则返回{@link Mono#empty()}.
      *
      * @param deviceId               设备ID
@@ -33,8 +42,6 @@ public interface DeviceSessionManager {
 
     /**
      * 移除会话,如果会话存在将触发DeviceSessionEvent
-     * @param deviceId
-     * @return
      */
     Mono<Long> remove(String deviceId);
 

@@ -27,4 +27,19 @@ public interface MessageCodecContext extends Wrapper {
         return Mono.justOrEmpty(getDevice());
     }
 
+    default Mono<DeviceOperator> getDevice(String deviceId) {
+        return Mono.empty();
+    }
+
+    /**
+     * 按烧录标识（productKey + deviceKey）获取设备操作接口。
+     *
+     * @param productKey 产品 Key
+     * @param deviceKey  设备 Key
+     * @return Mono<DeviceOperator>
+     */
+    default Mono<DeviceOperator> getDevice(String productKey, String deviceKey) {
+        return Mono.empty();
+    }
+
 }

@@ -1,10 +1,13 @@
 package net.lab1024.sa.admin.module.business.protocol.handler;
 
 import lombok.extern.slf4j.Slf4j;
+import net.lab1024.sa.admin.module.business.gateway.service.GatewayService;
 import net.lab1024.sa.admin.module.business.protocol.domain.entity.ProtocolEntity;
 import net.lab1024.sa.base.common.event.DeleteAfterEvent;
+import net.lab1024.sa.base.common.event.DeleteBeforeEvent;
 import net.lab1024.sa.base.common.event.SaveAfterEvent;
 import net.lab1024.sa.base.common.event.UpdateAfterEvent;
+import net.lab1024.sa.base.common.exception.BusinessException;
 import net.lab1024.sa.base.common.protocol.ProtocolSupportDefinition;
 import net.lab1024.sa.base.common.protocol.ProtocolSupportEvent;
 import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
@@ -26,6 +29,16 @@ public class ProtocolEventHandler {
 
     @Resource
     private IEventBus eventBus;
+
+    @Resource
+    private GatewayService gatewayService;
+
+    /** 删除前 → 校验网关引用 */
+    @EventListener
+    public void onBeforeDelete(DeleteBeforeEvent<ProtocolEntity> event) {
+        long refCount = gatewayService.countByProtocolId(event.getEntityId());
+        if (refCount > 0) throw new BusinessException("该协议被 " + refCount + " 个网关引用，无法删除");
+    }
 
     /** 保存 → ProtocolSupportEvent.SAVED */
     @EventListener

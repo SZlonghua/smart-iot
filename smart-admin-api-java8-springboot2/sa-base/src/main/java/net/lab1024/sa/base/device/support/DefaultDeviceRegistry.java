@@ -203,7 +203,6 @@ public class DefaultDeviceRegistry implements DeviceRegistry {
                 .put(DeviceField.PRODUCT_SECRET.getValue(), info.getProductSecret())
 //                .put(DeviceField.SESSION_ID.getValue(), info.getSessionId())
 //                .put(DeviceField.PROTOCOL_ID.getValue(), info.getProtocolId())
-                .put(DeviceField.GATEWAY_ID.getValue(), info.getGatewayId())
                 .put(DeviceField.CONNECTION_SERVER_ID.getValue(), info.getConnectionServerId())
                 .build();
     }

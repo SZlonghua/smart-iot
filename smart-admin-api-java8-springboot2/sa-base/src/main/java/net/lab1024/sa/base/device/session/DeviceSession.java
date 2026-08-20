@@ -1,10 +1,12 @@
 package net.lab1024.sa.base.device.session;
 
+import net.lab1024.sa.base.common.message.raw.EncodedMessage;
 import net.lab1024.sa.base.device.DeviceOperator;
 import net.lab1024.sa.base.common.message.codec.Transport;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Nullable;
+import java.util.function.Consumer;
 
 public interface DeviceSession {
 
@@ -63,8 +65,29 @@ public interface DeviceSession {
      */
     boolean isAlive();
 
+    /**
+     * @return 网关实例ID（设备接入的 DeviceGateway.getId()，如 "mqtt-server"），无网关返回 null
+     */
+    @Nullable
+    default String getGatewayId() {
+        return "";
+    }
+
     default Mono<Boolean> isAliveAsync() {
         return Mono.fromSupplier(this::isAlive);
+    }
+
+    /**
+     * 注册会话关闭监听器 — 会话关闭时回调（如子设备会话监听父会话关闭做级联清理）
+     */
+    default void onClose(Consumer<DeviceSession> listener) {
+    }
+
+    /**
+     * 移除会话关闭监听器 — 与 {@link #onClose} 对应，监听方 close() 时注销自己，
+     * 防止会话存活期间长期持有监听方引用导致内存泄漏
+     */
+    default void removeOnClose(Consumer<DeviceSession> listener) {
     }
 
 }

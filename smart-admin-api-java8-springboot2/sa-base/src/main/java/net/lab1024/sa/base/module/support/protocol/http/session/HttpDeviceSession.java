@@ -20,7 +20,7 @@ public class HttpDeviceSession extends AbstractDeviceSession {
     private volatile long lastPingTime = System.currentTimeMillis();
 
     public HttpDeviceSession(String deviceId) {
-        super(deviceId, null, DefaultTransport.HTTP);
+        super(deviceId, null, DefaultTransport.HTTP, null, null, null);
     }
 
     @Override

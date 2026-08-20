@@ -16,7 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 public class MqttAuthenticationRequest implements AuthenticationRequest {
 
     private String clientId;
-    // {productKey}-{deviceKey}
+    // {productKey}:{deviceKey}
     private String username;
     // 密码为签名
     private String password;
@@ -37,7 +37,7 @@ public class MqttAuthenticationRequest implements AuthenticationRequest {
     /**
      * 解析 MQTT CONNECT 报文为 DeviceAuthenticationRequest
      * clientId = "productKey:deviceKey:timestamp:mode:signType"
-     * username = "productKey-deviceKey"
+     * username = "productKey:deviceKey"（冒号连接，productKey 含 "-" 不能用 "-" 分隔）
      * password = signature(hex)
      */
     public DeviceAuthenticationRequest toDeviceRequest() {
@@ -64,9 +64,9 @@ public class MqttAuthenticationRequest implements AuthenticationRequest {
             throw new IllegalArgumentException("clientId 格式错误，期望 productKey:deviceKey:timestamp:mode:signType");
         }
 
-        String[] userParts = username.split("-");
+        String[] userParts = username.split(":");
         if (userParts.length != 2) {
-            throw new IllegalArgumentException("username 格式错误，期望 productKey-deviceKey");
+            throw new IllegalArgumentException("username 格式错误，期望 productKey:deviceKey");
         }
 
         if (!parts[0].equals(userParts[0]) || !parts[1].equals(userParts[1])) {

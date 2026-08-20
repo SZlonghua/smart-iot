@@ -31,4 +31,7 @@ public class ProductQueryForm extends PageParam {
     @SchemaEnum(DeviceTypeEnum.class)
     @CheckEnum(value = DeviceTypeEnum.class, required = false, message = "设备类型错误")
     private String deviceType;
+
+    @Schema(description = "状态(0禁用 1启用)，设备新建选产品时传1只查已启用")
+    private Integer status;
 }

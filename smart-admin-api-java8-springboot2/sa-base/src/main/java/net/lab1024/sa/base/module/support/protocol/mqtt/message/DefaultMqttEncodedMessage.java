@@ -5,6 +5,7 @@ import io.netty.buffer.Unpooled;
 import io.vertx.mqtt.messages.MqttPublishMessage;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * MQTT 已编码消息默认实现 — 持有 vertx MqttPublishMessage。
@@ -14,10 +15,10 @@ import lombok.Getter;
  * @Copyright 1024创新实验室
  */
 @Getter
-@Builder
 public class DefaultMqttEncodedMessage implements MqttEncodedMessage {
 
     private String topic;
+    private String deviceId;
     private String clientId;
     private int qosLevel;
     private ByteBuf payload;
@@ -25,8 +26,12 @@ public class DefaultMqttEncodedMessage implements MqttEncodedMessage {
     private boolean will;
     private boolean dup;
     private boolean retain;
+    /** 延迟 ACK 回调 — 由 VertxMqttConnection 注入（需要 endpoint 才能回 PUBACK/PUBREC），网关解码成功后调用 */
+    @Setter
+    private transient Runnable ack;
 
-    public DefaultMqttEncodedMessage(String clientId, MqttPublishMessage publishMessage) {
+    public DefaultMqttEncodedMessage(String deviceId, String clientId, MqttPublishMessage publishMessage) {
+        this.deviceId = deviceId;
         this.topic = publishMessage.topicName();
         this.clientId = clientId;
         this.qosLevel = publishMessage.qosLevel().value();
@@ -37,7 +42,9 @@ public class DefaultMqttEncodedMessage implements MqttEncodedMessage {
         this.retain = publishMessage.isRetain();
     }
 
-    public DefaultMqttEncodedMessage(String topic,
+    @Builder
+    public DefaultMqttEncodedMessage(String deviceId,
+                                     String topic,
                                      String clientId,
                                      int qosLevel,
                                      ByteBuf payload,
@@ -46,6 +53,7 @@ public class DefaultMqttEncodedMessage implements MqttEncodedMessage {
                                      boolean dup,
                                      boolean retain
     ) {
+        this.deviceId = deviceId;
         this.topic = topic;
         this.clientId = clientId;
         this.qosLevel = qosLevel;
@@ -79,5 +87,12 @@ public class DefaultMqttEncodedMessage implements MqttEncodedMessage {
     @Override
     public boolean isWill() {
         return will;
+    }
+
+    @Override
+    public void acknowledge() {
+        if (ack != null) {
+            ack.run();
+        }
     }
 }

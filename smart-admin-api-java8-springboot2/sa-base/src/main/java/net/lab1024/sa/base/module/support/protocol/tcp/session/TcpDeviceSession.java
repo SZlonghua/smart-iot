@@ -16,7 +16,7 @@ public class TcpDeviceSession extends AbstractDeviceSession {
     private volatile long lastPingTime = System.currentTimeMillis();
 
     public TcpDeviceSession(String deviceId) {
-        super(deviceId, null, DefaultTransport.TCP);
+        super(deviceId, null, DefaultTransport.TCP, null, null, null);
     }
 
     @Override

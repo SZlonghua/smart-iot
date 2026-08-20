@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.base.device.session.DeviceSession;
 import net.lab1024.sa.base.device.session.DeviceSessionEvent;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
+import org.apache.commons.lang3.StringUtils;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,16 +19,18 @@ import java.util.function.Predicate;
 
 /**
  * DeviceSessionManager 本地实现 — 基于 ConcurrentHashMap 管理设备会话。
- *
- * @Author 廖涛
- * @Date 2026/07/27
- * @Copyright 1024创新实验室
+ * <p>
+ * &#064;Author  廖涛
+ * &#064;Date  2026/07/27
+ * &#064;Copyright  1024创新实验室
  */
 @Slf4j
 public class LocalDeviceSessionManager implements DeviceSessionManager {
 
     private final Map<String, DeviceSession> sessions = new ConcurrentHashMap<>();
     private final List<Function<DeviceSessionEvent, Mono<Void>>> listeners = new CopyOnWriteArrayList<>();
+    /** 子设备烧录标识索引 — productKey:deviceKey → deviceId，避免每条消息查 registry */
+    private final Map<String, String> sessionKeyIndex = new ConcurrentHashMap<>();
 
     @Override
     public Mono<DeviceSession> compute(@Nonnull String deviceId,
@@ -35,9 +38,14 @@ public class LocalDeviceSessionManager implements DeviceSessionManager {
         return Mono.justOrEmpty(sessions.get(deviceId))
                 .transform(computer)
                 .doOnNext(session -> {
-                    boolean existed = sessions.containsKey(deviceId);
-                    sessions.put(deviceId, session);
-                    if (!existed) {
+                    DeviceSession old = sessions.put(deviceId, session);
+                    if (old != null && old != session) {
+                        // 新会话替换旧会话 — 内部关闭旧会话并移除其索引，不扩散到调用方
+                        removeIndexSession(old);
+                        old.close();
+                    }
+                    indexSession(session);
+                    if (old == null) {
                         fireEvent(DeviceSessionEvent.of(DeviceSessionEvent.Type.register, session));
                     }
                 });
@@ -45,7 +53,13 @@ public class LocalDeviceSessionManager implements DeviceSessionManager {
 
     @Override
     public Mono<DeviceSession> getSession(String deviceId) {
-        return Mono.justOrEmpty(sessions.get(deviceId));
+        return getSession(deviceId,false);
+    }
+
+    @Override
+    public Mono<DeviceSession> getSession(String productKey, String deviceKey) {
+        String deviceId = sessionKeyIndex.get(buildKey(productKey, deviceKey));
+        return deviceId == null ? Mono.empty() : Mono.justOrEmpty(sessions.get(deviceId));
     }
 
     @Override
@@ -69,6 +83,7 @@ public class LocalDeviceSessionManager implements DeviceSessionManager {
     public Mono<Long> remove(String deviceId) {
         DeviceSession removed = sessions.remove(deviceId);
         if (removed != null) {
+            removeIndexSession(removed);
             removed.close();
             fireEvent(DeviceSessionEvent.of(DeviceSessionEvent.Type.unregister, removed));
             return Mono.just(1L);
@@ -81,11 +96,38 @@ public class LocalDeviceSessionManager implements DeviceSessionManager {
         DeviceSession session = sessions.get(deviceId);
         if (session != null && predicate.test(session)) {
             sessions.remove(deviceId, session);
+            removeIndexSession(session);
             session.close();
             fireEvent(DeviceSessionEvent.of(DeviceSessionEvent.Type.unregister, session));
             return Mono.just(1L);
         }
         return Mono.just(0L);
+    }
+
+    private void indexSession(DeviceSession session) {
+        if (session instanceof AbstractDeviceSession) {
+            AbstractDeviceSession deviceSession = (AbstractDeviceSession) session;
+            String productKey = deviceSession.getProductKey();
+            String deviceKey = deviceSession.getDeviceKey();
+            if (StringUtils.isNotEmpty(productKey) && StringUtils.isNotEmpty(deviceKey)) {
+                sessionKeyIndex.put(buildKey(productKey, deviceKey), deviceSession.getDeviceId());
+            }
+        }
+    }
+
+    private void removeIndexSession(DeviceSession session) {
+        if (session instanceof AbstractDeviceSession) {
+            AbstractDeviceSession deviceSession = (AbstractDeviceSession) session;
+            String productKey = deviceSession.getProductKey();
+            String deviceKey = deviceSession.getDeviceKey();
+            if (StringUtils.isNotEmpty(productKey) && StringUtils.isNotEmpty(deviceKey)) {
+                sessionKeyIndex.remove(buildKey(productKey, deviceKey));
+            }
+        }
+    }
+
+    private String buildKey(String productKey, String deviceKey) {
+        return productKey + ":" + deviceKey;
     }
 
     @Override

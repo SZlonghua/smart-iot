@@ -7,6 +7,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.annotation.Order;
 
 import java.util.List;
 
@@ -37,6 +38,11 @@ public class DeviceGatewayAutoConfiguration {
         return new ChildrenDeviceGatewayProvider();
     }
 
+    /**
+     * 网关加载 — @Order(2) 晚于协议加载（ProtocolAutoConfiguration @Order(1)），
+     * 保证网关创建时协议已注册完成。
+     */
+    @Order(20)
     @EventListener(ApplicationReadyEvent.class)
     public void onReady(ApplicationReadyEvent event) {
         event.getApplicationContext()

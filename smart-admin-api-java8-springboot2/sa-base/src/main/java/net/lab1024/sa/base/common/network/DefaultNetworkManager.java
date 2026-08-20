@@ -113,6 +113,10 @@ public class DefaultNetworkManager implements NetworkManager {
 
     private Mono<Network> doCreate(NetworkType type, String id) {
         return configManager.getConfig(type, id)
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.warn("网络组件配置不存在, 创建网络失败 — type={}, componentId={}", type.getId(), id);
+                    return Mono.empty();
+                }))
                 .flatMap(props -> Mono.zip(
                         providers.getProvider(props.getType())
                                 .switchIfEmpty(Mono.error(() ->

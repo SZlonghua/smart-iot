@@ -14,6 +14,16 @@ public interface MqttConnection extends ClientConnection {
 
     String getDeviceId();
 
+    /**
+     * 产品 Key（烧录标识，认证成功后回填）
+     */
+    String getProductKey();
+
+    /**
+     * 设备 Key（烧录标识，认证成功后回填）
+     */
+    String getDeviceKey();
+
     void reject(MqttConnectReturnCode code);
 
     MqttConnection accept();

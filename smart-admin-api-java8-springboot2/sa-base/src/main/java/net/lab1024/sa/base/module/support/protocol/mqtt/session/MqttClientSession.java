@@ -16,7 +16,7 @@ public class MqttClientSession extends AbstractDeviceSession {
     private volatile long lastPingTime = System.currentTimeMillis();
 
     public MqttClientSession(String deviceId) {
-        super(deviceId, null, DefaultTransport.MQTT);
+        super(deviceId, null, DefaultTransport.MQTT, null, null, null);
     }
 
     @Override

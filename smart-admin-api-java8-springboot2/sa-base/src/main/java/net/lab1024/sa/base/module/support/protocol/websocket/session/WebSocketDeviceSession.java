@@ -16,7 +16,7 @@ public class WebSocketDeviceSession extends AbstractDeviceSession {
     private volatile long lastPingTime = System.currentTimeMillis();
 
     public WebSocketDeviceSession(String deviceId) {
-        super(deviceId, null, DefaultTransport.WebSocket);
+        super(deviceId, null, DefaultTransport.WebSocket, null, null, null);
     }
 
     @Override

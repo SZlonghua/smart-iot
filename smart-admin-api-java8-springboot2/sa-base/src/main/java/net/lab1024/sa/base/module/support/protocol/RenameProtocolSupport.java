@@ -3,6 +3,7 @@ package net.lab1024.sa.base.module.support.protocol;
 import lombok.AllArgsConstructor;
 import lombok.Generated;
 import lombok.Getter;
+import lombok.Setter;
 import net.lab1024.sa.base.common.defaults.Authenticator;
 import net.lab1024.sa.base.common.message.codec.DeviceMessageCodec;
 import net.lab1024.sa.base.common.message.codec.Transport;
@@ -25,12 +26,20 @@ public class RenameProtocolSupport implements ProtocolSupport {
     private final String id;
 
     @Getter
-    private final String name;
+    @Setter
+    private String name;
 
     @Getter
-    private final String description;
+    @Setter
+    private String description;
 
-    private final ProtocolSupport target;
+    /**
+     * 协议更新（onUpdated）时原地替换 target — 保持代理实例不变，
+     * 网关/会话持有的旧引用自动指向新协议
+     */
+    @Getter
+    @Setter
+    private ProtocolSupport target;
 
     private final IEventBus eventBus;
 

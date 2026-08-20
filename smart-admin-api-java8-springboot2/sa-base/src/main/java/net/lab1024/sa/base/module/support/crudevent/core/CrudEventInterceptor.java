@@ -105,7 +105,11 @@ public class CrudEventInterceptor implements Interceptor {
         if (ctx == null) {
             return invocation.proceed();
         }
-        Object entity = ctx.unwrap(parameter);
+        Object entity = resolveEntity(ctx, parameter);
+        if (entity == null) {
+            // 非实体参数（wrapper 插入等）不触发 CRUD 事件
+            return invocation.proceed();
+        }
 
         eventBus.publish(new SaveBeforeEvent<>(entity, ctx.getClassName(), ctx.getSimpleName(),
                 ctx.tableName(), null, null, entity, ctx.getEntityClass()));
@@ -121,7 +125,11 @@ public class CrudEventInterceptor implements Interceptor {
         if (ctx == null) {
             return invocation.proceed();
         }
-        Object entity = ctx.unwrap(parameter);
+        Object entity = resolveEntity(ctx, parameter);
+        if (entity == null) {
+            // wrapper 更新（参数为 ParamMap）不触发 CRUD 事件，直接执行 SQL
+            return invocation.proceed();
+        }
 
         Long entityId = ctx.extractEntityId(entity);
         Object beforeData = ctx.queryBeforeData(ms.getId(), entityId);
@@ -154,6 +162,15 @@ public class CrudEventInterceptor implements Interceptor {
 
         if (parameter instanceof Collection) {
             return handleBatchDelete(invocation, ms, (Collection<?>) parameter, ctx);
+        }
+
+        // MyBatis-Plus deleteByIds/deleteBatchIds(Collection) 的参数被 @Param("coll") 包装为 ParamMap
+        if (parameter instanceof Map) {
+            for (Object value : ((Map<?, ?>) parameter).values()) {
+                if (value instanceof Collection) {
+                    return handleBatchDelete(invocation, ms, (Collection<?>) value, ctx);
+                }
+            }
         }
 
         Long entityId = ctx.extractDeleteId(parameter);
@@ -191,6 +208,15 @@ public class CrudEventInterceptor implements Interceptor {
     }
 
     // ==================== 辅助方法 ====================
+
+    /**
+     * wrapper 更新（参数为 ParamMap 等）时无实体对象，事件中不携带实体（置 null），
+     * 避免监听器泛型擦除后自动 cast 抛 ClassCastException。
+     */
+    private Object resolveEntity(EventContext ctx, Object parameter) {
+        Object entity = ctx.unwrap(parameter);
+        return ctx.getEntityClass().isInstance(entity) ? entity : null;
+    }
 
     private Long toLong(Object value) {
         if (value instanceof Number) {
