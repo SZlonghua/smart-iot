@@ -2,7 +2,7 @@
 默认数据库为Mysql，若为其他数据库，请关注：[SmartAdmin其他数据库](https://smartadmin.vip/views/other/china-db/)
 
 #### 第一次
-如果是第一次部署，只需要执行 smart_admin_v3_old.sql 文件中的SQL语句即可；
+如果是第一次部署，只需要执行 smart_admin_v3.sql 文件中的SQL语句即可；
 
 
 #### 更新

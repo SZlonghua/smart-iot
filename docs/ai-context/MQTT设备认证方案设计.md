@@ -11,7 +11,7 @@
 | 字段 | 格式                                               | 说明 |
 |------|--------------------------------------------------|------|
 | clientId | `{productKey}:{deviceKey}:{timestamp}:{mode}:{signType}` | `:` 分隔 |
-| username | `{productKey}-{deviceKey}`                       | `-` 分隔 |
+| username | `{productKey}:{deviceKey}`                       | `:` 分隔（productKey 可能含 `-`，不能用 `-` 分隔） |
 | password | HMAC-SHA256 签名（hex 字符串）                          | 见 1.2 |
 
 ### 1.2 签名算法
@@ -79,7 +79,7 @@ public class DeviceAuthenticationRequest implements AuthenticationRequest {
 /**
  * 解析 MQTT CONNECT 报文为 DeviceAuthenticationRequest
  * clientId = "productKey:deviceKey:timestamp:mode:signType"
- * username = "productKey-deviceKey"
+ * username = "productKey:deviceKey"（冒号连接，productKey 含 "-" 不能用 "-" 分隔）
  * password = signature(hex)
  */
 public DeviceAuthenticationRequest toDeviceRequest() {
@@ -96,9 +96,9 @@ public DeviceAuthenticationRequest toDeviceRequest() {
         throw new IllegalArgumentException("clientId 格式错误，期望 productKey:deviceKey:timestamp:mode:signType");
     }
 
-    String[] userParts = username.split("-");
+    String[] userParts = username.split(":");
     if (userParts.length != 2) {
-        throw new IllegalArgumentException("username 格式错误，期望 productKey-deviceKey");
+        throw new IllegalArgumentException("username 格式错误，期望 productKey:deviceKey");
     }
 
     if (!parts[0].equals(userParts[0]) || !parts[1].equals(userParts[1])) {
