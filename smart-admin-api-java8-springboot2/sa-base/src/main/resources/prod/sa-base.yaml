@@ -182,3 +182,13 @@ smart:
     db-refresh-enabled: true
     # 数据库配置检测-执行间隔 默认120秒 可选
     db-refresh-interval: 60
+
+# 集群配置 — 默认单机；多节点部署 enabled: true，members 填集群所有节点地址（含自己）
+iot:
+  cluster:
+    enabled: false
+    hazelcast:
+      cluster-name: smart-iot
+      members:
+        - 192.168.1.101:5701
+        - 192.168.1.102:5701
