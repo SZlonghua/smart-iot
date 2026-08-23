@@ -5,6 +5,7 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import net.lab1024.sa.base.cluster.ClusterManager;
 import net.lab1024.sa.base.cluster.support.HazelcastClusterManager;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -35,7 +36,7 @@ public class HazelcastClusterAutoConfiguration {
     }
 
     @Bean
-    public ClusterManager clusterManager(HazelcastInstance hazelcast) {
-        return new HazelcastClusterManager(hazelcast);
+    public ClusterManager clusterManager(HazelcastInstance hazelcastInstance) {
+        return new HazelcastClusterManager(hazelcastInstance);
     }
 }
