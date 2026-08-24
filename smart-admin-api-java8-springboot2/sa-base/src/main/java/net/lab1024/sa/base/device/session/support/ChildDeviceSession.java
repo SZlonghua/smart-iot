@@ -7,6 +7,7 @@ import net.lab1024.sa.base.device.DeviceOperator;
 import net.lab1024.sa.base.device.session.DeviceSession;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
 
+import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -57,6 +58,20 @@ public class ChildDeviceSession extends AbstractDeviceSession {
     @Override
     public boolean isAlive() {
         return parent != null && parent.isAlive();
+    }
+
+    /** 协议实例 ID — 子设备经父网关代理通信，元数据跟随父会话 */
+    @Override
+    @Nullable
+    public String getProtocolId() {
+        return parent.getProtocolId();
+    }
+
+    /** 连接服务器节点 ID — 子设备经父网关代理通信，元数据跟随父会话 */
+    @Override
+    @Nullable
+    public String getConnectionServerId() {
+        return parent.getConnectionServerId();
     }
 
     @Override

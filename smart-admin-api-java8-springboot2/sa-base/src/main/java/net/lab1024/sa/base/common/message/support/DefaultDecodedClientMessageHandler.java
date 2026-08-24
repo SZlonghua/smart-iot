@@ -22,8 +22,8 @@ import java.util.Map;
  * 默认解码消息处理器。
  * <p>
  * 构造时监听会话注册/注销事件：
- * - 注册（上线）：缓存 SESSION_ID + ONLINE_TIME 到设备存储（Redis Hash），并回调持久化更新数据库
- * - 注销（下线）：清除 SESSION_ID + 缓存 OFFLINE_TIME，并回调持久化更新数据库
+ * - 注册（上线）：缓存 SESSION_ID + ONLINE_TIME + GATEWAY_ID + PROTOCOL_ID + CONNECTION_SERVER_ID 到设备存储（Redis Hash），并回调持久化更新数据库
+ * - 注销（下线）：清除上述字段 + 缓存 OFFLINE_TIME，并回调持久化更新数据库
  * <p>
  * &#064;Author  廖涛
  * &#064;Date  2026/08/07
@@ -66,12 +66,13 @@ public class DefaultDecodedClientMessageHandler implements DecodedClientMessageH
         }
     }
 
-    /** 下线：删除 SESSION_ID/GATEWAY_ID/PARENT_DEVICE_ID 字段（置空串不算清除）+ 缓存 OFFLINE_TIME，持久化离线状态 */
+    /** 下线：删除 SESSION_ID/GATEWAY_ID/PARENT_DEVICE_ID/PROTOCOL_ID/CONNECTION_SERVER_ID 字段（置空串不算清除）+ 缓存 OFFLINE_TIME，持久化离线状态 */
     private void handleUnregister(DeviceSession session) {
         DeviceOperator operator = session.getOperator();
         if (operator != null) {
             operator.removeConfigs(DeviceField.SESSION_ID.getValue(),
-                    DeviceField.GATEWAY_ID.getValue(), DeviceField.PARENT_DEVICE_ID.getValue());
+                    DeviceField.GATEWAY_ID.getValue(), DeviceField.PARENT_DEVICE_ID.getValue(),
+                    DeviceField.PROTOCOL_ID.getValue(), DeviceField.CONNECTION_SERVER_ID.getValue());
             operator.setConfigs(Collections.singletonMap(
                     DeviceField.OFFLINE_TIME.getValue(), System.currentTimeMillis()));
         }
@@ -81,15 +82,21 @@ public class DefaultDecodedClientMessageHandler implements DecodedClientMessageH
     }
 
     /**
-     * 构建上线缓存配置：SESSION_ID + ONLINE_TIME + GATEWAY_ID（网关实例ID），
+     * 构建上线缓存配置：SESSION_ID + ONLINE_TIME + GATEWAY_ID（网关实例ID）+ PROTOCOL_ID（协议实例ID）+ CONNECTION_SERVER_ID（集群节点ID，单机不写），
      * 子设备额外缓存 PARENT_DEVICE_ID（父设备ID）
      */
     private Map<String, Object> registerConfigs(DeviceSession session) {
-        Map<String, Object> configs = new HashMap<>(4);
+        Map<String, Object> configs = new HashMap<>(6);
         configs.put(DeviceField.SESSION_ID.getValue(), session.getId());
         configs.put(DeviceField.ONLINE_TIME.getValue(), System.currentTimeMillis());
         if (session.getGatewayId() != null) {
             configs.put(DeviceField.GATEWAY_ID.getValue(), session.getGatewayId());
+        }
+        if (session.getProtocolId() != null) {
+            configs.put(DeviceField.PROTOCOL_ID.getValue(), session.getProtocolId());
+        }
+        if (session.getConnectionServerId() != null) {
+            configs.put(DeviceField.CONNECTION_SERVER_ID.getValue(), session.getConnectionServerId());
         }
         if (session instanceof ChildDeviceSession) {
             DeviceSession parent = ((ChildDeviceSession) session).getParent();

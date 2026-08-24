@@ -199,9 +199,9 @@ vertx:
 # 集群配置 — 默认单机；多节点部署 enabled: true，members 填集群所有节点地址（含自己）
 iot:
   cluster:
-    enabled: false
+    enabled: true
     hazelcast:
       cluster-name: smart-iot
       members:
         - 192.168.1.101:5701
-        - 192.168.1.102:5701
+        - 192.168.1.101:5702
