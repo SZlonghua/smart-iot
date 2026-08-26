@@ -2,8 +2,10 @@ package net.lab1024.sa.base.common.message.support;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import net.lab1024.sa.base.common.message.AbstractDeviceMessageReply;
 import net.lab1024.sa.base.common.message.DecodedClientMessageHandler;
 import net.lab1024.sa.base.common.message.Message;
+import net.lab1024.sa.base.device.DeviceMessageReplyHandler;
 import net.lab1024.sa.base.device.DeviceOperator;
 import net.lab1024.sa.base.device.session.DeviceSession;
 import net.lab1024.sa.base.device.session.DeviceSessionEvent;
@@ -35,12 +37,15 @@ public class DefaultDecodedClientMessageHandler implements DecodedClientMessageH
     private final IEventBus eventBus;
     @Getter
     private final DeviceOnlineStatePersistence onlineStatePersistence;
+    private final DeviceMessageReplyHandler deviceMessageReplyHandler;
 
     public DefaultDecodedClientMessageHandler(IEventBus eventBus,
                                               DeviceSessionManager sessionManager,
-                                              DeviceOnlineStatePersistence onlineStatePersistence) {
+                                              DeviceOnlineStatePersistence onlineStatePersistence,
+                                              DeviceMessageReplyHandler deviceMessageReplyHandler) {
         this.eventBus = eventBus;
         this.onlineStatePersistence = onlineStatePersistence;
+        this.deviceMessageReplyHandler = deviceMessageReplyHandler;
         // 监听会话注册/注销 — 缓存在线状态 + 更新数据库 由online offline设备消息触发会话
         sessionManager.listenEvent(this::handleSessionEvent);
     }
@@ -110,11 +115,13 @@ public class DefaultDecodedClientMessageHandler implements DecodedClientMessageH
     @Override
     public Mono<Void> handle(Message message) {
         log.info("handle message: {}", message);
-        // Reply 类消息 → 回复到原始请求方
-        // TODO: 实现 Reply 消息回写逻辑（MessageReply / RepayableMessage 类型待落地）
-        // Child 子设备消息 → 解包后重新发布
-        // TODO: 实现子设备消息解包逻辑（ChildDeviceMessage 类型待落地）
-        // 普通消息 → 发布到事件总线
+        // ① 回复类消息 → 回调回复处理者（LocalDeviceMessageSender.onReply），按 messageId 完成发送方的 pending 等待
+        //    （子设备回复 ChildDeviceMessageReply 在 onReply 内解包后下发内层回复 — 见 3.5；事件总线发布保持外层，见 ②）
+        if (message instanceof AbstractDeviceMessageReply) {
+            deviceMessageReplyHandler.onReply((AbstractDeviceMessageReply) message);
+        }
+        // ② 普通消息 → 发布到事件总线（回复消息同样发布，业务可监听；子设备消息按外层发布，监听器经
+        //    ResolvableTypeProvider 泛型匹配内层类型，需要内层内容时自行解包 getChildDeviceMessage()）
         eventBus.publishAsync(message);
         return Mono.empty();
     }

@@ -13,10 +13,14 @@ import net.lab1024.sa.admin.module.business.gateway.service.GatewayService;
 import net.lab1024.sa.admin.module.business.product.service.ProductService;
 import net.lab1024.sa.base.common.domain.PageResult;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
+import net.lab1024.sa.base.common.exception.BusinessException;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.common.util.SmartPageUtil;
+import net.lab1024.sa.base.device.DeviceSendOperator;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -43,6 +47,9 @@ public class DeviceService {
 
     @Resource
     private GatewayService gatewayService;
+
+    @Resource
+    private DeviceSendOperator deviceSendOperator;
 
     /** 分页查询 */
     public PageResult<DeviceVO> queryPage(DeviceQueryForm queryForm) {
@@ -118,10 +125,14 @@ public class DeviceService {
         return SmartBeanUtil.copy(device, DeviceVO.class);
     }
 
-    /** 读取设备属性 — 下发命令到设备获取 */
+    /** 读取设备属性 — 同步下发，等待设备回复（默认 10s），返回属性值（失败抛 BusinessException，成功但数据为空返回 null） */
     public Map<String, Object> readProperties(String deviceId, List<String> properties) {
-        // TODO: 后续对接设备网关下发读取属性指令
-        return new HashMap<String, Object>();
+        return deviceSendOperator.readProperty()
+                .send(deviceId, properties)
+                .flatMap(reply -> reply.isSuccess()
+                        ? Mono.justOrEmpty(reply.getProperties())
+                        : Mono.error(replyError(reply.getMessage())))
+                .block();
     }
 
     /** 查询设备属性 — 查数据库 */
@@ -130,16 +141,31 @@ public class DeviceService {
         return new ArrayList<DevicePropertyVO>();
     }
 
-    /** 设置设备属性 — 下发命令到设备 */
+    /** 设置设备属性 — 同步下发，等待设备回复（默认 10s），返回最新属性值（失败抛 BusinessException，成功但数据为空返回 null） */
     public Map<String, Object> writeProperties(String deviceId, Map<String, Object> properties) {
-        // TODO: 后续对接设备网关下发设置属性指令
-        return properties;
+        return deviceSendOperator.writeProperty()
+                .send(deviceId, properties)
+                .flatMap(reply -> reply.isSuccess()
+                        ? Mono.justOrEmpty(reply.getProperties())
+                        : Mono.error(replyError(reply.getMessage())))
+                .block();
     }
 
-    /** 调用设备功能 — 下发命令到设备 */
+    /** 调用设备功能 — 同步下发，等待设备回复（默认 10s；物模型异步功能下发即成功），返回输出结果（失败抛 BusinessException，成功但无输出返回 null） */
     public Object invokeFunction(String deviceId, String functionId, Map<String, Object> properties) {
-        // TODO: 后续对接设备网关下发功能调用指令
-        return new HashMap<String, Object>();
+        return deviceSendOperator.invokeFunction()
+                .send(deviceId, functionId, properties)
+                .flatMap(reply -> reply.isSuccess()
+                        ? Mono.justOrEmpty(reply.getOutput())
+                        : Mono.error(replyError(reply.getMessage())))
+                .block();
+    }
+
+    /** 失败回复 → BusinessException — message 为空时兜底固定文案（null 会让前端 message.error 不渲染，出现"无提示"） */
+    private BusinessException replyError(String message) {
+        return StringUtils.isBlank(message)
+                ? new BusinessException("设备执行失败，请检查设备回复")
+                : new BusinessException(message);
     }
 
     private String generateDeviceKey() {

@@ -2,6 +2,8 @@ package net.lab1024.sa.base.module.support.protocol.mqtt.session;
 
 import lombok.Getter;
 import net.lab1024.sa.base.common.message.codec.Transport;
+import net.lab1024.sa.base.common.message.raw.EncodedMessage;
+import reactor.core.publisher.Mono;
 import net.lab1024.sa.base.device.DeviceOperator;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
 import net.lab1024.sa.base.device.session.support.AbstractDeviceSession;
@@ -57,5 +59,14 @@ public class MqttConnectionSession extends AbstractDeviceSession {
     @Override
     public boolean isAlive() {
         return connection != null && connection.isAlive();
+    }
+
+    /** 发送已编码的消息 — 转发到 MQTT 连接（下线时返回 false） */
+    @Override
+    public Mono<Boolean> send(EncodedMessage encodedMessage) {
+        if (!isAlive()) {
+            return Mono.just(false);
+        }
+        return connection.sendMessage(encodedMessage).thenReturn(true);
     }
 }

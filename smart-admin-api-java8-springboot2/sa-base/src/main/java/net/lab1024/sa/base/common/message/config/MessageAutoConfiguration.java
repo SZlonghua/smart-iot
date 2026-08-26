@@ -1,6 +1,7 @@
 package net.lab1024.sa.base.common.message.config;
 
 import net.lab1024.sa.base.common.message.support.DefaultDecodedClientMessageHandler;
+import net.lab1024.sa.base.device.DeviceMessageReplyHandler;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
 import net.lab1024.sa.base.device.support.DeviceOnlineStatePersistence;
 import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
@@ -13,7 +14,9 @@ public class MessageAutoConfiguration {
     @Bean
     public DefaultDecodedClientMessageHandler decodedClientMessageHandler(IEventBus eventBus,
                                                                          DeviceSessionManager sessionManager,
-                                                                         ObjectProvider<DeviceOnlineStatePersistence> onlineStatePersister) {
-        return new DefaultDecodedClientMessageHandler(eventBus, sessionManager, onlineStatePersister.getIfAvailable());
+                                                                         ObjectProvider<DeviceOnlineStatePersistence> onlineStatePersister,
+                                                                         DeviceMessageReplyHandler deviceMessageReplyHandler) {
+        return new DefaultDecodedClientMessageHandler(eventBus, sessionManager,
+                onlineStatePersister.getIfAvailable(), deviceMessageReplyHandler);
     }
 }

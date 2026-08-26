@@ -1,5 +1,6 @@
 package net.lab1024.sa.base.common.message;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -30,14 +31,31 @@ public class ChildDeviceMessageReply<T extends Message> extends AbstractDeviceMe
     /** 子设备回复消息 */
     private T childDeviceMessage;
 
-    public ChildDeviceMessageReply(String gatewayDeviceKey, String childProductKey, String childDeviceKey, T childDeviceMessage) {
+    /**
+     * 构造外层回复（网关代理）：
+     * 外层 = 网关三元（gatewayDeviceId / gatewayDeviceKey / gatewayProductKey）；
+     * 外层与内层是同一条消息 — 外层 messageId = 内层回复 messageId（回复按它绑定发送方等待），
+     * 子设备三元（childProductKey / childDeviceKey）取内层回复 productKey / deviceKey。
+     * 注：解码场景 gatewayDeviceId 未知传 null，由网关连接认证后回填。
+     */
+    @SuppressWarnings("unchecked")
+    public ChildDeviceMessageReply(String gatewayDeviceId, String gatewayDeviceKey, String gatewayProductKey, T childDeviceMessage) {
+        setDeviceId(gatewayDeviceId);
         setDeviceKey(gatewayDeviceKey);
-        this.childProductKey = childProductKey;
-        this.childDeviceKey = childDeviceKey;
+        setProductKey(gatewayProductKey);
         this.childDeviceMessage = childDeviceMessage;
+        if (childDeviceMessage instanceof AbstractDeviceMessage) {
+            AbstractDeviceMessage inner = (AbstractDeviceMessage) childDeviceMessage;
+            this.childProductKey = inner.getProductKey();
+            this.childDeviceKey = inner.getDeviceKey();
+            setMessageId(inner.getMessageId());
+            setTimestamp(inner.getTimestamp());
+        }
     }
 
+    /** 仅用于事件总线泛型匹配 — 序列化消息 payload 时排除（ResolvableType 自引用会导致 Jackson 递归报错） */
     @Override
+    @JsonIgnore
     public ResolvableType getResolvableType() {
         return ResolvableType.forClassWithGenerics(
                 ChildDeviceMessageReply.class,

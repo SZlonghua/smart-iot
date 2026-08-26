@@ -9,6 +9,8 @@ import com.hazelcast.map.IMap;
 import net.lab1024.sa.base.cluster.ClusterManager;
 import net.lab1024.sa.base.cluster.ServerNode;
 import net.lab1024.sa.base.cluster.support.task.RemoteServiceInvoker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Proxy;
@@ -34,6 +36,7 @@ public class HazelcastClusterManager implements ClusterManager {
     private static final long DEFAULT_RPC_TIMEOUT = 15_000;
 
     private static final String NODE_REGISTRY_MAP = "cluster:node-registry";
+    private static final Logger log = LoggerFactory.getLogger(HazelcastClusterManager.class);
 
     private final HazelcastInstance hazelcast;
     private final IMap<String, ServerNode> nodeMap;                   // 分布式节点注册表
@@ -149,6 +152,7 @@ public class HazelcastClusterManager implements ClusterManager {
         @Override
         public void memberAdded(MembershipEvent event) {
             // 成员加入无需处理 — 其注册表项由该节点自身 registerNode() 写入
+            log.info("memberAdded: {} address: {}" , event.getMember().getUuid(), event.getMember().getAddress());
         }
 
         @Override
@@ -156,6 +160,7 @@ public class HazelcastClusterManager implements ClusterManager {
             String nodeId = event.getMember().getUuid().toString();
             nodeMap.remove(nodeId);
             // 本地服务注册表无需清理 — 成员退出后 getService 只会对存活节点创建代理
+            log.info("memberRemoved: {} address: {}" , event.getMember().getUuid(), event.getMember().getAddress());
         }
     }
 }

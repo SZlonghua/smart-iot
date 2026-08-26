@@ -41,11 +41,29 @@ public interface DeviceSession {
 
     /**
      * 发送消息
-     * 预留
+     *
      * @param encodedMessage 消息
      * @return 是否成功
      */
-//    Mono<Boolean> send(EncodedMessage encodedMessage);
+    default Mono<Boolean> send(EncodedMessage encodedMessage) {
+        return Mono.error(new UnsupportedOperationException("会话未实现消息发送能力: " + getClass().getSimpleName()));
+    }
+
+    /**
+     * @return 产品 Key（烧录标识，可为空）
+     */
+    @Nullable
+    default String getProductKey() {
+        return null;
+    }
+
+    /**
+     * @return 设备 Key（烧录标识，可为空）
+     */
+    @Nullable
+    default String getDeviceKey() {
+        return null;
+    }
 
     /**
      * 传输协议,比如MQTT,TCP等
