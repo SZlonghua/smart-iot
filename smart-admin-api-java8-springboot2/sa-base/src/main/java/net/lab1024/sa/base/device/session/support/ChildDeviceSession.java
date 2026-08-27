@@ -3,10 +3,13 @@ package net.lab1024.sa.base.device.session.support;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.lab1024.sa.base.common.message.codec.Transport;
+import net.lab1024.sa.base.common.message.raw.EncodedMessage;
+import reactor.core.publisher.Mono;
 import net.lab1024.sa.base.device.DeviceOperator;
 import net.lab1024.sa.base.device.session.DeviceSession;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
 
+import javax.annotation.Nullable;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -57,6 +60,27 @@ public class ChildDeviceSession extends AbstractDeviceSession {
     @Override
     public boolean isAlive() {
         return parent != null && parent.isAlive();
+    }
+
+    /** 子设备消息发送防误用 — 子设备不持有连接，必须经 DeviceMessageSender 包装 ChildDeviceMessage 走父连接 */
+    @Override
+    public Mono<Boolean> send(EncodedMessage encodedMessage) {
+        return Mono.error(new UnsupportedOperationException(
+                "子设备消息需经网关代理，请通过 DeviceMessageSender 下发"));
+    }
+
+    /** 协议实例 ID — 子设备经父网关代理通信，元数据跟随父会话 */
+    @Override
+    @Nullable
+    public String getProtocolId() {
+        return parent.getProtocolId();
+    }
+
+    /** 连接服务器节点 ID — 子设备经父网关代理通信，元数据跟随父会话 */
+    @Override
+    @Nullable
+    public String getConnectionServerId() {
+        return parent.getConnectionServerId();
     }
 
     @Override

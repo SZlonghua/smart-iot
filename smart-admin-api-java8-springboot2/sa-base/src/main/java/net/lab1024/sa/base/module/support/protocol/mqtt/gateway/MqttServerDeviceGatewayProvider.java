@@ -1,6 +1,7 @@
 package net.lab1024.sa.base.module.support.protocol.mqtt.gateway;
 
 import lombok.Getter;
+import net.lab1024.sa.base.cluster.ClusterManager;
 import net.lab1024.sa.base.common.gateway.DeviceGateway;
 import net.lab1024.sa.base.common.gateway.DeviceGatewayProperties;
 import net.lab1024.sa.base.common.gateway.DeviceGatewayProvider;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 
@@ -34,17 +36,23 @@ public class MqttServerDeviceGatewayProvider implements DeviceGatewayProvider {
 
     private final ProtocolSupportManager protocolSupportManager;
 
+    /** 集群管理器 — 网关创建会话时取当前节点 ID；单机部署（未装配集群）为 null */
+    @Nullable
+    private final ClusterManager clusterManager;
+
 
     public MqttServerDeviceGatewayProvider(NetworkManager networkManager,
                                            DeviceRegistry registry,
                                            DeviceSessionManager sessionManager,
                                            DecodedClientMessageHandler messageHandler,
-                                           ProtocolSupportManager protocolSupportManager) {
+                                           ProtocolSupportManager protocolSupportManager,
+                                           @Nullable ClusterManager clusterManager) {
         this.networkManager = networkManager;
         this.registry = registry;
         this.sessionManager = sessionManager;
         this.messageHandler = messageHandler;
         this.protocolSupportManager = protocolSupportManager;
+        this.clusterManager = clusterManager;
     }
 
     @Override
@@ -80,7 +88,8 @@ public class MqttServerDeviceGatewayProvider implements DeviceGatewayProvider {
                         sessionManager,
                         mqttServerNetwork,
                         messageHandler,
-                        protocolSupportManager.getProtocol(properties.getProtocol())));
+                        protocolSupportManager.getProtocol(properties.getProtocol()),
+                        clusterManager));
     }
 
     @Override

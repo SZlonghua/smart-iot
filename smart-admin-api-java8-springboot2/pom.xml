@@ -52,6 +52,8 @@
         <redisson.version>3.25.0</redisson.version>
         <snakeyaml.version>2.4</snakeyaml.version>
         <freemarker.version>2.3.34</freemarker.version>
+        <!--JUnit 5 需要 surefire 2.22.2+，默认 2.12.4 只支持 JUnit 4-->
+        <maven-surefire.version>3.2.5</maven-surefire.version>
         <jsoup.version>1.21.1</jsoup.version>
         <tika.version>2.9.4</tika.version>
     </properties>
@@ -396,6 +398,15 @@
                     <source>1.8</source>
                     <target>1.8</target>
                     <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <!--surefire 版本固定（JUnit 5 支持）；无测试时跳过（sa-admin 等模块暂无测试）-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire.version}</version>
+                <configuration>
+                    <failIfNoTests>false</failIfNoTests>
                 </configuration>
             </plugin>
             <plugin>

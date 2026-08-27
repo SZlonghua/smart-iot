@@ -327,6 +327,13 @@
             <version>${vertx.version}</version>
         </dependency>
 
+        <!-- Hazelcast 集群设施（ClusterManager） — 5.3.x 最后版本，明确支持 Java 8（5.4 起要求 Java 11） -->
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+            <version>5.3.7</version>
+        </dependency>
+
     </dependencies>
 
 

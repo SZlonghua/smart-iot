@@ -4,6 +4,7 @@ import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.lab1024.sa.base.cluster.ClusterManager;
 import net.lab1024.sa.base.common.gateway.AbstractDeviceGateway;
 import net.lab1024.sa.base.common.gateway.GatewayState;
 import net.lab1024.sa.base.common.message.AbstractDeviceMessage;
@@ -32,6 +33,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
+import javax.annotation.Nullable;
 import java.util.function.Function;
 
 
@@ -57,6 +59,10 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
     @Setter
     private Mono<ProtocolSupport> protocolSupport;
 
+    /** 集群管理器 — 取当前节点 ID（会话注册时写入 connectionServerId）；单机部署（未装配集群）为 null */
+    @Nullable
+    private final ClusterManager clusterManager;
+
     private final Sinks.Many<Message> gatewayMessageSink = Sinks.many().multicast().onBackpressureBuffer();
 
     public MqttServerDeviceGateway(String id,
@@ -64,13 +70,21 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
                                    DeviceSessionManager sessionManager,
                                    MqttServerNetwork mqttServerNetwork,
                                    DecodedClientMessageHandler messageHandler,
-                                   Mono<ProtocolSupport> protocolSupport) {
+                                   Mono<ProtocolSupport> protocolSupport,
+                                   @Nullable ClusterManager clusterManager) {
         super(id);
         this.registry = registry;
         this.sessionManager = sessionManager;
         this.mqttServerNetwork = mqttServerNetwork;
         this.messageHandler = messageHandler;
         this.protocolSupport = protocolSupport;
+        this.clusterManager = clusterManager;
+    }
+
+    /** 当前节点 ID（集群节点 ID）— 集群未启用（未注入集群管理器）返回 null，会话注册时写入 connectionServerId */
+    @Nullable
+    private String getCurrentNodeId() {
+        return clusterManager == null ? null : clusterManager.getCurrentNodeId();
     }
 
     /*@Override
@@ -116,9 +130,13 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
                 })
                 // 3. 会话管理 — compute 替换（替换/关闭旧会话由 SessionManager 内部处理）
                 //    注意：compute 返回的 Mono 必须被订阅（flatMap），否则注册逻辑不执行
+                //    会话携带协议实例 ID + 当前节点 ID，注册事件写入 Redis 设备字段（DefaultDecodedClientMessageHandler）
                 .flatMap(connection ->
-                        registry.getDevice(connection.getDeviceId())
-                                .flatMap(deviceOperator -> Mono.just(new MqttConnectionSession(connection, deviceOperator, getTransport(), sessionManager, getId())))
+                        protocolSupport
+                                .flatMap(ps -> registry.getDevice(connection.getDeviceId())
+                                        .map(deviceOperator -> new MqttConnectionSession(connection, deviceOperator,
+                                                getTransport(), sessionManager, getId(),
+                                                ps.getId(), getCurrentNodeId())))
                                 .flatMap(session -> sessionManager.compute(session.getDeviceId(),
                                         oldSessionMono -> Mono.just(session))
                                         .thenReturn(connection))
@@ -275,12 +293,14 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
      */
     private Mono<Void> handleDirectDeviceOnline(VertxMqttConnection connection, DeviceOnlineMessage message) {
         // 此时 deviceId 尚未填充（fillDeviceId 在 handleDeviceSession 之后执行），按烧录的产品 key + 设备 key 查询
-        return registry.getDevice(message.getProductKey(), message.getDeviceKey())
-                .flatMap(operator -> {
-                    MqttConnectionSession session = new MqttConnectionSession(connection, operator, getTransport(), sessionManager, getId());
-                    return sessionManager.compute(session.getDeviceId(),
-                            old -> old.switchIfEmpty(Mono.just(session)));
-                })
+        return protocolSupport
+                .flatMap(ps -> registry.getDevice(message.getProductKey(), message.getDeviceKey())
+                        .flatMap(operator -> {
+                            MqttConnectionSession session = new MqttConnectionSession(connection, operator,
+                                    getTransport(), sessionManager, getId(), ps.getId(), getCurrentNodeId());
+                            return sessionManager.compute(session.getDeviceId(),
+                                    old -> old.switchIfEmpty(Mono.just(session)));
+                        }))
                 .then();
     }
 

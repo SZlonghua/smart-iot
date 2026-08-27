@@ -41,11 +41,29 @@ public interface DeviceSession {
 
     /**
      * 发送消息
-     * 预留
+     *
      * @param encodedMessage 消息
      * @return 是否成功
      */
-//    Mono<Boolean> send(EncodedMessage encodedMessage);
+    default Mono<Boolean> send(EncodedMessage encodedMessage) {
+        return Mono.error(new UnsupportedOperationException("会话未实现消息发送能力: " + getClass().getSimpleName()));
+    }
+
+    /**
+     * @return 产品 Key（烧录标识，可为空）
+     */
+    @Nullable
+    default String getProductKey() {
+        return null;
+    }
+
+    /**
+     * @return 设备 Key（烧录标识，可为空）
+     */
+    @Nullable
+    default String getDeviceKey() {
+        return null;
+    }
 
     /**
      * 传输协议,比如MQTT,TCP等
@@ -71,6 +89,22 @@ public interface DeviceSession {
     @Nullable
     default String getGatewayId() {
         return "";
+    }
+
+    /**
+     * @return 协议实例 ID（ProtocolSupport.getId()，如 "mqtt"）— 会话注册时写入 Redis 设备字段，无协议返回 null
+     */
+    @Nullable
+    default String getProtocolId() {
+        return null;
+    }
+
+    /**
+     * @return 连接服务器节点 ID（集群节点 ID）— 会话注册时写入 Redis 设备字段，集群路由到设备所在节点；单机部署返回 null
+     */
+    @Nullable
+    default String getConnectionServerId() {
+        return null;
     }
 
     default Mono<Boolean> isAliveAsync() {

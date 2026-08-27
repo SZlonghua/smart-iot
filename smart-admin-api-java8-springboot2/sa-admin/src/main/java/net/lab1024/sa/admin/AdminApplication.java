@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.hazelcast.HazelcastAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
@@ -26,7 +27,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
 @ComponentScan(AdminApplication.COMPONENT_SCAN)
 @MapperScan(value = AdminApplication.COMPONENT_SCAN, annotationClass = Mapper.class)
-@SpringBootApplication(exclude = {UserDetailsServiceAutoConfiguration.class})
+// 排除 Hazelcast 自动装配：Hazelcast 实例由 iot.cluster 自定义配置按需创建（enabled=true 时装配），
+// 且该注解排除对 IDE 可见 — sa-base.yaml 中的 spring.autoconfigure.exclude 经自定义 YamlProcessor 加载，IDE 无法识别
+@SpringBootApplication(exclude = {UserDetailsServiceAutoConfiguration.class, HazelcastAutoConfiguration.class})
 public class AdminApplication {
 
     public static final String COMPONENT_SCAN = "net.lab1024.sa";

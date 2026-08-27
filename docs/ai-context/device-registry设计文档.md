@@ -103,12 +103,12 @@ Type:   Hash
   productName        string   产品名称 (冗余, 产品变更时同步)
   productKey         string   产品密钥 (冗余, 产品变更时同步)
   productSecret      string   产品密钥 (冗余, 产品变更时同步)
-  offlineTime        long     下线时间 (预留)
-  onlineTime         long     上线时间 (预留)
-  sessionId          string   会话ID (预留, 上线时写入)
-  protocolId         string   协议ID (预留, 上线时写入)
-  gatewayId          string   网关ID (预留, 上线时写入)
-  connectionServerId string   集群节点ID (预留)
+  offlineTime        long     下线时间 (下线时写入)
+  onlineTime         long     上线时间 (上线时写入)
+  sessionId          string   会话ID (上线时写入)
+  protocolId         string   协议ID (上线时写入)
+  gatewayId          string   网关ID (上线时写入)
+  connectionServerId string   集群节点ID (上线时写入, 单机部署不写)
 ```
 
 > 字段枚举: `net.lab1024.sa.base.device.support.DeviceField`

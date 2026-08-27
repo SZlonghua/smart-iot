@@ -54,11 +54,9 @@ public enum TopicMessageCodec {
             if (childMsg == null) {
                 return null;
             }
-            ChildDeviceMessage<Message> msg = new ChildDeviceMessage<>(topic[2], topic[4], topic[5], childMsg);
-            msg.setProductKey(topic[1]);
-            msg.setTimestamp(childMsg.getTimestamp());
-            msg.setMessageId(childMsg.getMessageId());
-            return msg;
+            // gatewayDeviceId 解码时未知传 null（由网关连接认证后回填）；gatewayPk/Dk 取 topic 段；
+            // 子设备三元与 messageId 由构造从内层消息同步（构造已设置，与内层一致）
+            return new ChildDeviceMessage<>(null, topic[2], topic[1], childMsg);
         }
 
         @Override
@@ -93,11 +91,9 @@ public enum TopicMessageCodec {
             if (childMsg == null) {
                 return null;
             }
-            ChildDeviceMessageReply<Message> msg = new ChildDeviceMessageReply<>(topic[2], topic[4], topic[5], childMsg);
-            msg.setProductKey(topic[1]);
-            msg.setTimestamp(childMsg.getTimestamp());
-            msg.setMessageId(childMsg.getMessageId());
-            return msg;
+            // gatewayDeviceId 解码时未知传 null（由网关连接认证后回填）；gatewayPk/Dk 取 topic 段；
+            // 子设备三元与 messageId 由构造从内层回复同步（构造已设置，与内层一致）
+            return new ChildDeviceMessageReply<>(null, topic[2], topic[1], childMsg);
         }
 
         @Override

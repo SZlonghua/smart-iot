@@ -22,8 +22,10 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Vertx MQTT Connection 实现 — 封装 MqttEndpoint。
@@ -179,14 +181,14 @@ public class VertxMqttConnection implements MqttConnection {
                     log.debug("PUBCOMP mqtt[{}] message[{}]", getClientId(), id);
                 })
                 .subscribeHandler(sub -> {
-
-                    /*List<MqttQoS> grantedQos = sub.topicSubscriptions().stream()
+                    // 回 SUBACK 授予订阅（QoS 取请求值）— 订阅流程必须闭环，否则客户端订阅请求永远挂起
+                    List<MqttQoS> grantedQos = sub.topicSubscriptions().stream()
                             .map(s -> MqttQoS.valueOf(s.qualityOfService().value()))
                             .collect(Collectors.toList());
-                    endpoint.subscribeAcknowledge(sub.messageId(), grantedQos);*/
+                    endpoint.subscribeAcknowledge(sub.messageId(), grantedQos);
                 })
-                .unsubscribeHandler(unsub ->{
-//                    endpoint.unsubscribeAcknowledge(unsub.messageId());
+                .unsubscribeHandler(unsub -> {
+                    endpoint.unsubscribeAcknowledge(unsub.messageId());
                 })
                 .disconnectHandler(ignore -> complete())
                 .closeHandler(v -> complete())
