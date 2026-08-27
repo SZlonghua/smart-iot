@@ -21,9 +21,10 @@ public interface DeviceOnlineStatePersistence {
     void onOnline(DeviceSession session);
 
     /**
-     * 设备下线 — 更新 status（子设备会话清空 gateway_id）
+     * 设备下线 — 清空 gateway_id/parent_device_id 并更新 status（带幂等护栏：仅当仍为在线状态时生效）。
+     * 由 DeviceOfflineCleaner 统一调用（正常下线/异常残留清理同一路径）。
      *
-     * @param session 会话
+     * @param deviceId 设备ID
      */
-    void onOffline(DeviceSession session);
+    void onOffline(String deviceId);
 }

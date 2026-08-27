@@ -64,17 +64,16 @@ public class DeviceOnlineStatePersistenceImpl implements DeviceOnlineStatePersis
     }
 
     @Override
-    public void onOffline(DeviceSession session) {
+    public void onOffline(String deviceId) {
         LambdaUpdateWrapper<DeviceEntity> wrapper = Wrappers.lambdaUpdate(DeviceEntity.class)
-                .eq(DeviceEntity::getId, Long.valueOf(session.getDeviceId()))
+                .eq(DeviceEntity::getId, Long.valueOf(deviceId))
+                // 幂等护栏 — 仅当 DB 仍为"在线"时才落离线（设备可能已重连/已被正常下线链路清理）
+                .eq(DeviceEntity::getStatus, DeviceStatusEnum.ONLINE.getValue())
                 .set(DeviceEntity::getStatus, DeviceStatusEnum.OFFLINE.getValue())
-                // 下线 → 清空 gateway_id（不再接入任何网关）
-                .set(DeviceEntity::getGatewayId, null);
-        // 子设备 → 同时清空 parent_device_id
-        if (session instanceof ChildDeviceSession) {
-            wrapper.set(DeviceEntity::getParentDeviceId, null);
-        }
+                // 无会话对象无法判断子设备 — 网关/父设备关联无条件清空
+                .set(DeviceEntity::getGatewayId, null)
+                .set(DeviceEntity::getParentDeviceId, null);
         deviceManager.update(wrapper);
-        log.info("[设备状态] 下线 — deviceId={}", session.getDeviceId());
+        log.info("[设备状态] 下线 — deviceId={}", deviceId);
     }
 }

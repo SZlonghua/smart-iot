@@ -17,6 +17,7 @@ import net.lab1024.sa.base.common.exception.BusinessException;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
 import net.lab1024.sa.base.common.util.SmartPageUtil;
 import net.lab1024.sa.base.device.DeviceSendOperator;
+import net.lab1024.sa.base.device.support.DeviceOfflineCleaner;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -50,6 +51,9 @@ public class DeviceService {
 
     @Resource
     private DeviceSendOperator deviceSendOperator;
+
+    @Resource
+    private DeviceOfflineCleaner offlineCleaner;
 
     /** 分页查询 */
     public PageResult<DeviceVO> queryPage(DeviceQueryForm queryForm) {
@@ -99,6 +103,10 @@ public class DeviceService {
         if (device == null) {
             return null;
         }
+        // 接触即校验 — 校验在线状态；离线（kill -9/断电等异常残留）→ 清除会话残留（Redis/DB）后重查，返回修正后的状态
+        offlineCleaner.checkAndClean(String.valueOf(id)).block();
+        device = deviceDao.selectById(id);
+
         DeviceDetailVO vo = SmartBeanUtil.copy(device, DeviceDetailVO.class);
 
         // 产品详情

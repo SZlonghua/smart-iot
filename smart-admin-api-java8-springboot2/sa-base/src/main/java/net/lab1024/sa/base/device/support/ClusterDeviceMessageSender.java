@@ -31,43 +31,52 @@ public class ClusterDeviceMessageSender implements DeviceMessageSender {
     private final LocalDeviceMessageSender localSender;
     private final DeviceRegistry registry;
     private final DeviceSessionManager sessionManager;
+    private final DeviceOfflineCleaner offlineCleaner;
 
     public ClusterDeviceMessageSender(ClusterManager clusterManager,
                                       LocalDeviceMessageSender localSender,
                                       DeviceRegistry registry,
-                                      DeviceSessionManager sessionManager) {
+                                      DeviceSessionManager sessionManager,
+                                      DeviceOfflineCleaner offlineCleaner) {
         this.clusterManager = clusterManager;
         this.localSender = localSender;
         this.registry = registry;
         this.sessionManager = sessionManager;
+        this.offlineCleaner = offlineCleaner;
         // 注册本节点远程发送服务 — 其他节点 getService(nodeId, DeviceMessageSendService) 可调用本节点设备
         clusterManager.register(DeviceMessageSendService.class, new DefaultDeviceMessageSendService(localSender));
     }
 
     @Override
     public Mono<DeviceMessageReply> sendAndWait(DeviceMessage message, long timeout) {
-        return getDeviceNodeId(((AbstractDeviceMessage) message).getDeviceId())   // ① 设备所在节点
+        String deviceId = ((AbstractDeviceMessage) message).getDeviceId();
+        return getDeviceNodeId(deviceId)                                   // ① 设备所在节点
                 .flatMap(nodeId -> {
                     if (nodeId.equals(clusterManager.getCurrentNodeId())) {        // ② 本节点
                         return localSender.sendAndWait(message, timeout);
                     }
                     // ③ 远程节点 → 代理调用（目标节点 DefaultDeviceMessageSendService → LocalDeviceMessageSender）
                     return clusterManager.getService(nodeId, DeviceMessageSendService.class)
-                            .switchIfEmpty(Mono.error(new BusinessException("目标节点未注册发送服务: " + nodeId)))
+                            // 节点已下线（kill -9 等）→ 设备必然离线 → 清除 Redis/DB 残留再报错
+                            .switchIfEmpty(offlineCleaner.clean(deviceId)
+                                    .then(Mono.error(new BusinessException("目标节点未注册发送服务: " + nodeId))))
                             .flatMap(service -> service.sendAndWait(message, timeout));
                 });
     }
 
     @Override
     public Mono<Void> send(DeviceMessage message) {
-        return getDeviceNodeId(((AbstractDeviceMessage) message).getDeviceId())
+        String deviceId = ((AbstractDeviceMessage) message).getDeviceId();
+        return getDeviceNodeId(deviceId)
                 .flatMap(nodeId -> {
                     if (nodeId.equals(clusterManager.getCurrentNodeId())) {
                         return localSender.send(message);
                     }
                     // 异步下发远程执行：目标节点只发不等回复，本节点直接返回（回复不跨节点回传）
                     return clusterManager.getService(nodeId, DeviceMessageSendService.class)
-                            .switchIfEmpty(Mono.error(new BusinessException("目标节点未注册发送服务: " + nodeId)))
+                            // 节点已下线（kill -9 等）→ 设备必然离线 → 清除 Redis/DB 残留再报错
+                            .switchIfEmpty(offlineCleaner.clean(deviceId)
+                                    .then(Mono.error(new BusinessException("目标节点未注册发送服务: " + nodeId))))
                             .flatMap(service -> service.send(message));
                 });
     }
@@ -84,6 +93,8 @@ public class ClusterDeviceMessageSender implements DeviceMessageSender {
                 .switchIfEmpty(sessionManager.getSession(deviceId, true)
                         .filter(DeviceSession::isAlive)
                         .map(session -> clusterManager.getCurrentNodeId())
-                        .switchIfEmpty(Mono.error(new BusinessException("设备未在线，无法下发命令"))));
+                        // 本地无会话 + hash 无节点归属 = 设备离线（异常残留）→ 清除 Redis/DB 残留再报错
+                        .switchIfEmpty(offlineCleaner.clean(deviceId)
+                                .then(Mono.error(new BusinessException("设备未在线，无法下发命令")))));
     }
 }

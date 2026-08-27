@@ -44,13 +44,16 @@ public class LocalDeviceMessageSender implements DeviceMessageSender, DeviceMess
     private final DeviceSessionManager sessionManager;
     private final DeviceRegistry registry;
     private final ProtocolSupportManager protocolSupportManager;
+    private final DeviceOfflineCleaner offlineCleaner;
 
     public LocalDeviceMessageSender(DeviceSessionManager sessionManager,
                                     DeviceRegistry registry,
-                                    ProtocolSupportManager protocolSupportManager) {
+                                    ProtocolSupportManager protocolSupportManager,
+                                    DeviceOfflineCleaner offlineCleaner) {
         this.sessionManager = sessionManager;
         this.registry = registry;
         this.protocolSupportManager = protocolSupportManager;
+        this.offlineCleaner = offlineCleaner;
     }
 
     @Override
@@ -61,9 +64,12 @@ public class LocalDeviceMessageSender implements DeviceMessageSender, DeviceMess
             message.addHeaderIfAbsent(Headers.TIMEOUT.getValue(), timeout);
         }
         // deviceId 由消息携带（所有具体消息均为 AbstractDeviceMessage）
-        return sessionManager.getSession(((AbstractDeviceMessage) message).getDeviceId(), true)   // ① 查会话（失效自动注销）
+        String deviceId = ((AbstractDeviceMessage) message).getDeviceId();
+        return sessionManager.getSession(deviceId, true)                 // ① 查会话（失效自动注销）
                 .filter(DeviceSession::isAlive)                          // ② 在线判定
-                .switchIfEmpty(Mono.error(new BusinessException("设备离线，无法下发命令")))
+                // ③ 会话缺失 = 设备离线（kill -9/断电等异常残留）→ 顺手清除 Redis/DB 残留再报错
+                .switchIfEmpty(offlineCleaner.clean(deviceId)
+                        .then(Mono.error(new BusinessException("设备离线，无法下发命令"))))
                 .flatMap(session -> prepareMessage(session, message)    // ③ 填充 + 默认超时回填 + 子设备包装
                         .flatMap(msg -> {
                             // ④ 发送前先注册 pending（设备可能秒回：回复在 doSend 完成前到达也能经 onReply 命中 sink，
@@ -87,9 +93,12 @@ public class LocalDeviceMessageSender implements DeviceMessageSender, DeviceMess
 
     @Override
     public Mono<Void> send(DeviceMessage message) {
-        return sessionManager.getSession(((AbstractDeviceMessage) message).getDeviceId(), true)
+        String deviceId = ((AbstractDeviceMessage) message).getDeviceId();
+        return sessionManager.getSession(deviceId, true)
                 .filter(DeviceSession::isAlive)
-                .switchIfEmpty(Mono.error(new BusinessException("设备离线，无法下发命令")))
+                // 会话缺失 = 设备离线（kill -9/断电等异常残留）→ 顺手清除 Redis/DB 残留再报错
+                .switchIfEmpty(offlineCleaner.clean(deviceId)
+                        .then(Mono.error(new BusinessException("设备离线，无法下发命令"))))
                 .flatMap(session -> prepareMessage(session, message)
                         .flatMap(msg -> doSend(session, msg)));   // 异步：不等待回复，下发即成功，无需超时
     }

@@ -6,10 +6,12 @@ import net.lab1024.sa.base.device.DeviceRegistry;
 import net.lab1024.sa.base.device.DeviceSendOperator;
 import net.lab1024.sa.base.device.DeviceMessageSender;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
-import net.lab1024.sa.base.device.session.DeviceSessionManager;
 import net.lab1024.sa.base.device.support.ClusterDeviceMessageSender;
 import net.lab1024.sa.base.device.support.DefaultDeviceSendOperator;
+import net.lab1024.sa.base.device.support.DeviceOfflineCleaner;
+import net.lab1024.sa.base.device.support.DeviceOnlineStatePersistence;
 import net.lab1024.sa.base.device.support.LocalDeviceMessageSender;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,12 +28,24 @@ import org.springframework.context.annotation.Primary;
 @Configuration
 public class DeviceMessageSenderAutoConfiguration {
 
+    /** 离线清理器 — 发送链路/详情等入口会话缺失或节点失联时清除 Redis + DB 残留
+     * （clusterManager 单机不注入；持久化由业务模块实现，可空） */
+    @Bean
+    public DeviceOfflineCleaner deviceOfflineCleaner(DeviceSessionManager sessionManager,
+                                                     DeviceRegistry registry,
+                                                     ObjectProvider<ClusterManager> clusterManager,
+                                                     ObjectProvider<DeviceOnlineStatePersistence> onlineStatePersistence) {
+        return new DeviceOfflineCleaner(sessionManager, registry,
+                clusterManager.getIfAvailable(), onlineStatePersistence.getIfAvailable());
+    }
+
     /** 本地发送器 — 单机核心（也是集群中"设备所在节点"执行的部分），同时实现 DeviceMessageReplyHandler 供回复回调注入 */
     @Bean
     public LocalDeviceMessageSender localDeviceMessageSender(DeviceSessionManager sessionManager,
                                                              DeviceRegistry registry,
-                                                             ProtocolSupportManager protocolSupportManager) {
-        return new LocalDeviceMessageSender(sessionManager, registry, protocolSupportManager);
+                                                             ProtocolSupportManager protocolSupportManager,
+                                                             DeviceOfflineCleaner offlineCleaner) {
+        return new LocalDeviceMessageSender(sessionManager, registry, protocolSupportManager, offlineCleaner);
     }
 
     /** 下发门面 — 业务层只依赖接口，不感知本地/集群 */
@@ -61,7 +75,8 @@ public class DeviceMessageSenderAutoConfiguration {
     public DeviceMessageSender clusterDeviceMessageSender(LocalDeviceMessageSender localSender,
                                                           ClusterManager clusterManager,
                                                           DeviceRegistry registry,
-                                                          DeviceSessionManager sessionManager) {
-        return new ClusterDeviceMessageSender(clusterManager, localSender, registry, sessionManager);
+                                                          DeviceSessionManager sessionManager,
+                                                          DeviceOfflineCleaner offlineCleaner) {
+        return new ClusterDeviceMessageSender(clusterManager, localSender, registry, sessionManager, offlineCleaner);
     }
 }

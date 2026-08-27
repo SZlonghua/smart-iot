@@ -12,11 +12,11 @@ import net.lab1024.sa.base.device.session.DeviceSessionEvent;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
 import net.lab1024.sa.base.device.session.support.ChildDeviceSession;
 import net.lab1024.sa.base.device.support.DeviceField;
+import net.lab1024.sa.base.device.support.DeviceOfflineCleaner;
 import net.lab1024.sa.base.device.support.DeviceOnlineStatePersistence;
 import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,7 +25,7 @@ import java.util.Map;
  * <p>
  * 构造时监听会话注册/注销事件：
  * - 注册（上线）：缓存 SESSION_ID + ONLINE_TIME + GATEWAY_ID + PROTOCOL_ID + CONNECTION_SERVER_ID 到设备存储（Redis Hash），并回调持久化更新数据库
- * - 注销（下线）：清除上述字段 + 缓存 OFFLINE_TIME，并回调持久化更新数据库
+ * - 注销（下线）：统一走 DeviceOfflineCleaner 清理（清 Redis 上线字段 + OFFLINE_TIME + 持久化离线状态）
  * <p>
  * &#064;Author  廖涛
  * &#064;Date  2026/08/07
@@ -38,14 +38,17 @@ public class DefaultDecodedClientMessageHandler implements DecodedClientMessageH
     @Getter
     private final DeviceOnlineStatePersistence onlineStatePersistence;
     private final DeviceMessageReplyHandler deviceMessageReplyHandler;
+    private final DeviceOfflineCleaner offlineCleaner;
 
     public DefaultDecodedClientMessageHandler(IEventBus eventBus,
                                               DeviceSessionManager sessionManager,
                                               DeviceOnlineStatePersistence onlineStatePersistence,
-                                              DeviceMessageReplyHandler deviceMessageReplyHandler) {
+                                              DeviceMessageReplyHandler deviceMessageReplyHandler,
+                                              DeviceOfflineCleaner offlineCleaner) {
         this.eventBus = eventBus;
         this.onlineStatePersistence = onlineStatePersistence;
         this.deviceMessageReplyHandler = deviceMessageReplyHandler;
+        this.offlineCleaner = offlineCleaner;
         // 监听会话注册/注销 — 缓存在线状态 + 更新数据库 由online offline设备消息触发会话
         sessionManager.listenEvent(this::handleSessionEvent);
     }
@@ -71,19 +74,9 @@ public class DefaultDecodedClientMessageHandler implements DecodedClientMessageH
         }
     }
 
-    /** 下线：删除 SESSION_ID/GATEWAY_ID/PARENT_DEVICE_ID/PROTOCOL_ID/CONNECTION_SERVER_ID 字段（置空串不算清除）+ 缓存 OFFLINE_TIME，持久化离线状态 */
+    /** 下线：清除 Redis 上线字段 + 持久化离线状态 — 事件触发时设备必然离线（见 cleanDirect 注释），直清无需重查 */
     private void handleUnregister(DeviceSession session) {
-        DeviceOperator operator = session.getOperator();
-        if (operator != null) {
-            operator.removeConfigs(DeviceField.SESSION_ID.getValue(),
-                    DeviceField.GATEWAY_ID.getValue(), DeviceField.PARENT_DEVICE_ID.getValue(),
-                    DeviceField.PROTOCOL_ID.getValue(), DeviceField.CONNECTION_SERVER_ID.getValue());
-            operator.setConfigs(Collections.singletonMap(
-                    DeviceField.OFFLINE_TIME.getValue(), System.currentTimeMillis()));
-        }
-        if (onlineStatePersistence != null) {
-            onlineStatePersistence.onOffline(session);
-        }
+        offlineCleaner.cleanDirect(session.getDeviceId()).subscribe();
     }
 
     /**
