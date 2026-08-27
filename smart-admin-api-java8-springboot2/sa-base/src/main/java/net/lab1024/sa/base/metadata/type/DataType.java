@@ -2,7 +2,6 @@ package net.lab1024.sa.base.metadata.type;
 
 import net.lab1024.sa.base.metadata.Validatable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -17,8 +16,6 @@ public interface DataType extends Validatable {
     /** 类型标识 */
     String getType();
 
-    /** 校验单个值 — 预留：默认返回空列表（各类型实现后续按物模型校验设计.md 落地，本阶段不改动各 *DataType） */
-    default List<String> validateValue(Object value) {
-        return Collections.emptyList();
-    }
+    /** 值校验 — 校验传入值是否符合该类型约束（int 范围 / bool 类型 / enum 枚举值等），返回错误列表（空 = 合法） */
+    List<String> validateValue(Object value);
 }

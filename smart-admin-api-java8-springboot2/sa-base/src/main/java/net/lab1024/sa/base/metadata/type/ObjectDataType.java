@@ -5,7 +5,9 @@ import lombok.Data;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 public class ObjectDataType implements DataType {
@@ -35,6 +37,28 @@ public class ObjectDataType implements DataType {
                 } else {
                     errors.addAll(prop.getValueType().validate());
                 }
+            }
+        }
+        return errors;
+    }
+
+    /** 值校验 — 须为 Map，按 properties 递归 validateValue（可选子属性缺省不校验） */
+    @Override
+    public List<String> validateValue(Object value) {
+        List<String> errors = new ArrayList<String>();
+        if (!(value instanceof Map)) {
+            errors.add("类型应为 object，实际: " + value);
+            return errors;
+        }
+        Map<?, ?> map = (Map<?, ?>) value;
+        if (properties != null) {
+            for (ObjectProperty prop : properties) {
+                Object v = map.get(prop.getId());
+                if (v == null) {
+                    continue;   // 可选子属性缺省不校验
+                }
+                errors.addAll(prop.getValueType().validateValue(v)
+                        .stream().map(e -> "properties[" + prop.getId() + "] " + e).collect(Collectors.toList()));
             }
         }
         return errors;

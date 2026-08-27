@@ -174,6 +174,8 @@ public class LocalDeviceMessageSender implements DeviceMessageSender, DeviceMess
                 ? ((ChildDeviceSession) session).getParent() : session;
 
         return registry.getDevice(target.getDeviceId())                       // ① 设备 Redis Hash 取 protocolId（会话注册时写入）
+                // 设备 hash 有数据但产品被禁用/删除（产品 hash 已清空）→ exist()=false → getDevice 返回 empty → 明确报错（区别于"未绑定协议"）
+                .switchIfEmpty(Mono.error(new BusinessException("设备不存在或产品未启用，无法下发")))
                 .flatMap(operator -> operator.getSelfConfig(DeviceField.PROTOCOL_ID.getValue()))
                 .map(Value::asString)
                 .filter(StringUtils::isNotEmpty)

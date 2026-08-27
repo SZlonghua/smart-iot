@@ -98,7 +98,8 @@ public class DeviceOfflineCleaner {
     }
 
     private Mono<Void> doClean(String deviceId) {
-        return registry.getDevice(deviceId)
+        // 不校验存在性：产品被禁用/删除时设备 exist()=false（getDevice 返回 empty），但 Redis 上线字段残留仍需清理（removeConfigs 幂等）
+        return registry.getDeviceIgnoreExist(deviceId)
                 .flatMap(operator -> {
                     operator.removeConfigs(OFFLINE_CLEAR_FIELDS);
                     operator.setConfigs(Collections.singletonMap(

@@ -34,4 +34,14 @@ public class EnumDataType implements DataType {
         }
         return errors;
     }
+
+    /** 值校验 — 须命中 elements 的枚举值 */
+    @Override
+    public List<String> validateValue(Object value) {
+        List<String> errors = new ArrayList<String>();
+        if (elements == null || elements.stream().noneMatch(e -> e.getValue().equals(String.valueOf(value)))) {
+            errors.add("不在枚举值范围内: " + value);
+        }
+        return errors;
+    }
 }

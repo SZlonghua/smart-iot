@@ -22,4 +22,18 @@ public class StringDataType implements DataType {
         }
         return errors;
     }
+
+    /** 值校验 — 须为字符串 + maxLength 长度限制 */
+    @Override
+    public List<String> validateValue(Object value) {
+        List<String> errors = new ArrayList<String>();
+        if (!(value instanceof String)) {
+            errors.add("类型应为 string，实际: " + value);
+            return errors;
+        }
+        if (maxLength != null && ((String) value).length() > maxLength) {
+            errors.add("长度不能超过 " + maxLength);
+        }
+        return errors;
+    }
 }

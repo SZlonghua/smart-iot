@@ -73,6 +73,15 @@ public class DefaultDeviceRegistry implements DeviceRegistry {
                 .flatMap(operator -> deviceOperatorCache.computeIfAbsent(deviceId, k -> Mono.just(operator)));
     }
 
+    /** 获取设备操作对象（不校验存在性）— 产品被禁用/删除时设备 exist()=false，getDevice 返回 empty，
+     *  但 Redis 上线字段残留仍需清理；不走缓存（一次性操作，缓存无意义） */
+    @Override
+    public Mono<DeviceOperator> getDeviceIgnoreExist(String deviceId) {
+        return Mono.justOrEmpty(deviceId)
+                .filter(StringUtils::isNotEmpty)
+                .map(this::createOperator);
+    }
+
     private DeviceOperator createOperator(String deviceId) {
         return new DefaultDeviceOperator(deviceId, configStorageManager, eventBus, this);
     }
