@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 public interface DeviceMessageSender {
 
     /** 默认下发超时（毫秒）— 消息缺省 timeout header 时，prepareMessage 发送前回填此值（10s 与 MQTT 协议约定一致） */
-    long DEFAULT_TIMEOUT_MS = 30_000L;
+    long DEFAULT_TIMEOUT_MS = 10_000L;
 
     /** 同步下发并等待回复 — 超时以消息 timeout header 为准（缺省由 prepareMessage 回填默认 10s，不允许未设置），deviceId 取自消息 */
     default Mono<DeviceMessageReply> sendAndWait(DeviceMessage message) {
