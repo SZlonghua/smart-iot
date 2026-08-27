@@ -69,7 +69,13 @@ public class HazelcastClusterManager implements ClusterManager {
 
     @Override
     public String getCurrentNodeId() {
-        return hazelcast.getCluster().getLocalMember().getUuid().toString();
+        return toNodeId(hazelcast.getCluster().getLocalMember());
+    }
+
+    /** 节点 ID — ip:port（如 192.168.1.101:5701），与 hazelcast members 配置同格式；
+     *  相比 member UUID（每次启动随机），重启后保持不变 — 设备 Redis 字段 connectionServerId 持久稳定 */
+    private static String toNodeId(Member member) {
+        return member.getAddress().getHost() + ":" + member.getAddress().getPort();
     }
 
     @Override
@@ -89,11 +95,11 @@ public class HazelcastClusterManager implements ClusterManager {
     }
 
     /** 按 nodeId 获取 Hazelcast 实时成员（远程提交 submitToMember 用）— 节点已退出返回 null。
-     *  ServerNode 不直接存 Member（Member 不可 Java 序列化，无法进分布式 Map），按 UUID 实时解析 */
+     *  ServerNode 不直接存 Member（Member 不可 Java 序列化，无法进分布式 Map），按 nodeId（ip:port）实时解析 */
     @Override
     public Member getServerMember(String nodeId) {
         for (Member member : hazelcast.getCluster().getMembers()) {
-            if (member.getUuid().toString().equals(nodeId)) {
+            if (toNodeId(member).equals(nodeId)) {
                 return member;
             }
         }
@@ -152,15 +158,15 @@ public class HazelcastClusterManager implements ClusterManager {
         @Override
         public void memberAdded(MembershipEvent event) {
             // 成员加入无需处理 — 其注册表项由该节点自身 registerNode() 写入
-            log.info("memberAdded: {} address: {}" , event.getMember().getUuid(), event.getMember().getAddress());
+            log.info("memberAdded: {}", toNodeId(event.getMember()));
         }
 
         @Override
         public void memberRemoved(MembershipEvent event) {
-            String nodeId = event.getMember().getUuid().toString();
+            String nodeId = toNodeId(event.getMember());
             nodeMap.remove(nodeId);
             // 本地服务注册表无需清理 — 成员退出后 getService 只会对存活节点创建代理
-            log.info("memberRemoved: {} address: {}" , event.getMember().getUuid(), event.getMember().getAddress());
+            log.info("memberRemoved: {}", nodeId);
         }
     }
 }

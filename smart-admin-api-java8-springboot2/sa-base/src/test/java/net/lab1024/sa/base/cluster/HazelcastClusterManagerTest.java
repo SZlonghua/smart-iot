@@ -91,8 +91,9 @@ class HazelcastClusterManagerTest {
         assertNotNull(nodeA);
         assertEquals(nodeAId, nodeA.getNodeId());
         assertTrue(nodeA.getRegisterTime() > 0);
-        // 实时成员解析：按 nodeId 取 Hazelcast 存活成员（submitToMember 远程提交用）
-        assertEquals(nodeAId, managerB.getServerMember(nodeAId).getUuid().toString());
+        // 实时成员解析：按 nodeId（ip:port）取 Hazelcast 存活成员（submitToMember 远程提交用）
+        assertEquals(nodeAId, managerB.getServerMember(nodeAId).getAddress().getHost()
+                + ":" + managerB.getServerMember(nodeAId).getAddress().getPort());
         // 本节点信息
         assertEquals(nodeAId, managerA.getCurrentNodeId());
         assertNotNull(managerA.getCurrentNode());
