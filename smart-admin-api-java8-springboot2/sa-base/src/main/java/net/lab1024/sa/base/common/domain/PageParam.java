@@ -32,6 +32,16 @@ public class PageParam {
     @Max(value = 500, message = "每页最大为500")
     private Long pageSize;
 
+    /** 页码 int 取值（未设置默认第 1 页）— 供非 MyBatis-Plus 分页的查询直接使用 */
+    public int getIntPageNum() {
+        return pageNum == null ? 1 : pageNum.intValue();
+    }
+
+    /** 每页数量 int 取值（未设置默认 10 条） */
+    public int getIntPageSize() {
+        return pageSize == null ? 10 : pageSize.intValue();
+    }
+
     @Schema(description = "是否查询总条数")
     protected Boolean searchCount;
 

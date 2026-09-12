@@ -11,6 +11,7 @@ import net.lab1024.sa.base.device.support.DefaultDeviceSendOperator;
 import net.lab1024.sa.base.device.support.DeviceOfflineCleaner;
 import net.lab1024.sa.base.device.support.DeviceOnlineStatePersistence;
 import net.lab1024.sa.base.device.support.LocalDeviceMessageSender;
+import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -44,8 +45,9 @@ public class DeviceMessageSenderAutoConfiguration {
     public LocalDeviceMessageSender localDeviceMessageSender(DeviceSessionManager sessionManager,
                                                              DeviceRegistry registry,
                                                              ProtocolSupportManager protocolSupportManager,
-                                                             DeviceOfflineCleaner offlineCleaner) {
-        return new LocalDeviceMessageSender(sessionManager, registry, protocolSupportManager, offlineCleaner);
+                                                             DeviceOfflineCleaner offlineCleaner,
+                                                             IEventBus eventBus) {
+        return new LocalDeviceMessageSender(sessionManager, registry, protocolSupportManager, offlineCleaner, eventBus);
     }
 
     /** 下发门面 — 业务层只依赖接口，不感知本地/集群 */

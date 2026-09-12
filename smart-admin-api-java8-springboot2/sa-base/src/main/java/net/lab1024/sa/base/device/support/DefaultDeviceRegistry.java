@@ -6,6 +6,7 @@ import net.lab1024.sa.base.device.*;
 import net.lab1024.sa.base.module.support.cache.core.*;
 import net.lab1024.sa.base.common.util.SmartMapUtil;
 import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
+import net.lab1024.sa.base.storage.StorageStrategyRegistry;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -36,13 +37,16 @@ public class DefaultDeviceRegistry implements DeviceRegistry {
     private final IConfigStorageManager configStorageManager;
     private final ICacheManager cacheManager;
     private final IEventBus eventBus;
+    private final StorageStrategyRegistry storageStrategyRegistry;
 
     public DefaultDeviceRegistry(IConfigStorageManager configStorageManager,
                                  ICacheManager cacheManager,
-                                 IEventBus eventBus) {
+                                 IEventBus eventBus,
+                                 StorageStrategyRegistry storageStrategyRegistry) {
         this.configStorageManager = configStorageManager;
         this.cacheManager = cacheManager;
         this.eventBus = eventBus;
+        this.storageStrategyRegistry = storageStrategyRegistry;
         this.deviceOperatorCache = Caffeine.newBuilder()
                 .softValues()
                 .expireAfterAccess(30, TimeUnit.MINUTES)
@@ -83,7 +87,7 @@ public class DefaultDeviceRegistry implements DeviceRegistry {
     }
 
     private DeviceOperator createOperator(String deviceId) {
-        return new DefaultDeviceOperator(deviceId, configStorageManager, eventBus, this);
+        return new DefaultDeviceOperator(deviceId, configStorageManager, eventBus, this, storageStrategyRegistry);
     }
 
     @Override

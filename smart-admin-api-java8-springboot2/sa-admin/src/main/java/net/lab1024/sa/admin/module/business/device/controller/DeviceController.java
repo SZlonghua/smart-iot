@@ -91,7 +91,7 @@ public class DeviceController {
         return ResponseDTO.ok(deviceService.readProperties(deviceId, properties));
     }
 
-    @Operation(summary = "查询设备属性（查数据库） @author 廖涛")
+    @Operation(summary = "查询设备属性（最近上报值） @author 廖涛")
     @PostMapping("/device/{deviceId}/properties")
     @SaCheckPermission("device:query")
     public ResponseDTO<List<DevicePropertyVO>> getProperties(@PathVariable Long deviceId,

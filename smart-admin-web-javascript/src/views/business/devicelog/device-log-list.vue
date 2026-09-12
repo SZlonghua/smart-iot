@@ -8,10 +8,11 @@
       <a-form-item label="日志类型" class="smart-query-form-item">
         <SmartEnumSelect
           @pressEnter="onSearch"
-          v-model:value="queryForm.type"
+          v-model:value="queryForm.typeList"
           enum-name="DEVICE_LOG_TYPE_ENUM"
-          width="200px"
-          placeholder="日志类型"
+          width="260px"
+          placeholder="日志类型（多选）"
+          multiple
         />
       </a-form-item>
       <a-form-item label="创建时间" class="smart-query-form-item">
@@ -97,7 +98,7 @@
   // 查询数据表单和方法
   const queryFormState = {
     deviceName: '',
-    type: undefined,
+    typeList: [],
     deviceId: undefined,
     createTimeBegin: undefined,
     createTimeEnd: undefined,
@@ -143,8 +144,8 @@
     tableLoading.value = true;
     try {
       let params = { ...queryForm };
-      if (!params.type) {
-        delete params.type;
+      if (!params.typeList || params.typeList.length === 0) {
+        delete params.typeList;
       }
       let queryResult = await deviceLogApi.queryPage(params);
       tableData.value = queryResult.data.list;

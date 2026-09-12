@@ -5,6 +5,7 @@ import net.lab1024.sa.base.device.support.DefaultDeviceRegistry;
 import net.lab1024.sa.base.module.support.cache.core.ICacheManager;
 import net.lab1024.sa.base.module.support.cache.core.IConfigStorageManager;
 import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
+import net.lab1024.sa.base.storage.StorageStrategyRegistry;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,7 +25,8 @@ public class DeviceRegistryAutoConfiguration {
     @Bean
     public DeviceRegistry deviceRegistry(IConfigStorageManager configStorageManager,
                                          @Qualifier("cacheOperationManager") ICacheManager cacheManager,
-                                         IEventBus eventBus) {
-        return new DefaultDeviceRegistry(configStorageManager, cacheManager, eventBus);
+                                         IEventBus eventBus,
+                                         StorageStrategyRegistry storageStrategyRegistry) {
+        return new DefaultDeviceRegistry(configStorageManager, cacheManager, eventBus, storageStrategyRegistry);
     }
 }

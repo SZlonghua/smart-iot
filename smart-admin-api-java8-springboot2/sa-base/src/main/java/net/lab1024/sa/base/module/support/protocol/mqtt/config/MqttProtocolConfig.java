@@ -7,6 +7,7 @@ import net.lab1024.sa.base.common.network.NetworkManager;
 import net.lab1024.sa.base.common.protocol.ProtocolSupportManager;
 import net.lab1024.sa.base.device.DeviceRegistry;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
+import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
 import net.lab1024.sa.base.module.support.protocol.mqtt.gateway.MqttClientDeviceGatewayProvider;
 import net.lab1024.sa.base.module.support.protocol.mqtt.gateway.MqttServerDeviceGatewayProvider;
 import org.springframework.beans.factory.ObjectProvider;
@@ -21,11 +22,12 @@ public class MqttProtocolConfig {
                                                                  DeviceRegistry registry,
                                                                  DeviceSessionManager sessionManager,
                                                                  DecodedClientMessageHandler messageHandler,
+                                                                 IEventBus eventBus,
                                                                  ProtocolSupportManager protocolSupportManager,
                                                                  ObjectProvider<ClusterManager> clusterManagerProvider) {
         // ObjectProvider 可选注入 — 单机部署（iot.cluster.enabled=false）无 ClusterManager bean，getIfAvailable() 返回 null
         return new MqttServerDeviceGatewayProvider(networkManager, registry, sessionManager, messageHandler,
-                protocolSupportManager, clusterManagerProvider.getIfAvailable());
+                eventBus, protocolSupportManager, clusterManagerProvider.getIfAvailable());
     }
 
     @Bean

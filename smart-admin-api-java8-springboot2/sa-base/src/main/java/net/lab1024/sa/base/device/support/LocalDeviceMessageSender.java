@@ -15,6 +15,7 @@ import net.lab1024.sa.base.device.session.DeviceSession;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
 import net.lab1024.sa.base.device.session.support.ChildDeviceSession;
 import net.lab1024.sa.base.module.support.cache.core.Value;
+import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -45,15 +46,18 @@ public class LocalDeviceMessageSender implements DeviceMessageSender, DeviceMess
     private final DeviceRegistry registry;
     private final ProtocolSupportManager protocolSupportManager;
     private final DeviceOfflineCleaner offlineCleaner;
+    private final IEventBus eventBus;
 
     public LocalDeviceMessageSender(DeviceSessionManager sessionManager,
                                     DeviceRegistry registry,
                                     ProtocolSupportManager protocolSupportManager,
-                                    DeviceOfflineCleaner offlineCleaner) {
+                                    DeviceOfflineCleaner offlineCleaner,
+                                    IEventBus eventBus) {
         this.sessionManager = sessionManager;
         this.registry = registry;
         this.protocolSupportManager = protocolSupportManager;
         this.offlineCleaner = offlineCleaner;
+        this.eventBus = eventBus;
     }
 
     @Override
@@ -184,6 +188,9 @@ public class LocalDeviceMessageSender implements DeviceMessageSender, DeviceMess
                 .flatMap(ps -> ps.getMessageCodec(target.getTransport()))
                 .flatMap(codec -> Mono.from(codec.encode(DefaultMessageEncodeContext.of(target, message))))
                 .flatMap(target::send)                                        // 会话发送（见 3.6）
+                // 发送成功后才发布下行消息（消息日志存储监听器消费；失败 = 命令未到达设备，不入库；
+                // 回复不在此发布 — 设备回复经上行路径（DefaultDecodedClientMessageHandler ②）发布）
+                .doOnSuccess(ignore -> eventBus.publishAsync(message))
                 .then();
     }
 }

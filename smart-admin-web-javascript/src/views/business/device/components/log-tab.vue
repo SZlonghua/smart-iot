@@ -2,7 +2,7 @@
   <div>
     <a-form class="smart-query-form" layout="inline">
       <a-form-item label="类型">
-        <SmartEnumSelect v-model:value="query.type" enum-name="DEVICE_LOG_TYPE_ENUM" width="150px" placeholder="日志类型" />
+        <SmartEnumSelect v-model:value="query.typeList" enum-name="DEVICE_LOG_TYPE_ENUM" width="220px" placeholder="日志类型（多选）" multiple />
       </a-form-item>
       <a-form-item label="创建时间">
         <a-range-picker
@@ -63,7 +63,7 @@
   const loading = ref(false);
   const data = ref([]);
   const total = ref(0);
-  const defaultQuery = { type: undefined, createTimeBegin: undefined, createTimeEnd: undefined, pageNum: 1, pageSize: 10 };
+  const defaultQuery = { typeList: [], createTimeBegin: undefined, createTimeEnd: undefined, pageNum: 1, pageSize: 10 };
   const query = reactive({ ...defaultQuery });
   const createTimeRange = ref(null);
 
@@ -101,8 +101,8 @@
     loading.value = true;
     try {
       const params = { ...query, deviceId: props.deviceId };
-      if (!params.type) {
-        delete params.type;
+      if (!params.typeList || params.typeList.length === 0) {
+        delete params.typeList;
       }
       const res = await deviceLogApi.queryPage(params);
       data.value = res.data.list || [];

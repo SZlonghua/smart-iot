@@ -5,10 +5,12 @@ import net.lab1024.sa.base.common.message.codec.Transport;
 import net.lab1024.sa.base.common.message.raw.EncodedMessage;
 import reactor.core.publisher.Mono;
 import net.lab1024.sa.base.device.DeviceOperator;
+import net.lab1024.sa.base.device.session.DeviceSession;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
 import net.lab1024.sa.base.device.session.support.AbstractDeviceSession;
 
 import javax.annotation.Nullable;
+import java.util.function.Consumer;
 
 /**
  * MQTT Broker 侧设备连接会话 — 平台作为 MQTT Broker 接受设备连接。
@@ -32,16 +34,23 @@ public class MqttConnectionSession extends AbstractDeviceSession {
     @Nullable
     private final String connectionServerId;
 
+    /** 会话注销成功回调（连接关闭移除会话后）— 由创建方传入，用于发布设备下线消息 */
+    private final Consumer<DeviceSession> onUnregister;
+
     public MqttConnectionSession(MqttConnection connection, DeviceOperator deviceOperator, Transport transport,
                                  DeviceSessionManager sessionManager, String gatewayId,
-                                 @Nullable String protocolId, @Nullable String connectionServerId) {
+                                 @Nullable String protocolId, @Nullable String connectionServerId,
+                                 Consumer<DeviceSession> onUnregister) {
         super(connection.getDeviceId(), deviceOperator, transport,
                 connection.getProductKey(), connection.getDeviceKey(), gatewayId);
         this.connection = connection;
         this.protocolId = protocolId;
         this.connectionServerId = connectionServerId;
-        // 连接关闭 → 移除自己；predicate 校验会话仍是本实例，新连接替换后不误删新会话
-        connection.onClose(closed -> sessionManager.remove(getDeviceId(), session -> session == this).subscribe());
+        this.onUnregister = onUnregister;
+        // 连接关闭 → 移除自己（移除成功回调 onUnregister — 发布设备下线消息）；
+        // predicate 校验会话仍是本实例，新连接替换后不误删新会话
+        connection.onClose(closed -> sessionManager.remove(getDeviceId(), session -> session == this,
+                onUnregister).subscribe());
     }
 
     @Override

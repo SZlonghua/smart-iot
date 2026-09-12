@@ -11,6 +11,7 @@
 <template>
   <a-select
     v-model:value="selectValue"
+    :mode="multiple ? 'multiple' : ''"
     :style="`width: ${width}`"
     :placeholder="props.placeholder"
     :showSearch="true"
@@ -30,7 +31,12 @@
 
   const props = defineProps({
     enumName: String,
-    value: [Number, String],
+    value: [Number, String, Array],
+    // 多选模式：值为数组
+    multiple: {
+      type: Boolean,
+      default: false,
+    },
     width: {
       type: String,
       default: '100%',

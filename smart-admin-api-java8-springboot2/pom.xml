@@ -56,6 +56,8 @@
         <maven-surefire.version>3.2.5</maven-surefire.version>
         <jsoup.version>1.21.1</jsoup.version>
         <tika.version>2.9.4</tika.version>
+        <taos-jdbcdriver.version>3.8.3</taos-jdbcdriver.version>
+        <influxdb-client.version>6.12.0</influxdb-client.version>
     </properties>
 
     <dependencyManagement>
@@ -352,6 +354,20 @@
             <dependency>
                 <groupId>io.projectreactor</groupId>
                 <artifactId>reactor-core</artifactId>
+            </dependency>
+
+            <!-- TDengine 时序库 JDBC 驱动（Schemaless 写入/查询） -->
+            <dependency>
+                <groupId>com.taosdata.jdbc</groupId>
+                <artifactId>taos-jdbcdriver</artifactId>
+                <version>${taos-jdbcdriver.version}</version>
+            </dependency>
+
+            <!-- InfluxDB client-java — 仅借 Point 对象做行协议序列化（TDengine schemaless 兼容 InfluxDB 行协议），不引其 HTTP 写入客户端 -->
+            <dependency>
+                <groupId>com.influxdb</groupId>
+                <artifactId>influxdb-client-java</artifactId>
+                <version>${influxdb-client.version}</version>
             </dependency>
 
         </dependencies>

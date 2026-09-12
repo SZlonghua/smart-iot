@@ -2,6 +2,7 @@ package net.lab1024.sa.base.device;
 
 import net.lab1024.sa.base.metadata.ThingsMetadata;
 import net.lab1024.sa.base.module.support.cache.core.Value;
+import net.lab1024.sa.base.storage.StoragePolicy;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -38,4 +39,12 @@ public interface DeviceProductOperator {
 
     /** 清空自身全部配置 */
     void clear();
+
+    /**
+     * 获取产品消息数据存储策略 ID — 当前固定 TDengine 行存储（tdengine-row），
+     * 将来绑定产品配置（产品自配置 storagePolicy 字段）时改为读取配置
+     */
+    default String getStoragePolicy() {
+        return StoragePolicy.TDENGINE_ROW;
+    }
 }

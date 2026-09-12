@@ -14,6 +14,7 @@ import net.lab1024.sa.base.common.network.NetworkType;
 import net.lab1024.sa.base.common.protocol.ProtocolSupportManager;
 import net.lab1024.sa.base.device.DeviceRegistry;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
+import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
 import net.lab1024.sa.base.module.support.protocol.mqtt.network.MqttServerNetwork;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,9 @@ public class MqttServerDeviceGatewayProvider implements DeviceGatewayProvider {
 
     private final DecodedClientMessageHandler messageHandler;
 
+    /** 事件总线 — 网关发布连接建立/断开型上/下线消息 */
+    private final IEventBus eventBus;
+
     private final ProtocolSupportManager protocolSupportManager;
 
     /** 集群管理器 — 网关创建会话时取当前节点 ID；单机部署（未装配集群）为 null */
@@ -45,12 +49,14 @@ public class MqttServerDeviceGatewayProvider implements DeviceGatewayProvider {
                                            DeviceRegistry registry,
                                            DeviceSessionManager sessionManager,
                                            DecodedClientMessageHandler messageHandler,
+                                           IEventBus eventBus,
                                            ProtocolSupportManager protocolSupportManager,
                                            @Nullable ClusterManager clusterManager) {
         this.networkManager = networkManager;
         this.registry = registry;
         this.sessionManager = sessionManager;
         this.messageHandler = messageHandler;
+        this.eventBus = eventBus;
         this.protocolSupportManager = protocolSupportManager;
         this.clusterManager = clusterManager;
     }
@@ -88,6 +94,7 @@ public class MqttServerDeviceGatewayProvider implements DeviceGatewayProvider {
                         sessionManager,
                         mqttServerNetwork,
                         messageHandler,
+                        eventBus,
                         protocolSupportManager.getProtocol(properties.getProtocol()),
                         clusterManager));
     }

@@ -9,6 +9,7 @@ import net.lab1024.sa.base.common.swagger.SchemaEnum;
 import net.lab1024.sa.base.common.validator.enumeration.CheckEnum;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 设备日志 查询表单
@@ -27,10 +28,10 @@ public class DeviceLogQueryForm extends PageParam {
     @Schema(description = "设备名称")
     private String deviceName;
 
-    @Schema(description = "日志类型")
+    @Schema(description = "日志类型（多选，空 = 全部类型）")
     @SchemaEnum(value = DeviceLogTypeEnum.class)
-    @CheckEnum(value = DeviceLogTypeEnum.class, required = false, message = "日志类型错误")
-    private String type;
+    @CheckEnum(value = DeviceLogTypeEnum.class, message = "日志类型错误")
+    private List<String> typeList;
 
     @Schema(description = "创建时间-开始")
     private LocalDateTime createTimeBegin;
