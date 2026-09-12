@@ -197,7 +197,8 @@ public enum TopicMessageCodec {
         return Optional.empty();
     }
 
-    static Optional<TopicMessageCodec> fromMessage(DeviceMessage message) {
+    /** 消息 → codec 枚举匹配（按消息类精确匹配）— public：消息日志存储监听器等跨包调用（按枚举名落 commandType、upstream 判方向） */
+    public static Optional<TopicMessageCodec> fromMessage(DeviceMessage message) {
         for (TopicMessageCodec value : values()) {
             if (value.type == message.getClass()) {
                 return Optional.of(value);

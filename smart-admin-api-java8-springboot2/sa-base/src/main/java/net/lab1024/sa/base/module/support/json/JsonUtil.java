@@ -44,6 +44,17 @@ public class JsonUtil {
     }
 
     /**
+     * 任意对象 → JSON 字符串（紧凑序列化，null 字段缺省）— 如消息全量序列化、事件数据对象 JSON 化
+     */
+    public static String toJson(Object object) {
+        try {
+            return MAPPER.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("JSON序列化失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
      * 创建空对象 {}
      */
     public static IJsonNode createObjectNode() {

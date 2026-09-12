@@ -13,7 +13,8 @@ public interface EventMetadata extends Metadata, Jsonable {
 
     String getId();
     String getName();
-    String getEventType();
+    /** 事件类型：info=信息 / warning=告警 / error=故障 */
+    String getType();
     DataType getValueType();
     String getDescription();
 }

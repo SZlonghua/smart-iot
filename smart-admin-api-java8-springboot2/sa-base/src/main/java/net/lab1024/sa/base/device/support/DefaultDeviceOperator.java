@@ -7,6 +7,9 @@ import net.lab1024.sa.base.module.support.cache.core.IConfigStorage;
 import net.lab1024.sa.base.module.support.cache.core.IConfigStorageManager;
 import net.lab1024.sa.base.module.support.cache.core.Value;
 import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
+import net.lab1024.sa.base.storage.EmptyStorageStrategy;
+import net.lab1024.sa.base.storage.StorageStrategy;
+import net.lab1024.sa.base.storage.StorageStrategyRegistry;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -30,14 +33,17 @@ public class DefaultDeviceOperator implements DeviceOperator {
     private final IConfigStorageManager configStorageManager;
     private final IEventBus eventBus;
     private final DeviceRegistry registry;
+    private final StorageStrategyRegistry storageStrategyRegistry;
 
     public DefaultDeviceOperator(String deviceId, IConfigStorageManager configStorageManager,
-                                  IEventBus eventBus, DeviceRegistry registry) {
+                                  IEventBus eventBus, DeviceRegistry registry,
+                                  StorageStrategyRegistry storageStrategyRegistry) {
         this.deviceId = deviceId;
         this.storage = configStorageManager.getStorage(KEY_PREFIX_DEVICE + deviceId);
         this.configStorageManager = configStorageManager;
         this.eventBus = eventBus;
         this.registry = registry;
+        this.storageStrategyRegistry = storageStrategyRegistry;
     }
 
     @Override
@@ -51,23 +57,6 @@ public class DefaultDeviceOperator implements DeviceOperator {
     }
 
     @Override
-    public Mono<String> getSessionId() {
-        return Mono.justOrEmpty(storage.getConfig(DeviceField.SESSION_ID.getValue()).asString());
-    }
-
-    @Override
-    public Mono<Long> getOnlineTime() {
-        Value v = storage.getConfig(DeviceField.ONLINE_TIME.getValue());
-        return v.isPresent() ? Mono.just(v.asLong()) : Mono.empty();
-    }
-
-    @Override
-    public Mono<Long> getOfflineTime() {
-        Value v = storage.getConfig(DeviceField.OFFLINE_TIME.getValue());
-        return v.isPresent() ? Mono.just(v.asLong()) : Mono.empty();
-    }
-
-    @Override
     public Mono<Value> getSelfConfig(String key) {
         return Mono.just(storage.getConfig(key));
     }
@@ -75,13 +64,6 @@ public class DefaultDeviceOperator implements DeviceOperator {
     @Override
     public Flux<Value> getSelfConfigs(Collection<String> keys) {
         return Flux.fromIterable(storage.getConfigs(keys));
-    }
-
-    @Override
-    public Mono<Boolean> disconnect() {
-        // 预留还未实现
-        storage.setConfig(DeviceField.SESSION_ID.getValue(), "");
-        return Mono.just(true);
     }
 
     @Override
@@ -130,6 +112,14 @@ public class DefaultDeviceOperator implements DeviceOperator {
             return Mono.empty();
         }
         return registry.getProduct(productId);
+    }
+
+    @Override
+    public Mono<StorageStrategy> getStorageStrategy() {
+        // 设备未绑定产品/产品不存在同样兜底 EmptyStorageStrategy — 策略恒非空，上层无需判空
+        return getProduct()
+                .map(product -> storageStrategyRegistry.get(product.getStoragePolicy()))
+                .defaultIfEmpty(new EmptyStorageStrategy());
     }
 
     @Override

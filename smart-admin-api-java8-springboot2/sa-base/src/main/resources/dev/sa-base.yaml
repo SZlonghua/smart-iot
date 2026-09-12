@@ -205,3 +205,22 @@ iot:
       members:
         - 192.168.1.101:5701
         - 192.168.1.101:5702
+
+  # 设备消息数据存储 — 默认关闭；开启后按产品存储策略落库（属性上报/事件上报/命令上下发统一路由，见 设备消息数据存储设计.md）
+  storage:
+    enabled: true
+    tdengine:
+      enabled: true
+      driver-class-name: com.taosdata.jdbc.ws.WebSocketDriver  # 纯 Java WebSocket 驱动（官方形态：jdbc:TAOS-WS://host:6041/库名?varcharAsString=true，查询/无模式写入共用，均经 taosadapter 6041）；原生 JNI 备选 com.taosdata.jdbc.TSDBDriver + port 6030（需 taos.dll 在 java.library.path）
+      host: 127.0.0.1
+      port: 6041
+      user: root
+      password: taosdata
+      database: iot_data
+      keep: 3650        # 数据保留天数（建库 KEEP）
+      days: 30          # 数据文件保存天数（建库 DURATION）
+      ttl: 0            # 写入 ttl（秒），0 = 使用库 keep
+      initial-size: 0   # 0 = 惰性建连，TDengine 未启动不影响应用启动
+      min-idle: 0
+      max-active: 10
+      max-wait: 60000

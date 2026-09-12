@@ -24,6 +24,7 @@ import net.lab1024.sa.base.device.DeviceRegistry;
 import net.lab1024.sa.base.device.session.DeviceSession;
 import net.lab1024.sa.base.device.session.DeviceSessionManager;
 import net.lab1024.sa.base.device.session.support.ChildDeviceSession;
+import net.lab1024.sa.base.module.support.eventbus.core.IEventBus;
 import net.lab1024.sa.base.module.support.protocol.mqtt.message.MqttEncodedMessage;
 import net.lab1024.sa.base.module.support.protocol.mqtt.network.MqttServerNetwork;
 import net.lab1024.sa.base.module.support.protocol.mqtt.session.MqttConnectionSession;
@@ -34,6 +35,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import javax.annotation.Nullable;
+import java.util.UUID;
 import java.util.function.Function;
 
 
@@ -56,6 +58,9 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
 
     private final DecodedClientMessageHandler messageHandler;
 
+    /** 事件总线 — 连接建立/断开型上/下线消息发布（无设备消息，需构造补齐） */
+    private final IEventBus eventBus;
+
     @Setter
     private Mono<ProtocolSupport> protocolSupport;
 
@@ -70,6 +75,7 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
                                    DeviceSessionManager sessionManager,
                                    MqttServerNetwork mqttServerNetwork,
                                    DecodedClientMessageHandler messageHandler,
+                                   IEventBus eventBus,
                                    Mono<ProtocolSupport> protocolSupport,
                                    @Nullable ClusterManager clusterManager) {
         super(id);
@@ -77,6 +83,7 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
         this.sessionManager = sessionManager;
         this.mqttServerNetwork = mqttServerNetwork;
         this.messageHandler = messageHandler;
+        this.eventBus = eventBus;
         this.protocolSupport = protocolSupport;
         this.clusterManager = clusterManager;
     }
@@ -131,14 +138,16 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
                 // 3. 会话管理 — compute 替换（替换/关闭旧会话由 SessionManager 内部处理）
                 //    注意：compute 返回的 Mono 必须被订阅（flatMap），否则注册逻辑不执行
                 //    会话携带协议实例 ID + 当前节点 ID，注册事件写入 Redis 设备字段（DefaultDecodedClientMessageHandler）
+                //    连接建立无设备消息 → 传入注册成功回调（this::publishOnline）构造上线消息发布；
+                //    连接断开同理，回调随会话携带（this::publishOffline）在注销成功时发布下线消息
                 .flatMap(connection ->
                         protocolSupport
                                 .flatMap(ps -> registry.getDevice(connection.getDeviceId())
                                         .map(deviceOperator -> new MqttConnectionSession(connection, deviceOperator,
                                                 getTransport(), sessionManager, getId(),
-                                                ps.getId(), getCurrentNodeId())))
+                                                ps.getId(), getCurrentNodeId(), this::publishOffline)))
                                 .flatMap(session -> sessionManager.compute(session.getDeviceId(),
-                                        oldSessionMono -> Mono.just(session))
+                                        oldSessionMono -> Mono.just(session), this::publishOnline)
                                         .thenReturn(connection))
                 )
                 // 4. accept — 回复 CONNACK
@@ -187,7 +196,9 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
                 // 注意：子设备消息外层 deviceId 是网关 ID（恒非空），必须检查内层 deviceId
                 .filter(this::hasDeviceId)
                 .flatMap(message -> {
-                    // 最后才处理真正的消息
+                    // 最后才处理真正的消息 — 设备上报的 online/offline 消息同样进入消息流
+                    //（原 messageId/时间戳/headers 保留落库）；连接建立/断开型变更无设备消息，
+                    // 由网关注册/注销回调构造发布 — 两来源互斥，不重复
                     return messageHandler.handle(message)
                             .doOnSuccess(v -> log.info("message handled: {}", message));
                 });
@@ -196,22 +207,27 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
     /**
      * 校验消息 deviceId 是否已回填 — 未回填说明会话/设备不存在，无法路由，直接丢弃。
      * 丢弃日志统一在这里输出（回填阶段不报错，避免日志分散两处）。
-     * 注意：子设备消息外层 deviceId 是网关 ID（恒非空），必须解包检查内层；
-     * 参数 message 是值传递，这里用 target 承接解包结果，不覆盖原引用。
+     * 注意：子设备消息外层 deviceId 是网关 ID（恒非空），必须解包检查内层。
      */
     private boolean hasDeviceId(Message message) {
-        Message target = message;
-        if (target instanceof ChildDeviceMessage) {
-            target = ((ChildDeviceMessage<?>) target).getChildDeviceMessage();
-        } else if (target instanceof ChildDeviceMessageReply) {
-            target = ((ChildDeviceMessageReply<?>) target).getChildDeviceMessage();
-        }
+        Message target = unwrapChild(message);
         // 解码链路产出的消息均为 AbstractDeviceMessage（子设备消息解包后亦然），无需再判类型
         boolean has = StringUtils.isNotEmpty(((AbstractDeviceMessage) target).getDeviceId());
         if (!has) {
             log.error("[MQTT] 丢弃消息 — deviceId 未回填（子设备未上线或设备不存在）: {}", message);
         }
         return has;
+    }
+
+    /** 子设备消息解包 — 返回内层消息，非子设备消息返回自身（值传递，不覆盖原引用） */
+    private static Message unwrapChild(Message message) {
+        if (message instanceof ChildDeviceMessage) {
+            return ((ChildDeviceMessage<?>) message).getChildDeviceMessage();
+        }
+        if (message instanceof ChildDeviceMessageReply) {
+            return ((ChildDeviceMessageReply<?>) message).getChildDeviceMessage();
+        }
+        return message;
     }
 
     /**
@@ -259,6 +275,10 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
      * 处理设备会话：
      * - 子设备消息 → 处理子设备会话（上线注册 / 下线注销 / 普通消息刷新）
      * - 直连设备消息 → 会话在连接建立时已注册（重复注册不影响），处理下线注销
+     * <p>
+     * 消息驱动的会话变更不传注册/注销回调 — 设备上报的 online/offline 原消息本身进入消息流
+     *（原 messageId/时间戳/headers 保留），无需构造发布，避免重复；
+     * 连接建立/断开型变更（无设备消息）在网关侧传入回调（this::publishOnline / this::publishOffline）补齐。
      */
     private Mono<Message> handleDeviceSession(VertxMqttConnection connection, Message message) {
         log.info("handleDeviceSession decoded message: {}", message);
@@ -279,7 +299,7 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
         if (message instanceof DeviceOnlineMessage) {
             return handleDirectDeviceOnline(connection, (DeviceOnlineMessage) message).thenReturn(message);
         }
-        // 直连设备下线 → 注销会话（deviceId 尚未填充，用连接认证时的 deviceId）
+        // 直连设备下线 → 注销会话（deviceId 尚未填充，用连接认证时的 deviceId；消息驱动 — 原消息进入消息流，不传注销回调）
         if (message instanceof DeviceOfflineMessage) {
             return sessionManager.remove(connection.getDeviceId())
                     .thenReturn(message);
@@ -290,6 +310,7 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
     /**
      * 处理直连设备上线 — 会话在连接建立时已注册，这里幂等注册：
      * 会话已存在则保持原会话（不能替换，否则会关闭当前连接），不存在则注册。
+     * 消息驱动注册不传注册回调 — 设备原上线消息已进入消息流，不重复构造。
      */
     private Mono<Void> handleDirectDeviceOnline(VertxMqttConnection connection, DeviceOnlineMessage message) {
         // 此时 deviceId 尚未填充（fillDeviceId 在 handleDeviceSession 之后执行），按烧录的产品 key + 设备 key 查询
@@ -297,7 +318,8 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
                 .flatMap(ps -> registry.getDevice(message.getProductKey(), message.getDeviceKey())
                         .flatMap(operator -> {
                             MqttConnectionSession session = new MqttConnectionSession(connection, operator,
-                                    getTransport(), sessionManager, getId(), ps.getId(), getCurrentNodeId());
+                                    getTransport(), sessionManager, getId(), ps.getId(), getCurrentNodeId(),
+                                    this::publishOffline);
                             return sessionManager.compute(session.getDeviceId(),
                                     old -> old.switchIfEmpty(Mono.just(session)));
                         }))
@@ -305,7 +327,7 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
     }
 
     /**
-     * 处理子设备会话：
+     * 处理子设备会话（消息驱动）：
      * - 仅上线/下线消息触发会话变更（上线注册 / 下线注销）
      * - 其他消息不处理会话，直接放行（避免每条消息查询 registry）
      */
@@ -321,22 +343,50 @@ public class MqttServerDeviceGateway extends AbstractDeviceGateway {
         return registry.getDevice(childProductKey, childDeviceKey)
                 .flatMap(operator -> sessionManager.getSession(connection.getDeviceId())
                         .flatMap(parent -> {
-                            // 子设备下线 → 注销子设备会话
+                            // 子设备下线 → 先回填内层 deviceId（会话移除后 fillChildDeviceId 查不到会话，
+                            // 消息会因 deviceId 未回填被 hasDeviceId 丢弃）再注销子设备会话；消息驱动不传注销回调
                             if (inner instanceof DeviceOfflineMessage) {
+                                ((AbstractDeviceMessage) inner).setDeviceId(operator.getDeviceId());
                                 return sessionManager.remove(operator.getDeviceId()).then();
                             }
                             // 子设备上线 → 注册子设备会话（会话持有父网关会话引用，alive 跟随网关连接）；
                             // 旧会话仍存活则保留（重复上线幂等，避免频繁替换关闭会话），
-                            // 旧会话失效或不存在（首次上线）→ 注册新会话
+                            // 旧会话失效或不存在（首次上线）→ 注册新会话；
+                            // 消息驱动注册不传注册回调（设备原上线消息已进入消息流），注销回调随会话携带
+                            //（父连接断开级联移除子会话时构造发布子设备下线消息）
                             ChildDeviceSession childSession = new ChildDeviceSession(
                                     operator.getDeviceId(), operator, getTransport(),
-                                    childProductKey, childDeviceKey, parent, getId(), sessionManager);
+                                    childProductKey, childDeviceKey, parent, getId(), sessionManager,
+                                    this::publishOffline);
                             return sessionManager.compute(childSession.getDeviceId(),
                                     old -> old.flatMap(existing -> existing.isAlive()
                                             ? Mono.just(existing)
                                             : Mono.just(childSession))
                                             .switchIfEmpty(Mono.just(childSession))).then();
                         }));
+    }
+
+    /**
+     * 构造并发布上/下线消息 — 仅用于连接建立/断开型变更（无设备消息，需平台补齐）；
+     * 设备上报的 online/offline 消息走消息流，不在此构造。
+     * messageId 平台侧生成（同设备命令下发约定），时间戳/headers 信封由消息基类默认。
+     */
+    private void publishSessionMessage(DeviceSession session, AbstractDeviceMessage message) {
+        message.setMessageId(UUID.randomUUID().toString());
+        message.setDeviceId(session.getDeviceId());
+        message.setProductKey(session.getProductKey());
+        message.setDeviceKey(session.getDeviceKey());
+        eventBus.publishAsync(message);
+    }
+
+    /** 会话注册成功（连接建立）→ 构造发布设备上线消息 */
+    private void publishOnline(DeviceSession session) {
+        publishSessionMessage(session, new DeviceOnlineMessage());
+    }
+
+    /** 会话注销成功（连接断开 / 父连接断开级联）→ 构造发布设备下线消息 */
+    private void publishOffline(DeviceSession session) {
+        publishSessionMessage(session, new DeviceOfflineMessage());
     }
 
     @Override

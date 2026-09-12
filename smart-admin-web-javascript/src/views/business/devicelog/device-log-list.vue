@@ -2,16 +2,17 @@
   <!---------- 查询表单 begin ---------->
   <a-form class="smart-query-form">
     <a-row class="smart-query-form-row">
-      <a-form-item label="设备名称" class="smart-query-form-item">
-        <a-input style="width: 200px" @pressEnter="onSearch" v-model:value="queryForm.deviceName" placeholder="设备名称" />
+      <a-form-item label="设备名称" class="smart-query-form-item" required>
+        <DeviceSelect v-model:value="queryForm.deviceId" width="200px" @select="onDeviceSelect" />
       </a-form-item>
       <a-form-item label="日志类型" class="smart-query-form-item">
         <SmartEnumSelect
           @pressEnter="onSearch"
-          v-model:value="queryForm.type"
+          v-model:value="queryForm.typeList"
           enum-name="DEVICE_LOG_TYPE_ENUM"
-          width="200px"
-          placeholder="日志类型"
+          width="260px"
+          placeholder="日志类型（多选）"
+          multiple
         />
       </a-form-item>
       <a-form-item label="创建时间" class="smart-query-form-item">
@@ -78,11 +79,13 @@
 </template>
 
 <script setup>
-  import { reactive, ref, onMounted } from 'vue';
+  import { reactive, ref } from 'vue';
+  import { message } from 'ant-design-vue';
   import { deviceLogApi } from '/@/api/business/devicelog/device-log-api';
   import { PAGE_SIZE_OPTIONS } from '/@/constants/common-const';
   import { smartSentry } from '/@/lib/smart-sentry';
   import SmartEnumSelect from '/@/components/framework/smart-enum-select/index.vue';
+  import DeviceSelect from '/@/components/business/device-select/index.vue';
   import _ from 'lodash';
 
   // 表格列
@@ -97,7 +100,7 @@
   // 查询数据表单和方法
   const queryFormState = {
     deviceName: '',
-    type: undefined,
+    typeList: [],
     deviceId: undefined,
     createTimeBegin: undefined,
     createTimeEnd: undefined,
@@ -123,17 +126,27 @@
     }
   }
 
-  // 重置查询条件
+  // 设备选择回填 — 设备名称为查询必填项；设备 ID 即时序库按设备隔离的查询维度
+  function onDeviceSelect(deviceId, device) {
+    queryForm.deviceName = device.name;
+  }
+
+  // 重置查询条件（设备为必选，重置后不自动查询）
   function resetQuery() {
     let pageSize = queryForm.pageSize;
     Object.assign(queryForm, queryFormState);
     queryForm.pageSize = pageSize;
     createTimeRange.value = null;
-    queryData();
+    tableData.value = [];
+    total.value = 0;
   }
 
-  // 搜索
+  // 搜索（设备必选 — 后台按时序库设备维度查询，未选择设备直接提示）
   function onSearch() {
+    if (!queryForm.deviceId) {
+      message.warning('请选择设备名称');
+      return;
+    }
     queryForm.pageNum = 1;
     queryData();
   }
@@ -143,8 +156,8 @@
     tableLoading.value = true;
     try {
       let params = { ...queryForm };
-      if (!params.type) {
-        delete params.type;
+      if (!params.typeList || params.typeList.length === 0) {
+        delete params.typeList;
       }
       let queryResult = await deviceLogApi.queryPage(params);
       tableData.value = queryResult.data.list;
@@ -155,6 +168,4 @@
       tableLoading.value = false;
     }
   }
-
-  onMounted(queryData);
 </script>

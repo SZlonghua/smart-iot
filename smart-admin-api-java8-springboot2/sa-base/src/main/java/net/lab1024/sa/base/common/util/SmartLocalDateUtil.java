@@ -3,7 +3,6 @@ package net.lab1024.sa.base.common.util;
 import java.time.*;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.Locale;
 
 
@@ -15,6 +14,9 @@ import java.util.Locale;
  * 1024创新实验室 （ https://1024lab.net ），2012-2023
  */
 public class SmartLocalDateUtil {
+
+    /** 固定时区 +08:00 — 设备消息时间戳与本地时间换算口径统一，不随部署机器时区变化 */
+    private static final ZoneId FIXED_ZONE = ZoneOffset.ofHours(8);
 
 
     /**
@@ -62,16 +64,6 @@ public class SmartLocalDateUtil {
     }
 
     /**
-     * 获取指定日期时间戳
-     *
-     * @param time
-     * @return
-     */
-    public static Long getTimestamp(LocalDateTime time) {
-        return time.toInstant(ZoneOffset.ofHours(8)).toEpochMilli();
-    }
-
-    /**
      * 获取当前时间戳(秒)
      *
      * @return
@@ -100,8 +92,18 @@ public class SmartLocalDateUtil {
         return formatToChineseWeek(localDate).replace("星期", "周");
     }
 
-    public static LocalDateTime toLocalDateTime(Date date) {
-        return Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDateTime();
+    /**
+     * 毫秒时间戳 → LocalDateTime（固定 +08:00 时区，与设备消息时间戳口径一致）
+     */
+    public static LocalDateTime toLocalDateTime(long epochMillis) {
+        return Instant.ofEpochMilli(epochMillis).atZone(FIXED_ZONE).toLocalDateTime();
+    }
+
+    /**
+     * LocalDateTime → 毫秒时间戳（固定 +08:00 时区，与设备消息时间戳口径一致）；null 原样返回
+     */
+    public static Long toEpochMillis(LocalDateTime time) {
+        return time == null ? null : time.atZone(FIXED_ZONE).toInstant().toEpochMilli();
     }
 
     /**

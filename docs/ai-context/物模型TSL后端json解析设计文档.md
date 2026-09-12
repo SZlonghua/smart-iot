@@ -146,7 +146,7 @@ public interface FunctionParamMetadata extends Metadata {
 public interface EventMetadata extends Metadata {
     String getId();
     String getName();
-    String getEventType();     // info / warning / error
+    String getType();          // info / warning / error
     DataType getValueType();
     String getDescription();
 }

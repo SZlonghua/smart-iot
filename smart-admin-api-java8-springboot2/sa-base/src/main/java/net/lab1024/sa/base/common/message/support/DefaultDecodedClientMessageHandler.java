@@ -27,6 +27,10 @@ import java.util.Map;
  * - 注册（上线）：缓存 SESSION_ID + ONLINE_TIME + GATEWAY_ID + PROTOCOL_ID + CONNECTION_SERVER_ID 到设备存储（Redis Hash），并回调持久化更新数据库
  * - 注销（下线）：统一走 DeviceOfflineCleaner 清理（清 Redis 上线字段 + OFFLINE_TIME + 持久化离线状态）
  * <p>
+ * 上/下线消息发布不在此处理：设备上报的 online/offline 消息由网关送入正常消息流发布（原 messageId/时间戳/headers 保留），
+ * 连接建立/断开型变更无设备消息 — 由网关在会话注册/注销成功的回调中构造发布（补平台 messageId），
+ * 事件总线上每类上/下线事实有且仅有一条消息。
+ * <p>
  * &#064;Author  廖涛
  * &#064;Date  2026/08/07
  * &#064;Copyright  1024创新实验室
@@ -49,16 +53,17 @@ public class DefaultDecodedClientMessageHandler implements DecodedClientMessageH
         this.onlineStatePersistence = onlineStatePersistence;
         this.deviceMessageReplyHandler = deviceMessageReplyHandler;
         this.offlineCleaner = offlineCleaner;
-        // 监听会话注册/注销 — 缓存在线状态 + 更新数据库 由online offline设备消息触发会话
+        // 监听会话注册/注销 — 缓存在线状态 + 更新数据库（上/下线消息发布由网关会话回调处理）
         sessionManager.listenEvent(this::handleSessionEvent);
     }
 
-    /** 会话注册/注销事件 — 缓存在线状态（Redis），并回调持久化更新数据库 */
+    /** 会话注册/注销事件 — 缓存在线状态（Redis）+ 持久化更新数据库；上/下线消息发布由网关注册/注销回调构造，本类不涉及 */
     private Mono<Void> handleSessionEvent(DeviceSessionEvent event) {
+        DeviceSession session = event.getSession();
         if (event.getType() == DeviceSessionEvent.Type.register) {
-            handleRegister(event.getSession());
+            handleRegister(session);
         } else {
-            handleUnregister(event.getSession());
+            handleUnregister(session);
         }
         return Mono.empty();
     }

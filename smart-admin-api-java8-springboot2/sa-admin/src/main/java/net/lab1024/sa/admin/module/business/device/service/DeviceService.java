@@ -9,18 +9,28 @@ import net.lab1024.sa.admin.module.business.device.domain.form.DeviceUpdateForm;
 import net.lab1024.sa.admin.module.business.device.domain.vo.DeviceDetailVO;
 import net.lab1024.sa.admin.module.business.device.domain.vo.DevicePropertyVO;
 import net.lab1024.sa.admin.module.business.device.domain.vo.DeviceVO;
+import net.lab1024.sa.admin.module.business.device.storage.service.DevicePropertyDataService;
 import net.lab1024.sa.admin.module.business.gateway.service.GatewayService;
+import net.lab1024.sa.admin.module.business.product.domain.vo.ProductDetailVO;
 import net.lab1024.sa.admin.module.business.product.service.ProductService;
 import net.lab1024.sa.base.common.domain.PageResult;
+import net.lab1024.sa.base.device.DeviceOperator;
+import net.lab1024.sa.base.device.DeviceRegistry;
+import net.lab1024.sa.base.storage.model.LatestPropertyValue;
 import net.lab1024.sa.base.common.domain.ResponseDTO;
 import net.lab1024.sa.base.common.exception.BusinessException;
 import net.lab1024.sa.base.common.util.SmartBeanUtil;
+import net.lab1024.sa.base.common.util.SmartLocalDateUtil;
 import net.lab1024.sa.base.common.util.SmartPageUtil;
 import net.lab1024.sa.base.device.DeviceSendOperator;
 import net.lab1024.sa.base.device.support.DeviceOfflineCleaner;
+import net.lab1024.sa.base.metadata.PropertyMetadata;
+import net.lab1024.sa.base.metadata.ThingsMetadata;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.annotation.Resource;
@@ -54,6 +64,11 @@ public class DeviceService {
 
     @Resource
     private DeviceOfflineCleaner offlineCleaner;
+
+    @Resource
+    private DevicePropertyDataService propertyDataService;
+    @Autowired
+    private DeviceRegistry deviceRegistry;
 
     /** 分页查询 */
     public PageResult<DeviceVO> queryPage(DeviceQueryForm queryForm) {
@@ -143,10 +158,68 @@ public class DeviceService {
                 .block();
     }
 
-    /** 查询设备属性 — 查数据库 */
+    /**
+     * 查询设备属性（最近上报值）— 每个属性独立取消息数据存储中最后一条非空上报记录。
+     * 属性列表为空 = 产品物模型全部属性；未上报过（列/表不存在或存储无记录）→ 值与时间为空不报错。
+     * 存储未开启/无匹配策略 → EmptyStorageStrategy 兜底明确报错
+     */
     public List<DevicePropertyVO> getProperties(Long deviceId, List<String> properties) {
-        // TODO: 后续查询 device_property 表，按 property IDs 过滤
-        return new ArrayList<DevicePropertyVO>();
+        // 一镜到底：设备 → 物模型 → 属性定义解析（Flux）→ 定义列表 → 最新值查询 + 逐条组装 VO（见 propertyVos），链末统一 block；
+        // 设备未注册/物模型缺失/属性全未命中 → 空流由 defaultIfEmpty 兜底为空列表
+        return deviceRegistry.getDevice(String.valueOf(deviceId))
+                .flatMap(DeviceOperator::getMetadata)
+                .flatMapMany(metadata -> resolveDefinitions(metadata, properties))
+                .collectList()
+                .flatMapMany(definitions -> propertyVos(deviceId, definitions))
+                .collectList()
+                .defaultIfEmpty(new ArrayList<>())
+                .block();
+    }
+
+    /** 定义列表 → 属性 VO 流（Flux）— 批量取各属性最新上报值后交 assembleVos 按定义顺序组装 */
+    private Flux<DevicePropertyVO> propertyVos(Long deviceId, List<PropertyMetadata> definitions) {
+        return latestValues(deviceId, definitions)
+                .flatMapMany(latestMap -> assembleVos(definitions, latestMap));
+    }
+
+    /** 定义列表 × 最新上报值 Map → 属性 VO 流（Flux）— 按定义顺序逐条组装；未上报属性经 propertyVo 保留空值行 */
+    private static Flux<DevicePropertyVO> assembleVos(List<PropertyMetadata> definitions,
+                                                      Map<String, LatestPropertyValue> latestMap) {
+        return Flux.fromIterable(definitions)
+                .map(definition -> propertyVo(definition, latestMap.get(definition.getId())));
+    }
+
+    /** 定义列表 → 最新上报值 Map（Mono）— 定义 id 提取（Flux）后批量查询；同步 DAO 经 fromSupplier 挂载为异步源 */
+    private Mono<Map<String, LatestPropertyValue>> latestValues(Long deviceId, List<PropertyMetadata> definitions) {
+        return Flux.fromIterable(definitions)
+                .map(PropertyMetadata::getId)
+                .collectList()
+                .flatMap(propertyIds -> Mono.fromSupplier(() ->
+                        propertyDataService.queryLatestPropertyValues(String.valueOf(deviceId), propertyIds)));
+    }
+
+    /** 单条属性定义 + 最新值 → VO — latest 为空（从未上报）时值/时间为空，前端显示无数据 */
+    private static DevicePropertyVO propertyVo(PropertyMetadata definition, LatestPropertyValue latest) {
+        DevicePropertyVO vo = new DevicePropertyVO();
+        vo.setPropertyId(definition.getId());
+        vo.setPropertyName(definition.getName());
+        if (latest != null) {
+            vo.setFormatValue(String.valueOf(latest.getValue()));
+            vo.setTimeValue(SmartLocalDateUtil.toLocalDateTime(latest.getTimestamp()));
+        }
+        return vo;
+    }
+
+    /**
+     * 属性定义解析（Flux）— 入参为空 → 物模型全部属性；非空 → 按入参顺序取定义，物模型不存在的属性跳过。
+     * 顺序保真用 concatMap 逐项串行解析，出流顺序与入参一致
+     */
+    private Flux<PropertyMetadata> resolveDefinitions(ThingsMetadata metadata, List<String> properties) {
+        if (CollectionUtils.isEmpty(properties)) {
+            return Flux.fromIterable(metadata.getProperties());
+        }
+        return Flux.fromIterable(properties)
+                .concatMap(propertyId -> Mono.justOrEmpty(metadata.getPropertyOrNull(propertyId)));
     }
 
     /** 设置设备属性 — 同步下发，等待设备回复（默认 10s），返回最新属性值（失败抛 BusinessException，成功但数据为空返回 null） */

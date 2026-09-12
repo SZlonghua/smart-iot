@@ -42,12 +42,17 @@ public class ChildDeviceSession extends AbstractDeviceSession {
     /** 注册在父会话上的关闭监听器 — close() 时注销，否则父会话存活期间本实例被强引用无法回收 */
     private final Consumer<DeviceSession> parentCloseListener = closed -> close();
 
+    /** 会话注销成功回调（父连接断开级联移除后）— 由创建方传入，用于发布设备下线消息 */
+    private final Consumer<DeviceSession> onUnregister;
+
     public ChildDeviceSession(String deviceId, DeviceOperator operator, Transport transport,
                               String childProductKey, String childDeviceKey, DeviceSession parent,
-                              String gatewayId, DeviceSessionManager sessionManager) {
+                              String gatewayId, DeviceSessionManager sessionManager,
+                              Consumer<DeviceSession> onUnregister) {
         super(deviceId, operator, transport, childProductKey, childDeviceKey, gatewayId);
         this.parent = parent;
         this.sessionManager = sessionManager;
+        this.onUnregister = onUnregister;
         // 父会话关闭（父连接断开/被替换）→ 级联关闭自己；close() 幂等 + predicate 防误删后续新会话
         parent.onClose(parentCloseListener);
     }
@@ -91,8 +96,9 @@ public class ChildDeviceSession extends AbstractDeviceSession {
         }
         // 注销父会话上的监听器 — 否则父会话存活期间本实例被强引用无法回收（内存泄漏）
         parent.removeOnClose(parentCloseListener);
-        // 子设备无实际连接，只移除自己（不能关父连接，否则子会话被替换时会误断网关）
-        sessionManager.remove(getDeviceId(), session -> session == this).subscribe();
+        // 子设备无实际连接，只移除自己（不能关父连接，否则子会话被替换时会误断网关）；
+        // 移除成功回调 onUnregister — 父连接断开级联时发布设备下线消息
+        sessionManager.remove(getDeviceId(), session -> session == this, onUnregister).subscribe();
         notifyClose();
     }
 }

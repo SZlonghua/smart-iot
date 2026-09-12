@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -34,7 +35,8 @@ public class LocalDeviceSessionManager implements DeviceSessionManager {
 
     @Override
     public Mono<DeviceSession> compute(@Nonnull String deviceId,
-                                       @Nonnull Function<Mono<DeviceSession>, Mono<DeviceSession>> computer) {
+                                       @Nonnull Function<Mono<DeviceSession>, Mono<DeviceSession>> computer,
+                                       @Nonnull Consumer<DeviceSession> onRegister) {
         return Mono.justOrEmpty(sessions.get(deviceId))
                 .transform(computer)
                 .doOnNext(session -> {
@@ -47,6 +49,7 @@ public class LocalDeviceSessionManager implements DeviceSessionManager {
                     indexSession(session);
                     if (old == null) {
                         fireEvent(DeviceSessionEvent.of(DeviceSessionEvent.Type.register, session));
+                        fireCallback(onRegister, session);
                     }
                 });
     }
@@ -92,13 +95,15 @@ public class LocalDeviceSessionManager implements DeviceSessionManager {
     }
 
     @Override
-    public Mono<Long> remove(String deviceId, Predicate<DeviceSession> predicate) {
+    public Mono<Long> remove(String deviceId, Predicate<DeviceSession> predicate,
+                             @Nonnull Consumer<DeviceSession> onUnregister) {
         DeviceSession session = sessions.get(deviceId);
         if (session != null && predicate.test(session)) {
             sessions.remove(deviceId, session);
             removeIndexSession(session);
             session.close();
             fireEvent(DeviceSessionEvent.of(DeviceSessionEvent.Type.unregister, session));
+            fireCallback(onUnregister, session);
             return Mono.just(1L);
         }
         return Mono.just(0L);
@@ -145,6 +150,15 @@ public class LocalDeviceSessionManager implements DeviceSessionManager {
     public Disposable listenEvent(Function<DeviceSessionEvent, Mono<Void>> handler) {
         listeners.add(handler);
         return () -> listeners.remove(handler);
+    }
+
+    /** 注册/注销回调执行 — 异常仅记日志，不影响会话管理主流程 */
+    private void fireCallback(Consumer<DeviceSession> callback, DeviceSession session) {
+        try {
+            callback.accept(session);
+        } catch (Exception e) {
+            log.error("[SessionManager] 会话回调异常 deviceId={}", session.getDeviceId(), e);
+        }
     }
 
     private void fireEvent(DeviceSessionEvent event) {
