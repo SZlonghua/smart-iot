@@ -9,7 +9,8 @@
 ├── 物联管理
 │   ├── 产品分类    — 产品分类管理
 │   ├── 产品管理    — 产品 CRUD + 物模型（属性/功能/事件）编辑
-│   └── 设备管理    — 设备 CRUD + 父子设备 + deviceKey 自动生成
+│   ├── 设备管理    — 设备 CRUD + 父子设备 + deviceKey 自动生成
+│   └── 设备日志    — 设备消息日志查询（上下线/属性/事件/命令，来自时序库）
 ├── 网络管理
 │   ├── 网络组件    — MQTT/HTTP/CoAP/TCP Server 等网络通道管理
 │   ├── 协议管理    — 协议 JAR 包 / 本地 class 加载（SPI 扩展）
@@ -29,7 +30,7 @@
 | 认证 | Sa-Token（管理端）+ HMAC-SHA256 设备签名认证 |
 | 数据库 | MySQL 8.x |
 | 缓存 | Redis（设备/产品注册表、会话缓存） |
-| 时序存储 | TDengine（规划中） |
+| 时序存储 | TDengine 3.x（WebSocket 无模式写入，按产品存储策略路由） |
 
 ## 设备接入链路
 
@@ -116,6 +117,8 @@ IEventBus（动态事件总线，泛型精准匹配）                   ← 业
 | IEventBus | 动态事件总线（EventHandler 泛型精准匹配，publish/publishAsync），与 Spring @EventListener 共存 |
 | CRUD 事件 | MyBatis 拦截器自动发布 Save/Update/Delete 前后事件（beforeData/afterData，物理/软删除区分） |
 | 物模型 TSL | ThingsMetadata 聚合根 + 7 种 DataType 编解码体系（DataTypeCodecRegistry 扩展） |
+| 消息存储 | StorageStrategy 存储策略体系（属性/事件/命令消息经事件总线统一路由落库，tdengine-row / tdengine-column 双布局；默认关闭） |
+| 集群管理 | ClusterManager 集群抽象（Hazelcast 组网 + 远程服务调用，默认单机） |
 | 缓存管理 | ICacheManager（String/Hash/Set 三种结构）+ IConfigStorage（配置 Hash 专用存储） |
 
 ## 快速开始
@@ -127,6 +130,7 @@ IEventBus（动态事件总线，泛型精准匹配）                   ← 业
 - Node.js 20+
 - MySQL 8.x
 - Redis
+- TDengine 3.x + taosadapter（可选 — 启用消息时序存储 `iot.storage.enabled=true` 时需要）
 
 ### 数据库
 
@@ -182,7 +186,8 @@ npm run localhost
 | `protocol` | 协议（jar/local 加载方式、jarPath） |
 | `gateway` | 设备网关（组件 + 协议绑定） |
 | `alarm_log` | 告警日志（四级告警、状态流转） |
-| `device_log` | 设备运行日志（上下线/属性上报/事件/命令） |
+
+> 设备消息数据（上下线 / 属性上报 / 事件上报 / 命令上下发）存储于时序库 TDengine，按产品分表：`device_properties_{productId}` / `device_events_{productId}` / `device_message_logs_{productId}`，设备日志页数据来源即消息日志表（`device_log` 为早期 MySQL 结构，已不再写入）。
 
 ## 设备类型
 
@@ -212,6 +217,8 @@ smart-iot/
 │   │       ├── device/             # 设备注册中心/操作器/认证
 │   │       ├── device/session/     # 会话体系
 │   │       ├── metadata/           # 物模型 TSL 元数据
+│   │       ├── cluster/            # 集群管理（Hazelcast 组网 / 远程调用）
+│   │       ├── storage/            # 消息数据存储策略体系（TDengine 行/列布局）
 │   │       ├── module/support/protocol/  # 协议实现（mqtt/http/tcp...）
 │   │       └── module/support/cache/     # 缓存管理
 │   └── sa-admin/                   # 业务模块（物联/网络/告警管理）
@@ -234,15 +241,20 @@ smart-iot/
 | [设备消息定义](./docs/ai-context/平台统一设备消息定义文档.md) | 消息接口体系、headers 约定 |
 | [MQTT 认证方案](./docs/ai-context/MQTT设备认证方案设计.md) | 一机一密/一型一密签名认证 |
 | [Codec 解码方案](./docs/ai-context/MqttDeviceMessageCodec解码方案设计.md) | Topic 枚举解码、子设备递归解码 |
-| [网关设计](./docs/ai-context/DeviceGateway 设计文档.md) | 网关抽象、生命周期、事件驱动 |
-| [协议 SPI 设计](./docs/ai-context/ProtocolSupport 设计文档.md) | 协议扩展、jar 加载 |
-| [网络组件设计](./docs/ai-context/Network 组件设计文档.md) | 网络抽象、11 种类型、Vert.x 实现 |
-| [会话设计](./docs/ai-context/DeviceSession 设计文档.md) | 三类会话、生命周期、子设备会话 |
+| [网关设计](./docs/ai-context/DeviceGateway%20设计文档.md) | 网关抽象、生命周期、事件驱动 |
+| [协议 SPI 设计](./docs/ai-context/ProtocolSupport%20设计文档.md) | 协议扩展、jar 加载 |
+| [网络组件设计](./docs/ai-context/Network%20组件设计文档.md) | 网络抽象、11 种类型、Vert.x 实现 |
+| [会话设计](./docs/ai-context/DeviceSession%20设计文档.md) | 三类会话、生命周期、子设备会话 |
 | [设备注册中心](./docs/ai-context/device-registry设计文档.md) | Redis 存储结构、注册/查询流程 |
 | [EventBus 设计](./docs/ai-context/EventBus设计文档.md) | 动态事件总线、泛型匹配 |
-| [CRUD 事件系统](./docs/ai-context/CRUD 事件系统 — 设计文档.md) | MyBatis 拦截器事件发布 |
+| [CRUD 事件系统](./docs/ai-context/CRUD%20事件系统%20—%20设计文档.md) | MyBatis 拦截器事件发布 |
 | [物模型 TSL](./docs/ai-context/物模型TSL后端json解析设计文档.md) | 元数据体系、数据类型编解码 |
+| [物模型校验](./docs/ai-context/物模型校验设计.md) | 下发/上报链路的物模型内部校验 |
 | [缓存管理器](./docs/ai-context/自定义缓存管理器设计文档.md) | 缓存抽象、Config 存储 |
+| [设备消息数据存储](./docs/ai-context/设备消息数据存储设计.md) | 属性/事件/消息日志存储策略、TDengine 表结构 |
+| [设备命令下发](./docs/ai-context/设备命令下发解决方案设计.md) | 读/写属性、功能调用下行链路与回复 |
+| [集群管理](./docs/ai-context/集群管理设计.md) | ClusterManager 通用集群设施、远程服务调用 |
+| [MQTT Server 启动监听](./docs/ai-context/MQTT-Server-启动监听方案设计.md) | Broker 启动监听、连接/认证/路由链路 |
 | [高保真原型](./docs/ai-context/iot-platform-prototype.html) | 页面原型 |
 
 ## License
